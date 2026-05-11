@@ -1,13 +1,3 @@
-import {
-  Page,
-  Card,
-  Button,
-  IndexTable,
-  Text,
-  Badge,
-  InlineStack,
-} from "@shopify/polaris";
-
 export default function ProductOptionsPage() {
   const groups = [
     {
@@ -25,50 +15,65 @@ export default function ProductOptionsPage() {
   ];
 
   return (
-    <Page
-      title="Product Options"
-      primaryAction={{
-        content: "Add group",
-        url: "/app/options/new",
-      }}
-    >
-      <Card>
-        <IndexTable
-          resourceName={{ singular: "group", plural: "groups" }}
-          itemCount={groups.length}
-          headings={[
-            { title: "Group name" },
-            { title: "Options" },
-            { title: "Status" },
-            { title: "Actions" },
-          ]}
-          selectable={false}
-        >
-          {groups.map((group, index) => (
-            <IndexTable.Row id={group.id} key={group.id} position={index}>
-              <IndexTable.Cell>
-                <Text as="span" fontWeight="semibold">
-                  {group.name}
-                </Text>
-              </IndexTable.Cell>
+    <s-page heading="Product Options">
+      <s-button slot="primary-action" href="/app/options/new" variant="primary">
+        Add group
+      </s-button>
 
-              <IndexTable.Cell>{group.options}</IndexTable.Cell>
-
-              <IndexTable.Cell>
-                <Badge tone="success">{group.status}</Badge>
-              </IndexTable.Cell>
-
-              <IndexTable.Cell>
-                <InlineStack gap="200">
-                  <Button url={`/app/options/${group.id}`}>Edit</Button>
-                  <Button>Duplicate</Button>
-                  <Button tone="critical">Delete</Button>
-                </InlineStack>
-              </IndexTable.Cell>
-            </IndexTable.Row>
-          ))}
-        </IndexTable>
-      </Card>
-    </Page>
+      <s-section>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={headerCellStyle}>Group name</th>
+              <th style={headerCellStyle}>Options</th>
+              <th style={headerCellStyle}>Status</th>
+              <th style={headerCellStyle}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groups.map((group) => (
+              <tr key={group.id}>
+                <td style={bodyCellStyle}>
+                  <strong>{group.name}</strong>
+                </td>
+                <td style={bodyCellStyle}>{group.options}</td>
+                <td style={bodyCellStyle}>
+                  <span style={badgeStyle}>{group.status}</span>
+                </td>
+                <td style={bodyCellStyle}>
+                  <s-stack direction="inline" gap="small">
+                    <s-button href={`/app/options/${group.id}`}>Edit</s-button>
+                    <s-button>Duplicate</s-button>
+                    <s-button tone="critical">Delete</s-button>
+                  </s-stack>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </s-section>
+    </s-page>
   );
 }
+
+const headerCellStyle = {
+  padding: "12px",
+  borderBottom: "1px solid #dfe3e8",
+  textAlign: "left",
+};
+
+const bodyCellStyle = {
+  padding: "12px",
+  borderBottom: "1px solid #eef0f2",
+  verticalAlign: "middle",
+};
+
+const badgeStyle = {
+  display: "inline-block",
+  padding: "2px 8px",
+  borderRadius: "999px",
+  background: "#aee9d1",
+  color: "#202223",
+  fontSize: "12px",
+  fontWeight: 600,
+};
