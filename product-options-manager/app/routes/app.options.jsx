@@ -113,6 +113,7 @@ export default function ProductOptionsPage() {
                   <th style={headerCellStyle}>Targets</th>
                   <th style={headerCellStyle}>Status</th>
                   <th style={headerCellStyle}>Actions</th>
+                  {/* <s-button href={`/app/options/${group.id}`}>Edit</s-button> */}
                 </tr>
               </thead>
               <tbody>
@@ -135,11 +136,20 @@ export default function ProductOptionsPage() {
                       </span>
                     </td>
                     <td style={bodyCellStyle}>
-                      <Form method="post">
-                        <input type="hidden" name="intent" value="duplicate" />
-                        <input type="hidden" name="id" value={group.id} />
-                        <s-button submit>Duplicate</s-button>
-                      </Form>
+                      <s-stack direction="inline" gap="small">
+                        <s-button href={`/app/options/${group.id}`}>
+                          Edit
+                        </s-button>
+                        <Form method="post">
+                          <input
+                            type="hidden"
+                            name="intent"
+                            value="duplicate"
+                          />
+                          <input type="hidden" name="id" value={group.id} />
+                          <s-button submit>Duplicate</s-button>
+                        </Form>
+                      </s-stack>
                     </td>
                   </tr>
                 ))}
