@@ -14,21 +14,97 @@ datasource db {
 }
 
 model Session {
-  id            String    @id
-  shop          String
-  state         String
-  isOnline      Boolean   @default(false)
-  scope         String?
-  expires       DateTime?
-  accessToken   String
-  userId        BigInt?
-  firstName     String?
-  lastName      String?
-  email         String?
-  accountOwner  Boolean   @default(false)
-  locale        String?
-  collaborator  Boolean?  @default(false)
-  emailVerified Boolean?  @default(false)
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
   refreshToken        String?
   refreshTokenExpires DateTime?
+}
+
+model OptionGroup {
+  id          String   @id @default(cuid())
+  shop        String
+  name        String
+  status      String   @default("draft")
+  description String?
+  sortOrder   Int      @default(0)
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  fields  OptionField[]
+  targets ProductTarget[]
+
+  @@index([shop])
+  @@index([shop, status])
+}
+
+model OptionField {
+  id          String   @id @default(cuid())
+  groupId     String
+  type        String
+  label       String
+  key         String
+  required    Boolean  @default(false)
+  helpText    String?
+  placeholder String?
+  sortOrder   Int      @default(0)
+  priceType   String   @default("none")
+  priceValue  Decimal  @default(0)
+  settings    Json?
+  conditions  Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  group  OptionGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  values OptionValue[]
+
+  @@index([groupId])
+}
+
+model OptionValue {
+  id         String   @id @default(cuid())
+  fieldId    String
+  label      String
+  value      String
+  priceValue Decimal  @default(0)
+  sortOrder  Int      @default(0)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  field OptionField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId])
+}
+
+model ProductTarget {
+  id               String   @id @default(cuid())
+  groupId          String
+  targetType       String
+  shopifyProductId String?
+  shopifyVariantId String?
+  shopifyHandle    String?
+  title            String?
+  rule             Json?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  group OptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@index([shopifyProductId])
 }
