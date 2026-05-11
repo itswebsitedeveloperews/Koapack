@@ -1,0 +1,133 @@
+{% schema %}
+{
+  "name": "Product Tabs",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color Scheme",
+      "default": "scheme-1"
+    },
+    {
+      "type": "textarea",
+      "id": "specifications_text",
+      "label": "Specifications Content",
+      "default": "Add your specifications content here.<br>Supports line breaks using &lt;br&gt;."
+    },
+    {
+      "type": "textarea",
+      "id": "printing_text",
+      "label": "Printing Content",
+      "default": "Add your printing content here.<br>Supports line breaks using &lt;br&gt;."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Tabs",
+      "category": "Product"
+    }
+  ]
+}
+{% endschema %}
+
+
+<style>
+.tabs-container {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 5px solid #F2DEC599;
+  margin-bottom: 20px;
+  
+}
+
+.tab-button {
+  padding: 10px 20px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  color: #333;
+  transition: all 0.3s ease;
+  line-height: 100%;
+  letter-spacing: 0;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+}
+
+.tab-button.active {
+  border-bottom: 5px solid #C17A5C;
+  color: #D58D5C;
+}
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+  font-size: 20px;
+  color: #000000;
+  line-height: 1.5;
+  letter-spacing: -0.48px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+}
+
+.tab-content.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+  @media (max-width: 768px) {
+
+  .tab-buttons {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tab-button {
+    width: 100%;
+    font-size: 18px;
+    padding: 12px 0;
+    text-align: left;
+  }
+
+  .tab-content {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}
+
+</style>
+<section class="tabs-section color-{{ section.settings.color_scheme }}">
+  <div class="page-width">
+    <div class="tabs-container">
+      <div class="tab-buttons">
+        <button class="tab-button active" onclick="showTab(event, 'specifications')">Overview</button>
+        <button class="tab-button" onclick="showTab(event, 'printing')">Printing</button>
+      </div>
+    
+      <div id="specifications" class="tab-content active">
+        <p>{{ section.settings.specifications_text | newline_to_br }}</p>
+      </div>
+    
+      <div id="printing" class="tab-content">
+        <p>{{ section.settings.printing_text | newline_to_br }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+<script>
+  function showTab(event, tabId) {
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+</script>

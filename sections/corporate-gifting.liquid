@@ -1,0 +1,157 @@
+{% comment %}
+  Section: Corporate Gifting Split (KOA Pack)
+  – tuned spacing + mobile typography
+{% endcomment %}
+
+<section class="corp-split" style="--left-bg: {{ section.settings.left_bg | default: '#4C7089' }}">
+  <!-- ─── LEFT HALF ──────────────────────────────────────────── -->
+  <div class="corp-left">
+    <div class="crop-heading-text">
+      <h2 class="corp-heading">{{ section.settings.heading }}</h2>
+      <em><p class="corp-sub">{{ section.settings.subheading }}</p></em>  
+    </div>
+
+    <div class="corp-grid">
+      {%- for block in section.blocks -%}
+        <div class="corp-item" {{ block.shopify_attributes }}>
+          {%- if block.settings.icon != blank -%}
+            <img
+              src="{{ block.settings.icon | image_url: width: 80 }}"
+              alt="{{ block.settings.title | escape }}"
+              class="corp-icon"
+              width="80" height="80"
+              loading="lazy"
+            >
+          {%- endif -%}
+
+          <h3 class="corp-item-title">{{ block.settings.title }}</h3>
+          <div class="corp-item-text">{{ block.settings.text }}</div>
+        </div>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <!-- ─── RIGHT HALF ─────────────────────────────────────────── -->
+  <div class="corp-right">
+    {%- if section.settings.right_image != blank -%}
+      <img
+        src="{{ section.settings.right_image | image_url }}"
+        alt="{{ section.settings.heading | escape }}"
+        loading="lazy"
+        width="400"
+        height="400"
+      >
+    {%- endif -%}
+  </div>
+</section>
+
+<style>
+  /* ---------- Layout ---------- */
+  .corp-split{display:flex;flex-wrap:wrap;min-height:60vh}
+  .corp-left,.corp-right{flex:1 1 50%}
+  .corp-right{position:relative;overflow:hidden}
+  .corp-right img{width:100%;height:100%;object-fit:cover}
+
+  /* ---------- Left half ---------- */
+  .corp-left{
+    background:#6D8EA1; /* fallback; can still be overridden by setting */
+    color:#fff;
+    padding:4rem 3rem;
+    display:flex;flex-direction:column;justify-content:center;
+  }
+  .corp-heading{
+    font-family:'Roboto',sans-serif;
+    font-size:64px;font-weight:400;line-height:1.1;letter-spacing:-3.2px;
+    margin:0 0 .25em 0;color:#fff;
+  }
+  .corp-sub{
+    font-family:'Instrument Serif',serif;
+    font-style:italic;font-size:64px;line-height:1.1;letter-spacing:-3.2px;
+    margin:0 0 8rem 0;           /* ← increased bottom space (was 3rem) */
+    font-weight:400;
+  }
+
+  /* 2 × 2 grid */
+  .corp-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:2rem 3rem;max-width:900px
+  }
+
+  /* Process-Steps typography / icon sizing */
+  .corp-item{text-align:left;padding:1.5rem 1rem}
+  .corp-icon{width:80px;height:auto;margin:0 0 1.5rem 0;object-fit:contain;filter:none}
+  .corp-item-title{color:#fff;font-size:1.5rem;font-weight:600;margin:0 0 1rem 0;line-height:1.3}
+  .corp-item-text{color:#fff;font-size:1rem;line-height:1.6;margin:0}
+
+  /* ---------- Responsive ---------- */
+  /* Tablet */
+  @media(max-width:1024px){
+    .corp-heading{font-size:48px;letter-spacing:-2.5px}
+    .corp-sub{font-size:48px;letter-spacing:-2.5px;margin-bottom:3rem}
+  }
+  /* Mobile L */
+  @media(max-width:768px){
+    .corp-left,.corp-right{
+      flex:1 1 100%
+    }
+    .corp-right{
+      min-height:45vh
+    }
+    .corp-heading{
+      font-size:32px;
+      letter-spacing:-1.5px
+    }
+    .corp-sub{
+      font-size:32px;
+      letter-spacing:-1.5px;
+      margin-bottom:2.5rem
+    }
+    .corp-grid{
+      gap:1.5rem
+    }
+    .corp-item-title{
+      font-size:1.25rem
+    }
+    .corp-item-text{
+      font-size:.95rem
+    }
+  }
+  /* Mobile S */
+  @media(max-width:480px){
+    .corp-grid{grid-template-columns:1fr}
+    .corp-heading{font-size:28px}
+    .corp-sub{font-size:28px;margin-bottom:2rem}
+    .corp-item{text-align: center;}
+    .corp-heading-text{text-align: center;}
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Corporate Gifting Split",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Main Heading", "default": "KOA Pack:" },
+    { "type": "text", "id": "subheading", "label": "Sub-Heading", "default": "Corporate Gifting" },
+    { "type": "image_picker", "id": "right_image", "label": "Right-Side Image" },
+    { "type": "color", "id": "left_bg", "label": "Left Background Colour", "default": "#4C7089" }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Feature",
+      "settings": [
+        { "type": "image_picker", "id": "icon", "label": "Icon (80×80 PNG/SVG)" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Tailored for Gifting & Culture" },
+        { "type": "textarea", "id": "text", "label": "Description", "default": "Our materials are gentle on the earth, thoughtfully selected to support a cleaner, greener future." }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    {
+      "name": "Corporate Gifting Split",
+      "blocks": [ { "type": "feature" }, { "type": "feature" }, { "type": "feature" }, { "type": "feature" } ]
+    }
+  ]
+}
+{% endschema %}

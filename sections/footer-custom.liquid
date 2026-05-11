@@ -1,0 +1,616 @@
+<div class="custom-footer">
+  <!-- Main Footer Content -->
+  <div class="footer-container">
+    <!-- Left Column -->
+    <div class="footer-left">
+      <!-- First Row - Content -->
+      <div class="footer-content">
+        <p class="heading">{{ section.settings.left_heading | replace: 'KOA', '<b>KOA</b>' }}</p>
+        <p class='subheading'>{{ section.settings.left_content }}</p>
+      </div>
+      
+      <!-- Second Row - Navigation Links -->
+      <div class="footer-nav">
+        <p>
+          <a href="{{ routes.root_url }}">{{ section.settings.link_home_label | default: 'Home' }}</a> /
+          <a href="{{ section.settings.link_tote }}">{{ section.settings.link_tote_label | default: 'Tote Bags' }}</a> /
+          <a href="{{ section.settings.link_potli }}">{{ section.settings.link_potli_label | default: 'Potli' }}</a> /
+          <a href="{{ section.settings.link_essentials }}">{{ section.settings.link_essentials_label | default: 'Essentials' }}</a> /
+          <br>
+          <a href="{{ section.settings.link_bloom }}">{{ section.settings.link_bloom_label | default: 'Bloom Collections' }}</a> /
+          <a href="{{ section.settings.link_wholesale }}">{{ section.settings.link_wholesale_label | default: 'Wholesale' }}</a>
+        </p>
+      </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="footer-right">
+      <!-- First Row -->
+      <div class="footer-row">
+        <div class="footer-col">
+          <h4>Contact Us</h4>
+          <p>{{ section.settings.phone_number }}</p>
+        </div>
+        <div class="footer-col">
+          <h4>Mo-Fri</h4>
+          <p>{{ section.settings.working_hours }}</p>
+        </div>
+      </div>
+      
+      <!-- Second Row -->
+      <div class="footer-row">
+        <div class="footer-col">
+          <h4>Email</h4>
+          <p>{{ section.settings.email_address }}</p>
+        </div>
+        <div class="footer-col">
+          <h4>Location</h4>
+          <p>{{ section.settings.location }}</p>
+        </div>
+      </div>
+      
+      <!-- Third Row -->
+      <div class="footer-row">
+        <div class="footer-col">
+          <h4>Follow Us On</h4>
+          <div class="social-icons">
+            {% if section.settings.google_url != blank %}
+              <a href="{{ section.settings.google_url }}" target="_blank">{% render 'icon-linkedin' %}</a>
+            {% endif %}
+            {% if section.settings.instagram_url != blank %}
+              <a href="{{ section.settings.instagram_url }}" target="_blank">{% render 'icon-instagram' %}</a>
+            {% endif %}
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Let's Chat</h4>
+          <div class="chat-icons">
+            {% if section.settings.whatsapp_url != blank %}
+              <a href="{{ section.settings.whatsapp_url }}" target="_blank">{% render 'icon-whatsapp' %}</a>
+            {% endif %}
+            {% if section.settings.telegram_url != blank %}
+              <a href="{{ section.settings.telegram_url }}" target="_blank">{% render 'icon-telegram' %}</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Full Width Button -->
+  <div class="footer-full-width">
+    <a href="{{ section.settings.catalog_url }}" class="catalog-button">
+      {% if section.settings.catalog_image %}
+        <div class="catalog-image-wrapper" style="opacity: {{ section.settings.image_opacity | divided_by: 100.0 }};">
+          {{ section.settings.catalog_image | image_url: width: 1200 | image_tag: loading: 'lazy', class: 'catalog-image' }}
+        </div>
+      {% endif %}
+      <div class="catalog-button-content">
+        {{ section.settings.catalog_text }}
+      </div>
+    </a>
+  </div>
+  
+  <!-- Copyright -->
+  <div class="footer-copyright">
+    <p>{{ section.settings.copyright_text }} &copy; {{ 'now' | date: "%Y" }}</p>
+  </div>
+</div>
+
+<style>
+  .custom-footer {
+    background-color: {{ section.settings.background_color }};
+    color: {{ section.settings.text_color }};
+    padding: 40px 20px;
+    font-family: {{ section.settings.font_family }};
+  }
+  
+  .footer-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 30px;
+  }
+  
+  .footer-left {
+    flex: 1;
+    padding-right: 200px;
+  }
+  
+  .footer-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-left: 100px;
+  }
+  
+  .footer-row {
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  .footer-col {
+    flex: 1;
+  }
+  
+  .footer-content .heading {
+    font-size: 36px;
+    margin-bottom: 15px;
+  }
+
+  .footer-nav {
+    margin-top: 60px;
+  }
+  
+  .footer-nav ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+  
+  .footer-nav a {
+    color: {{ section.settings.text_color }};
+    text-decoration: none;
+    transition: opacity 0.3s;
+    line-height: 1.5;
+  }
+  
+  .footer-nav a:hover {
+    opacity: 0.8;
+  }
+  
+  .footer-col h4 {
+    font-size: 8px;
+    margin-bottom: 2px;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
+    color: #C17A5C;
+    line-height: 1.5;
+  }
+  .footer-col p {
+    margin-top: 4px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    letter-spacing: -0.02px;
+    line-height: 1.4;
+  }
+  
+  .social-icons, .chat-icons {
+    margin-top: 16px;
+    display: flex;
+    gap: 5px;
+  }
+  
+  .social-icons a, 
+  .chat-icons a {
+    color: {{ section.settings.text_color }};
+    font-size: 20px;
+  }
+  
+  .footer-full-width {
+    max-width: 1200px;
+    margin: 30px auto 0 auto;
+    text-align: center;
+  }
+  
+  .catalog-button {
+    display: block;
+    position: relative;
+    background-color: {{ section.settings.button_color }};
+    color: {{ section.settings.button_text_color }};
+    text-decoration: none;
+    font-size: 24px;
+    font-family: 'Roboto', sans-serif;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    width: 100%;
+    height: 80px;
+    overflow: hidden;
+  }
+  
+  .catalog-image-wrapper {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  
+  .catalog-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .catalog-button-content {
+    position: relative;
+    z-index: 2;
+    padding: 20px 30px;
+    text-align: left;
+    line-height: 1.5;
+  }
+  
+  .catalog-button:hover {
+    background-color: {{ section.settings.button_hover_color }};
+  }
+    
+  .footer-copyright {
+    text-align: right;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.5;
+  }
+  .social-icons a, 
+  .chat-icons a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: 1px solid #FFFFFF;
+    border-radius: 50%;
+    margin: 0 5px 0 0;
+    transition: all 0.3s ease;
+  }
+  
+  .social-icons a:hover, 
+  .chat-icons a:hover {
+    background: rgba(255,255,255,0.2);
+    transform: translateY(-3px);
+  }
+  
+  .social-icons svg, 
+  .chat-icons svg {
+    width: 20px;
+    height: 20px;
+  }
+  #shopify-section-sections--18379993317547__footer_custom_BJWfBB .heading {
+    margin-top: 0;
+    font-size: 36px;
+    color: #FFFFFF;
+    font-family: 'Roboto', sans-serif;
+  }
+  #shopify-section-sections--18379993317547__footer_custom_BJWfBB .subheading {
+    font-family: 'Roboto', sans-serif;
+    margin-top: 4px;
+    font-size: 16px;
+    letter-spacing: -0.48px;
+    line-height: 1.5;
+  }
+  #shopify-section-sections--18379993317547__footer_custom_BJWfBB b {
+    font-weight : 1600;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .custom-footer {
+      padding: 30px 15px;
+    }
+    
+    .footer-container {
+      flex-direction: column;
+    }
+    
+    .footer-left {
+      padding-right: 0;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .footer-right {
+      padding-left: 0;
+    }
+    
+    .footer-content .heading {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    
+    .footer-content .subheading {
+      font-size: 14px;
+    }
+    
+    .footer-nav {
+      margin-top: 30px;
+    }
+    
+    .footer-nav p {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .footer-nav a {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    
+    .footer-row {
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    
+    .footer-col {
+      margin-bottom: 15px;
+    }
+    
+    .footer-col h4 {
+      font-size: 8px;
+      margin-bottom: 5px;
+      margin-left: 4px;
+      line-height: 1.5;
+    }
+    
+    .footer-col p {
+      font-size: 10px;
+      margin-left: 4px;
+    }
+    
+    /* Two-column layout for contact info */
+    .footer-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    /* Social icons adjustments */
+    .social-icons, .chat-icons {
+      margin-top: 10px;
+      gap: 3px;
+    }
+    
+    .social-icons a, 
+    .chat-icons a {
+      width: 32px;
+      height: 32px;
+    }
+    
+    .social-icons svg, 
+    .chat-icons svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    /* Catalog button adjustments */
+    .catalog-button {
+      height: 60px;
+    }
+    
+    .catalog-button-content {
+      padding: 15px 20px;
+      font-size: 18px;
+    }
+    
+    /* Copyright adjustments */
+    .footer-copyright {
+      font-size: 8px;
+      padding-top: 8px;
+    }
+
+    .footer-row .footer-col:nth-child(2) {
+      padding-left: 15px;
+    }
+  
+    .footer-row:nth-child(2) .footer-col:nth-child(2),
+    .footer-row:nth-child(3) .footer-col:nth-child(2) {
+      padding-left: 20px;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Custom Footer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left Column"
+    },
+    {
+      "type": "text",
+      "id": "left_heading",
+      "label": "Heading",
+      "default": "About Our Company"
+    },
+    {
+      "type": "textarea",
+      "id": "left_content",
+      "label": "Content",
+      "default": "We provide high quality products and excellent customer service."
+    },
+    {
+      "type": "link_list",
+      "id": "left_nav_menu",
+      "label": "Navigation Menu"
+    },
+
+    {
+      "type": "header",
+      "content": "Right Column"
+    },
+    {
+      "type": "text",
+      "id": "phone_number",
+      "label": "Phone Number",
+      "default": "+1 (123) 456-7890"
+    },
+    {
+      "type": "text",
+      "id": "working_hours",
+      "label": "Working Hours",
+      "default": "9:00 AM - 6:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "email_address",
+      "label": "Email Address",
+      "default": "info@example.com"
+    },
+    {
+      "type": "text",
+      "id": "location",
+      "label": "Location",
+      "default": "123 Main St, City, Country"
+    },
+
+    {
+      "type": "header",
+      "content": "Footer Links (editable labels)"
+    },
+    { "type": "text", "id": "link_home_label", "label": "Home label", "default": "Home" },
+
+    { "type": "text", "id": "link_tote_label", "label": "Tote Bags label", "default": "Tote Bags" },
+    { "type": "url", "id": "link_tote", "label": "Tote Bags link" },
+    
+    { "type": "text", "id": "link_potli_label", "label": "Potli label", "default": "Potli" },
+    { "type": "url", "id": "link_potli", "label": "Potli link" },
+    
+    { "type": "text", "id": "link_essentials_label", "label": "Essentials label", "default": "Essentials" },
+    { "type": "url", "id": "link_essentials", "label": "Essentials link" },
+    
+    { "type": "text", "id": "link_bloom_label", "label": "Bloom Collections label", "default": "Bloom Collections" },
+    { "type": "url", "id": "link_bloom", "label": "Bloom Collections link" },
+    
+    { "type": "text", "id": "link_wholesale_label", "label": "Wholesale label", "default": "Wholesale" },
+    { "type": "url", "id": "link_wholesale", "label": "Wholesale link" },
+
+    {
+      "type": "header",
+      "content": "Full Width Button"
+    },
+    {
+      "type": "text",
+      "id": "catalog_text",
+      "label": "Button Text",
+      "default": "View Product Catalog"
+    },
+    {
+      "type": "url",
+      "id": "catalog_url",
+      "label": "Button URL"
+    },
+    {
+      "type": "image_picker",
+      "id": "catalog_image",
+      "label": "Button Background Image",
+      "info": "Optional: Add an image behind the button text"
+    },
+    {
+      "type": "range",
+      "id": "image_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "label": "Image Opacity",
+      "default": 50
+    },
+    {
+  "type": "header",
+  "content": "Social Links"
+},
+{
+  "type": "url",
+  "id": "facebook_url",
+  "label": "Facebook URL"
+},
+{
+  "type": "url",
+  "id": "instagram_url",
+  "label": "Instagram URL"
+},
+{
+  "type": "url",
+  "id": "youtube_url",
+  "label": "YouTube URL"
+},
+{
+  "type": "url",
+  "id": "google_url",
+  "label": "Google Plus URL"
+},
+{
+  "type": "url",
+  "id": "whatsapp_url",
+  "label": "WhatsApp URL"
+},
+{
+  "type": "url",
+  "id": "telegram_url",
+  "label": "Telegram URL"
+}
+,
+
+    {
+      "type": "header",
+      "content": "Copyright"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright Text",
+      "default": "All rights reserved"
+    },
+
+    {
+      "type": "header",
+      "content": "Styling"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#1a1a1a"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#2a6df5"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_hover_color",
+      "label": "Button Hover Color",
+      "default": "#1a4db3"
+    },
+    {
+      "type": "select",
+      "id": "font_family",
+      "label": "Font Family",
+      "options": [
+        { "value": "Arial, sans-serif", "label": "Arial" },
+        { "value": "'Helvetica Neue', sans-serif", "label": "Helvetica" },
+        { "value": "Georgia, serif", "label": "Georgia" },
+        { "value": "'Times New Roman', serif", "label": "Times New Roman" },
+        { "value": "'Roboto', sans-serif", "label": "Roboto" }
+      ],
+      "default": "Arial, sans-serif"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Footer"
+    }
+  ]
+}
+{% endschema %}

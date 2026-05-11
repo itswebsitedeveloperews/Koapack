@@ -1,0 +1,129 @@
+{% comment %}
+  Section: Corporate Buttons Text
+  Layout: centred headline → 4 pill-buttons (image + label) → centred paragraph
+{% endcomment %}
+
+<section class="koa-possible" style="--pill-bg:#F6F3ED;--pill-bg-hover:#E8E4DE;">
+  <div class="wrapper">
+    <!-- ── HEADLINE ───────────────────────────── -->
+    <h2 class="koa-heading">
+      <em>{{ section.settings.heading_prefix }}</em>
+      {{ section.settings.heading_suffix }}
+    </h2>
+
+    <!-- ── BUTTON ROW ─────────────────────────── -->
+    <div class="pill-row">
+      {%- for block in section.blocks -%}
+        <a
+          class="pill{% if forloop.index == 1 %} is-active{% endif %}"
+          {% if block.settings.link != blank %}href="{{ block.settings.link }}"{% endif %}
+          {{ block.shopify_attributes }}
+        >
+          {%- if block.settings.icon != blank -%}
+            <img
+              src="{{ block.settings.icon | image_url: width: 48 }}"
+              alt="{{ block.settings.label | escape }}"
+              width="32" height="32" loading="lazy"
+            >
+          {%- endif -%}
+          <span>{{ block.settings.label }}</span>
+        </a>
+      {%- endfor -%}
+    </div>
+
+    <!-- ── DESCRIPTION ────────────────────────── -->
+    <p class="koa-desc">{{ section.settings.description }}</p>
+  </div>
+</section>
+
+<style>
+  /* ---------- Base layout ---------- */
+  .koa-possible{padding:4rem 1rem;text-align:center;font-family:'Roboto',sans-serif}
+  .koa-possible .wrapper{max-width:960px;margin:0 auto}
+
+  /* headline */
+  .koa-heading{
+    font-family:'Roboto',sans-serif;font-size:40px;line-height:1;font-weight:400;
+    margin:0 0 4rem;color:#6D8EA1;
+  }
+  .koa-heading em{
+    font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;
+    font-size:40px;line-height:1;color:#6D8EA1;
+  }
+
+  /* ---------- Pills ---------- */
+  .pill-row{display:flex;justify-content:center;flex-wrap:wrap;gap:1.25rem;margin-bottom:4rem}
+
+  /* ---------- Pills (updated) ---------- */
+.pill{
+  position:relative;                          /* keeps icon absolute          */
+  display:flex;                               /* flexbox → easy centring      */
+  align-items:center;                         /* vertical centre              */
+  justify-content:center;                     /* horizontal centre            */
+
+  min-width:140px;min-height:60px;            /* uniform size                 */
+  padding:0 1.4rem 0 calc(32px + 1rem);       /* left pad = icon + gap        */
+  border-radius:9999px;
+
+  background:var(--pill-bg);color:#1E1E1E;
+  font-size:14px;font-weight:500;text-decoration:none;
+  transition:background .25s,color .25s;
+  text-align:center;
+}
+
+/* remove previous top-margin hack */
+.pill span{white-space:nowrap;margin:0;}
+
+  
+
+  /* icon fixed at far left, vertically centred */
+  .pill img{
+    position:absolute;left:.75rem;top:50%;
+    width:32px;height:32px;border-radius:50%;
+    transform:translateY(-50%);object-fit:cover;
+    pointer-events:none;               /* keeps whole pill clickable       */
+  }
+
+  /* same style for active pill; font-weight heavier if wanted */
+  .pill.is-active{font-weight:600; background-color: #6D8EA1;}
+
+  /* subtle hover for all pills */
+  .pill:hover{background:#6D8EA1;}
+
+  /* ---------- Paragraph ---------- */
+  .koa-desc{max-width:760px;margin:0 auto;font-size:14px;line-height:1.6;color:#2d2d2d}
+
+  /* ---------- Responsive ---------- */
+  @media(max-width:640px){
+    .koa-heading{font-size:28px}
+    .koa-heading em{font-size:28px}
+    .koa-desc{font-size:13px}
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Corporate Buttons Text",
+  "settings": [
+    { "type": "text", "id": "heading_prefix", "label": "Heading Italic Part", "default": "What's Possible" },
+    { "type": "text", "id": "heading_suffix", "label": "Heading Normal Part", "default": "with KOA" },
+    { "type": "textarea", "id": "description", "label": "Paragraph Text", "default": "We partner with purpose-driven brands to co-create meaningful, co-branded products that go beyond utility — they tell a story. Whether it’s a limited-edition tote, a conscious giveaway, or packaging for a special campaign, each piece is thoughtfully crafted using sustainable materials and clean design principles. Scalable, customizable, and rooted in shared values, our co-branding solutions are made to reflect your identity — with your brand woven into every stitch." }
+  ],
+  "blocks": [
+    {
+      "type": "pill",
+      "name": "Pill Button",
+      "settings": [
+        { "type": "image_picker", "id": "icon", "label": "Circle Image (32×32)" },
+        { "type": "text", "id": "label", "label": "Label", "default": "Co-Branding" },
+        { "type": "url", "id": "link", "label": "Optional Link" }
+      ]
+    }
+  ],
+  "max_blocks": 4,
+  "presets": [
+    { "name": "Corporate Buttons Text",
+      "blocks": [ { "type": "pill" }, { "type": "pill" }, { "type": "pill" }, { "type": "pill" } ] }
+  ]
+}
+{% endschema %}

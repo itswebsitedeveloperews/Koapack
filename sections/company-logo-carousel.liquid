@@ -1,0 +1,195 @@
+{% schema %}
+{
+  "name": "Circular Logo Ticker",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Logo Ticker Settings"
+    },
+    {
+      "type": "range",
+      "id": "animation_speed",
+      "min": 10,
+      "max": 60,
+      "step": 5,
+      "unit": "s",
+      "label": "Animation Speed",
+      "default": 30,
+      "info": "Time for one complete loop"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 60,
+      "max": 200,
+      "step": 10,
+      "unit": "px",
+      "label": "Logo Display Width",
+      "default": 120
+    },
+    {
+      "type": "range",
+      "id": "logo_height",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "label": "Logo Display Height",
+      "default": 60
+    },
+    {
+      "type": "checkbox",
+      "id": "grayscale_effect",
+      "label": "Enable grayscale effect on hover",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "Logo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "logo_image",
+          "label": "Logo Image"
+        },
+        {
+          "type": "url",
+          "id": "logo_link",
+          "label": "Logo Link (optional)"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Circular Logo Ticker",
+      "category": "Image",
+      "blocks": [
+        { "type": "logo" },
+        { "type": "logo" },
+        { "type": "logo" },
+        { "type": "logo" },
+        { "type": "logo" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+{% stylesheet %}
+.logo-ticker-container {
+  width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  position: relative;
+  padding: 40px 0;
+  background-color: {{ section.settings.background_color }};
+}
+
+.logo-ticker-track {
+  display: flex;
+  align-items: center;
+  width: calc(200% + 40px);
+  animation: scroll {{ section.settings.animation_speed }}s linear infinite;
+}
+
+.logo-ticker-track:hover {
+  animation-play-state: paused;
+}
+
+.logo-item {
+  flex: 0 0 auto;
+  margin: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-item a {
+  display: block;
+  line-height: 0; /* Remove extra space below image */
+}
+
+.logo-item img {
+  width: {{ section.settings.logo_width }}px;
+  height: {{ section.settings.logo_height }}px;
+  object-fit: contain;
+  {% if section.settings.grayscale_effect %}
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+  {% endif %}
+}
+
+.logo-item img:hover {
+  {% if section.settings.grayscale_effect %}
+  filter: grayscale(0%);
+  {% endif %}
+}
+
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 20px));
+  }
+}
+{% endstylesheet %}
+
+<div class="logo-ticker-container">
+  <div class="logo-ticker-track">
+    {% comment %} First set of logos {% endcomment %}
+    {% for block in section.blocks %}
+      <div class="logo-item" {{ block.shopify_attributes }}>
+        {% if block.settings.logo_link != blank %}
+          <a href="{{ block.settings.logo_link }}">
+        {% endif %}
+          {% if block.settings.logo_image != blank %}
+            <img 
+              src="{{ block.settings.logo_image | img_url: '300x' }}" 
+              alt="{{ block.settings.logo_image.alt | escape }}"
+              width="{{ section.settings.logo_width }}"
+              height="{{ section.settings.logo_height }}"
+              loading="lazy"
+            >
+          {% else %}
+            {{ 'logo' | placeholder_svg_tag: 'placeholder-svg' }}
+          {% endif %}
+        {% if block.settings.logo_link != blank %}
+          </a>
+        {% endif %}
+      </div>
+    {% endfor %}
+    
+    {% comment %} Duplicate set for seamless looping {% endcomment %}
+    {% for block in section.blocks %}
+      <div class="logo-item" {{ block.shopify_attributes }}>
+        {% if block.settings.logo_link != blank %}
+          <a href="{{ block.settings.logo_link }}">
+        {% endif %}
+          {% if block.settings.logo_image != blank %}
+            <img 
+              src="{{ block.settings.logo_image | img_url: '300x' }}" 
+              alt="{{ block.settings.logo_image.alt | escape }}"
+              width="{{ section.settings.logo_width }}"
+              height="{{ section.settings.logo_height }}"
+              loading="lazy"
+            >
+          {% else %}
+            {{ 'logo' | placeholder_svg_tag: 'placeholder-svg' }}
+          {% endif %}
+        {% if block.settings.logo_link != blank %}
+          </a>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

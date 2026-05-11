@@ -1,0 +1,190 @@
+{% schema %}
+{
+  "name": "Feature Card Section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "section_heading",
+      "label": "Section Heading",
+      "default": "Small actions. Big difference."
+    },
+    {
+      "type": "text",
+      "id": "section_description",
+      "label": "Section Description",
+      "default": "These moments remind us that thoughtful packaging and empowered people can shape something much larger — a better way forward."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Card",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "card_image",
+          "label": "Card Image"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "label": "Subheading",
+          "default": "FEATURE"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading Text"
+        },
+        {
+          "type": "textarea",
+          "id": "body",
+          "label": "Body Text",
+          "default": "Body content goes here."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 3,
+  "presets": [
+    {
+      "name": "Feature Card Section",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="feature-section">
+  <div class="feature-section__top">
+    <h2 class="feature-section__heading">{{ section.settings.section_heading | replace: 'actions', '<em>actions</em>' | replace: 'difference.', '<em>difference.</em>'}}</h2>
+    <p class="feature-section__description">{{ section.settings.section_description }}</p>
+  </div>
+
+  <div class="feature-section__cards">
+    {% for block in section.blocks %}
+      <div class="feature-card">
+        {% if block.settings.card_image %}
+          <div class="feature-card__image">
+            <img src="{{ block.settings.card_image | img_url: '720x480' }}" alt="Feature Image" width="300" height="200">
+          </div>
+        {% endif %}
+        <div class="feature-card__content">
+          <p class="feature-card__subheading">{{ block.settings.subheading }}</p>
+          <h3 class="feature-card__heading">{{ block.settings.heading | replace: 'Collective', '<br>Collective</br>' | replace: 'of 2025', '<br>of 2025</br>' | replace: 'for Purpose', '<br>for Purpose</br>'}}</h3>
+          <p class="feature-card__body">{{ block.settings.body }}</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+.feature-section {
+  background-color: #6a8b9a;
+  padding: 5rem 4rem;
+  color: white;
+  font-family: sans-serif;
+}
+.feature-section__top {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+.feature-section__heading {
+  font-size: 32px;
+  font-weight: 400;
+  font-family: 'Roboto', sans-serif;
+  line-height: 100%;
+  flex: 1;
+  color: #FFFFFF;
+}
+.feature-section__description {
+  flex: 1;
+  max-width: 600px;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.5;
+  letter-spacing: -0.48px;
+  text-align: left;
+}
+.feature-section__cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+.feature-card {
+  background: white;
+  color: black;
+  width: 100%;
+  max-width: 32%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.feature-card__image img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+.feature-card__content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+.feature-card__subheading {
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: -0.48px;
+  margin-bottom: 4rem;
+  color: #3C403C;
+  line-height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+}
+.feature-card__heading {
+  font-size: 20px;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  color: #3C403C;
+  line-height: 100%;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.48px;
+}
+.feature-card__body {
+  font-size: 16px;
+  color: #3C403C;
+  line-height: 1.4;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.48px;
+}
+em, i {
+  font-style: italic;
+  font-family: 'Instrument Serif', serif;
+}
+@media (max-width: 768px) {
+  .feature-section__top {
+    flex-direction: column;
+    text-align: center;
+  }
+  .feature-section__description {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .feature-section__cards {
+    flex-direction: column;
+    align-items: center;
+  }
+  .feature-card {
+    max-width: 100%;
+  }
+}
+</style>

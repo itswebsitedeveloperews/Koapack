@@ -1,0 +1,250 @@
+{{ 'section-process-steps.css' | asset_url | stylesheet_tag }}
+
+<div class="process-steps color-{{ section.settings.color_scheme }}">
+  <div class="page-width">
+    <div class="process-steps__header">
+      <h2 class="process-steps__main-heading">{{ section.settings.main_heading }}</h2>
+      {% if section.settings.sub_heading != blank %}
+        <div class="process-steps__subheading">{{ section.settings.sub_heading }}</div>
+      {% endif %}
+    </div>
+
+    <div class="process-steps__grid">
+      {% for i in (1..4) %}
+        {% capture icon %}icon{{ i }}{% endcapture %}
+        {% capture heading %}heading{{ i }}{% endcapture %}
+        {% capture text %}text{{ i }}{% endcapture %}
+
+        <div class="process-step">
+          {% if section.settings[icon] != blank %}
+            <div class="process-step__icon">
+              {{ section.settings[icon] | image_url: width: 100 | image_tag: loading: 'lazy' }}
+            </div>
+          {% endif %}
+          <h3 class="process-step__heading">{{ section.settings[heading] }}</h3>
+          <div class="process-step__text">{{ section.settings[text] }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .process-steps {
+    padding: 5rem 2rem;
+    background: {{ section.settings.background_color }};
+  }
+
+  /* Added text color rules */
+  .process-steps__main-heading,
+  .process-steps__subheading,
+  .process-step__heading,
+  .process-step__text {
+    color: #ffffff !important;
+  }
+
+  /* Rest of original CSS remains unchanged */
+  .process-steps__header {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto 4rem;
+  }
+
+  .process-steps__main-heading {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .process-steps__subheading {
+    font-size: 1.2rem;
+    line-height: 1.6;
+  }
+
+  .process-steps__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .process-step {
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .process-step__icon {
+    margin-bottom: 1.5rem;
+  }
+
+  .process-step__icon img {
+    width: 80px;
+    height: auto;
+    margin: 0 auto;
+  }
+
+  .process-step__heading {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .process-step__text {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  .process-step {
+  position: relative;
+}
+
+@media(min-width: 768px) {
+  .process-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 60px; /* ⬅️ move line higher (closer to icon) */
+  right: -8rem; /* ⬅️ move further out to extend line */
+  width: 14rem;     /* ⬅️ increase line length */
+  height: 0.2px;
+  background-color: #ffffff;
+  z-index: 1;
+}
+}
+
+/* White horizontal lines between steps (except last) */
+
+
+
+  @media (max-width: 768px) {
+    .process-steps__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .process-steps__main-heading {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .process-steps__grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .process-step {
+      padding: 1rem;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Process Steps",
+  "settings": [
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "text",
+      "id": "main_heading",
+      "label": "Main Heading",
+      "default": "Making Packaging Simple"
+    },
+    {
+      "type": "richtext",
+      "id": "sub_heading",
+      "label": "Sub Heading"
+    },
+    {
+      "type": "header",
+      "content": "Step 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "icon1",
+      "label": "Icon 1"
+    },
+    {
+      "type": "text",
+      "id": "heading1",
+      "label": "Heading 1",
+      "default": "Pick a Product"
+    },
+    {
+      "type": "richtext",
+      "id": "text1",
+      "label": "Text 1",
+      "default": "<p>Explore our curated range of ideas, goals, and essentials — all designed with quality and sustainability in mind.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "icon2",
+      "label": "Icon 2"
+    },
+    {
+      "type": "text",
+      "id": "heading2",
+      "label": "Heading 2",
+      "default": "Personalize It"
+    },
+    {
+      "type": "richtext",
+      "id": "text2",
+      "label": "Text 2",
+      "default": "<p>Add your brand’s touch. Choose coffee, store, and custom prints to make each piece uniquely yours.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "icon3",
+      "label": "Icon 3"
+    },
+    {
+      "type": "text",
+      "id": "heading3",
+      "label": "Heading 3",
+      "default": "We Handcraft It"
+    },
+    {
+      "type": "richtext",
+      "id": "text3",
+      "label": "Text 3",
+      "default": "<p>Our women-led teams get to work carefully bringing your design to life using ethical, zero-waste practices.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Step 4"
+    },
+    {
+      "type": "image_picker",
+      "id": "icon4",
+      "label": "Icon 4"
+    },
+    {
+      "type": "text",
+      "id": "heading4",
+      "label": "Heading 4",
+      "default": "Receive & Reuse"
+    },
+    {
+      "type": "richtext",
+      "id": "text4",
+      "label": "Text 4",
+      "default": "<p>Your custom packaging is delivered, ready to impress — and designed to be trusted, re-bond, and remembered.</p>"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Process Steps",
+      "category": "Custom Content"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,229 @@
+{% schema %}
+{
+  "name": "Cultural Impact Section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading_line1",
+      "label": "Heading Line 1",
+      "default": "Making a"
+    },
+    {
+      "type": "text",
+      "id": "heading_line2",
+      "label": "Heading Line 2 (Italic)",
+      "default": "Cultural Impact"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "Description",
+      "default": "We believe sustainability isn't just a section—it’s embedded in every layer of what we do..."
+    },
+    {
+      "type": "image_picker",
+      "id": "scroll_icon",
+      "label": "Scroll Icon"
+    },
+    {
+      "type": "image_picker",
+      "id": "main_image",
+      "label": "Main Image"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Cultural Impact Section"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+.cultural-impact-section {
+  background-color: #3d5b41;
+  color: white;
+  padding: 30px 20px;
+  font-family: sans-serif;
+  height: 120vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.text-wrapper {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.left-heading {
+  flex: 1;
+  min-width: 250px;
+  margin-bottom: 3rem;
+  margin-top: 6rem;
+  padding-left: 0;
+}
+
+.left-heading h2 {
+  margin: 0;
+  font-size: 32px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  line-height: 100%;
+  color: #FFFFFF;
+  text-align: left;
+}
+
+.left-heading h2 em {
+  font-style: italic;
+  font-family: 'Instrument Serif', serif;
+}
+
+.right-description {
+  flex: 2;
+  min-width: 250px;
+  text-align: left;
+  position: relative;
+  margin-bottom: 3rem;
+  margin-top: 3rem;
+  padding-right: 0;
+}
+
+.right-description p {
+  max-width: 700px;
+  margin-left: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.48px;
+}
+
+.scroll-icon {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.scroll-icon p {
+  margin: 0;
+  margin-left: 1rem;
+}
+
+.main-image {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.main-image img {
+  width: 100%;
+  height: auto;
+  max-height: 50rem;
+  object-fit: cover;
+}
+
+/* Alignment helper */
+.content-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 749px) {
+  .text-wrapper {
+    flex-direction: column;
+    padding: 0 15px;
+  }
+  
+  .left-heading,
+  .right-description {
+    text-align: left;
+    padding: 0;
+    margin: 2rem 0;
+  }
+  
+  .left-heading {
+    margin-top: 3rem;
+  }
+  
+  .scroll-icon {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+  
+  .main-image img {
+    height: auto;
+  }
+}
+
+@media screen and (min-width: 750px) and (max-width: 1240px) {
+  .text-wrapper {
+    padding: 0 30px;
+  }
+  
+  .left-heading h2 {
+    font-size: 28px;
+  }
+  
+  .right-description p {
+    font-size: 14px;
+  }
+}
+
+@media screen and (min-width: 1241px) {
+  .cultural-impact-section {
+    padding: 30px 80px 40px;
+  }
+  
+  .left-heading h2 {
+    font-size: 36px;
+  }
+  
+  .right-description p {
+    font-size: 16px;
+  }
+  
+  .scroll-icon {
+    margin-left: 0;
+  }
+}
+</style>
+
+<div class="cultural-impact-section">
+  <div class="content-container">
+    <div class="text-wrapper">
+      <div class="left-heading">
+        <h2>{{ section.settings.heading_line1 }}</h2>
+        <h2><em>{{ section.settings.heading_line2 }}</em></h2>
+      </div>
+      <div class="right-description">
+        <p>{{ section.settings.description }}</p>
+        {% if section.settings.scroll_icon %}
+          <div class="scroll-icon">
+            <img src="{{ section.settings.scroll_icon | img_url: 'medium' }}" alt="Scroll Icon" width="20" height="20">
+            <p class="scroll-icon-text">Scroll to explore the KOA way.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if section.settings.main_image %}
+      <div class="main-image">
+        <img src="{{ section.settings.main_image | img_url: 'master' }}" alt="Main Image" width="400" height="400">
+      </div>
+    {% endif %}
+  </div>
+</div>

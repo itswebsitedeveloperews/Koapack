@@ -1,0 +1,271 @@
+{% style %}
+  .custom-image-text {
+    padding: {{ section.settings.section_padding }}rem 0;
+  }
+  
+  .custom-image-text .grid-container {
+    display: flex;
+    align-items: stretch;
+    gap: {{ section.settings.gap_between }}px;
+    {% if section.settings.image_position == 'right' %}
+    flex-direction: row-reverse;
+    {% endif %}
+  }
+  
+  .custom-image-text .image-wrapper {
+    flex: 0 0 {{ section.settings.image_width }}px;
+    height: {{ section.settings.image_height }}px;
+  }
+  
+  .custom-image-text .image-wrapper img {
+    width: 100%;
+    height: 100%;
+    border-radius: 1%;
+    object-fit: cover;
+  }
+  
+  .custom-image-text .content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: {{ section.settings.image_height }}px;
+    padding: {{ section.settings.content_padding }}rem;
+  }
+
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .h3 {
+    font-size : 28px;
+    font-family: 'Roboto', sans-serif;
+    padding-top : 60px;
+  }
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 p {
+    font-size : 12px;
+    font-family: 'Roboto', sans-serif;
+    letter-spacing: -0.48px;
+    line-height: 1.5;
+  }
+  
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 em,
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 i {
+    font-style: italic !important;
+    font-family: 'Instrument Serif', serif;
+  }
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .button {
+    font-family: 'Roboto', sans-serif;
+    border: 1px solid #BE7A58;
+    background: none;
+    color: #C17A5C;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+    display: block;
+    width: fit-content;
+    cursor: pointer;
+    margin-bottom: 80px;
+    margin-top: 20px;
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+  }
+  #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .button:hover {
+    background-color: #C17A5C;
+    color: #fff;
+  }
+  
+  @media (max-width: 749px) {
+    .custom-image-text .grid-container {
+      flex-direction: column;
+    }
+    
+    .custom-image-text .image-wrapper {
+      flex: 0 0 auto;
+      width: 100% !important;
+      height: {{ section.settings.mobile_image_height }}px !important;
+    }
+    
+    .custom-image-text .content-wrapper {
+      height: auto;
+      padding: {{ section.settings.mobile_content_padding }}rem;
+    }
+    #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .h3 {
+      font-size : 20px;
+      font-family: 'Roboto', sans-serif;
+      padding-top : 0;
+    }
+    #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 p {
+      font-size : 12px;
+      font-family: 'Roboto', sans-serif;
+    }
+    #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .content-wrapper {
+      text-align: center;
+      align-items: center;
+    }
+    #shopify-section-template--18408001077419__custom_image_with_text_ytRWT9 .button {
+      margin-bottom: 0px !important;
+    }
+  }
+{% endstyle %}
+
+<div class="custom-image-text">
+  <div class="page-width">
+    <div class="grid-container">
+      <div class="image-wrapper">
+        {% if section.settings.image %}
+          {{ section.settings.image | image_url: width: 1000 | image_tag: loading: 'lazy' }}
+        {% else %}
+          {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+        {% endif %}
+      </div>
+      
+      <div class="content-wrapper">
+        {% if section.settings.heading != blank %}
+          <h2 class="h3">{{ section.settings.heading | replace: 'different', '<em>different</em>'}}</h2>
+        {% endif %}
+        
+        {% if section.settings.text != blank %}
+          <div class="rte">{{ section.settings.text }}</div>
+        {% endif %}
+        
+        {% if section.settings.button_label != blank %}
+          <a href="{{ section.settings.button_link }}" class="button">
+            {{ section.settings.button_label }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Custom Image + Text",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout Settings"
+    },
+    {
+      "type": "select",
+      "id": "image_position",
+      "label": "Desktop Image Position",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "image_width",
+      "label": "Image Width (Desktop)",
+      "min": 300,
+      "max": 600,
+      "step": 10,
+      "unit": "px",
+      "default": 400
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "label": "Image Height (Desktop)",
+      "min": 200,
+      "max": 600,
+      "step": 10,
+      "unit": "px",
+      "default": 300
+    },
+    {
+      "type": "range",
+      "id": "mobile_image_height",
+      "label": "Image Height (Mobile)",
+      "min": 150,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "default": 250
+    },
+    {
+      "type": "range",
+      "id": "gap_between",
+      "label": "Gap Between Image & Text",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "section_padding",
+      "label": "Section Padding",
+      "min": 0,
+      "max": 10,
+      "step": 0.5,
+      "unit": "rem",
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "content_padding",
+      "label": "Content Padding (Desktop)",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "rem",
+      "default": 2
+    },
+    {
+      "type": "range",
+      "id": "mobile_content_padding",
+      "label": "Content Padding (Mobile)",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "rem",
+      "default": 1.5
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Image with text section"
+    },
+    {
+      "type": "richtext",
+      "id": "text",
+      "label": "Text",
+      "default": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Image + Text",
+      "category": "Image"
+    }
+  ]
+}
+{% endschema %}

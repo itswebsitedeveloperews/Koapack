@@ -1,0 +1,201 @@
+.rich-text {
+  z-index: 1;
+}
+
+.rich-text__wrapper {
+  display: flex;
+  justify-content: center;
+  width: calc(100% - 4rem / var(--font-body-scale));
+}
+
+.rich-text:not(.rich-text--full-width) .rich-text__wrapper {
+  margin: auto;
+  width: calc(100% - 8rem / var(--font-body-scale));
+}
+
+.rich-text__blocks {
+  width: 100%;
+}
+
+@media screen and (min-width: 750px) {
+  .rich-text__wrapper {
+    width: 100%;
+  }
+
+  .rich-text__wrapper--left {
+    justify-content: flex-start;
+  }
+
+  .rich-text__wrapper--right {
+    justify-content: flex-end;
+  }
+
+  .rich-text__blocks {
+    max-width: 50rem;
+  }
+}
+
+@media screen and (min-width: 990px) {
+  .rich-text__blocks {
+    max-width: 78rem;
+  }
+}
+
+.rich-text__blocks * {
+  overflow-wrap: break-word;
+}
+
+.rich-text__blocks > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.rich-text__blocks > * + * {
+  margin-top: 2rem;
+}
+
+.rich-text__blocks > * + a {
+  margin-top: 3rem;
+}
+
+.rich-text__buttons {
+  display: inline-flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+  max-width: 45rem;
+  word-break: break-word;
+}
+
+.rich-text__buttons--multiple > * {
+  flex-grow: 1;
+  min-width: 22rem;
+}
+
+.rich-text__buttons + .rich-text__buttons {
+  margin-top: 1rem;
+}
+
+.rich-text__blocks.left .rich-text__buttons {
+  justify-content: flex-start;
+}
+
+.rich-text__blocks.right .rich-text__buttons {
+  justify-content: flex-end;
+}
+.section-template--18379992858795__rich_text_CaP8md-padding .rich-text__heading {
+    font-family: 'Roboto', sans-serif;
+    font-size: 40px;
+    color: #000000;
+    margin-bottom: 20px;
+    font-weight: 400;
+  }
+
+  /* Style for the product categories list */
+  .section-template--18379992858795__rich_text_CaP8md-padding .rich-text__text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    color: #3E5D49;
+  }
+
+  /* Style the bullet points and links */
+  .section-template--18379992858795__rich_text_CaP8md-padding .rich-text__text p {
+    margin: 0;
+    letter-spacing: -0.02px;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  /* Create hover effect for all text (since it's dynamic) */
+  .section-template--18379992858795__rich_text_CaP8md-padding .rich-text__text:hover {
+    color: #C6D1C3;
+    transition: color 0.3s ease;
+  }
+
+  .section-template--18379992858795__rich_text_YdBzBK-padding .rich-text__heading,
+  .section-template--18379993022635__rich_text_67mm8B-padding .rich-text__heading{
+    font-family: 'Roboto', sans-serif;
+  }
+  .section-template--18379992858795__rich_text_YdBzBK-padding .rich-text__text {
+    font-family: 'Roboto', sans-serif;
+    color: #3E5D49;
+    letter-spacing: -0.02px;
+  }
+  .section-template--18379992858795__rich_text_wUjR6z-padding .button,
+  .section-template--18379993022635__rich_text_WceA7P-padding .button {
+    font-family: 'Roboto', sans-serif;
+    color: #C17A5C;
+    background-color: #FFFFFF;
+    border: 1px solid #BE7A58;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+  }
+  .section-template--18379992858795__rich_text_wUjR6z-padding .button:hover,
+  .section-template--18379993022635__rich_text_WceA7P-padding .button:hover {
+      font-family: 'Roboto', sans-serif;
+      color: #FFFFFF;
+      background-color: #C17A5C;
+      border: 1px solid #BE7A58;
+    }
+#shopify-section-template--18492223520939__rich_text_iAVMGK .rich-text__wrapper {
+  padding-bottom: 0;
+}
+#shopify-section-template--18492223520939__rich_text_wLaFAC .rich-text__wrapper {
+  padding-top: 0;
+}
+#shopify-section-template--18492223520939__rich_text_iAVMGK .rich-text__heading {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 500;
+  font-size: 40px;
+  line-height: 100%;
+  letter-spacing: 0;
+}
+#shopify-section-template--18492223520939__rich_text_iAVMGK .rich-text__text {
+  font-family: 'Instrument Serif', serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 100%;
+  letter-spacing: 0;
+  font-style: italic;
+}
+
+#shopify-section-template--18492223520939__rich_text_wLaFAC .rich-text__text {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.5;
+  letter-spacing: -0.48px;
+}
+
+#shopify-section-template--18379993022635__rich_text_67mm8B .rich-text__heading {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 40px;
+  line-height: 100%;
+  letter-spacing: 0%;
+  margin-bottom: 4rem;
+}
+
+#shopify-section-template--18379993022635__rich_text_RNntyV .button {
+  border: 1px solid #BE7A58;
+  background: none;
+  color: #C17A5C;
+  font-family: 'Roboto', sans-serif;
+}
+#shopify-section-template--18379993022635__rich_text_RNntyV .button:hover {
+  color: #FFFFFF;
+  background: #C17A5C;
+}
+
+@media screen and (max-width: 749px) {
+  #shopify-section-template--18492223520939__rich_text_iAVMGK .rich-text__heading,
+  #shopify-section-template--18492223520939__rich_text_iAVMGK .rich-text__text{
+    font-size: 24px;
+  }
+  #shopify-section-template--18492223520939__rich_text_wLaFAC .rich_text__text{
+    font-size: 12px;
+  }
+  #shopify-section-template--18379993022635__rich_text_67mm8B .rich-text__heading {
+    font-size: 28px;
+  }
+}

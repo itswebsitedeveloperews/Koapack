@@ -1,0 +1,152 @@
+:root {
+  --header-height: 44px;
+  --maquee-height: 44px;
+}
+#shopify-section-template--18379992858795__custom_content_section_iY8hni {
+  min-height: calc(100vh - var(--header-height) - var(--marquee-height));
+}
+
+/* Section wrapper */
+.custom-content-section {
+  background-color: #F5F1E8;
+  min-height: calc(100vh - var(--header-height) - var(--marquee-height));
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  overflow: hidden;
+  height: 80vh;
+}
+
+/* Heading */
+.custom-content-section__heading {
+  font-family: 'Roboto', sans-serif;
+  /* font-family: "Instrument Serif", serif; */
+  font-weight: 500;
+  font-size: 52px;
+  line-height: 1.2;
+  letter-spacing: -3.2px;
+  color: #010101;
+  margin:0;
+  margin-top: 20px;
+  max-width: 546px;
+}
+
+/* Description */
+.custom-content-section__text {
+  font-family: 'Roboto', sans-serif;
+  /* font-family: "Instrument Serif", serif; */
+  font-size: 12px;
+  line-height: 1.5;
+  color: #000;
+  max-width: 700px;
+  letter-spacing: 0.48px;
+}
+
+/* CTA Button */
+.custom-content-section__button {
+    font-family: 'Roboto', sans-serif;
+    border: 1px solid #BE7A58;
+    background: none;
+    color: #C17A5C;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 12px 24px;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0 auto;
+    width: fit-content;
+    cursor: pointer;
+    line-height: 1.1;
+    letter-spacing: -0.4px;
+}
+
+.custom-content-section__button:hover {
+  background-color: #C17A5C;
+  color: #fff;
+}
+
+/* Image Wrapper */
+.custom-content-section__image-wrapper {
+  max-width: 100%;
+  height: 52vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 5px;
+}
+
+.custom-content-section__image-wrapper img {
+  height: 54vh;
+  object-fit: contain;
+  width: 100%;
+}
+
+.made-in-india {
+  display: flex;
+  background: #FFFFFF;
+  border-radius: 20px;
+  width: 16rem;
+  height: 4rem;
+  align-items: center;
+  justify-content: center;
+}
+.made-in-india p {
+  margin-left: 1rem;
+  font-family: 'Brooklyn', sans-serif;
+  font-size: 14px;
+  line-height: 100%;
+  color: ##3E5D49;
+}
+
+
+/* Responsive Tuning */
+@media (max-width: 768px) {
+  .custom-content-section {
+    padding: 24px 16px;
+    height: 64vh;
+  }
+
+  .custom-content-section__heading {
+    font-size: 32px;
+    letter-spacing: -1.2px;
+  }
+
+  .custom-content-section__text {
+    font-size: 14px;
+  }
+
+  .custom-content-section__button {
+    width: 100%;
+    max-width: 250px;
+  }
+  .custom-content-section__image-wrapper {
+  max-width: 100%;
+  height: 26vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: 40px;
+  padding-top: 20px;
+}
+
+.custom-content-section__image-wrapper img {
+  height: 26vh;
+  object-fit: contain;
+}
+}
+
+@media (max-width: 480px) {
+  .custom-content-section__heading {
+    font-size: 28px;
+    line-height: 1.3;
+  }
+
+  .custom-content-section__text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}

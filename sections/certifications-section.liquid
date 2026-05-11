@@ -1,0 +1,126 @@
+{% schema %}
+{
+  "name": "Certifications Section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading Text",
+      "default": "KOA PACK IS CERTIFIED TO GLOBAL STANDARDS"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_1",
+      "label": "Certification Image 1"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_2",
+      "label": "Certification Image 2"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_3",
+      "label": "Certification Image 3"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_4",
+      "label": "Certification Image 4"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_5",
+      "label": "Certification Image 5"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_6",
+      "label": "Certification Image 6"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_7",
+      "label": "Certification Image 7"
+    },
+    {
+      "type": "image_picker",
+      "id": "cert_8",
+      "label": "Certification Image 8"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Certifications Section",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<section class="certifications-section">
+  <div class="container">
+    <p class="cert-heading">{{ section.settings.heading }}</p>
+    <div class="cert-images">
+      {% for i in (1..8) %}
+        {% assign cert_key = "cert_" | append: i %}
+        {% assign cert_img = section.settings[cert_key] %}
+        {% if cert_img %}
+          <div class="cert-img-wrap">
+            <img src="{{ cert_img | img_url: 'medium' }}" alt="Certification {{ i }}" loading="lazy" width="40" height="40">
+          </div>
+        {% endif %}
+      {% endfor %}
+
+    </div>
+  </div>
+</section>
+
+<style>
+.certifications-section {
+  text-align: center;
+  padding: 20px 10px;
+}
+.cert-heading {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  font-size: 26px;
+  color: #3E5D49;
+  line-height: 100%;
+  letter-spacing: -2%;
+  margin-bottom: 20px;
+  width: 573px;
+  height: 23px;
+  margin: auto;
+}
+.cert-images {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+}
+.cert-img-wrap {
+  flex: 1 1 80px;
+  max-width: 100px;
+}
+.cert-img-wrap img {
+  width: 100%;
+  height: auto;
+}
+@media (min-width: 768px) {
+  .cert-img-wrap {
+    flex: 1 1 100px;
+    max-width: 120px;
+  }
+  .cert-heading {
+    font-size: 18px;
+  }
+}
+@media (max-width: 750px) {
+  .cert-heading {
+    font-size: 16px;
+    height: auto;
+    width: auto;
+  }
+}
+</style>

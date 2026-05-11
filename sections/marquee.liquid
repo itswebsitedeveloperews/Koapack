@@ -1,0 +1,332 @@
+{% schema %}
+{
+  "name": "Advanced Marquee",
+  "settings": [
+    {
+      "type": "select",
+      "id": "direction",
+      "label": "Scroll Direction",
+      "options": [
+        { "value": "left", "label": "Left to Right" },
+        { "value": "right", "label": "Right to Left" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "Scroll Speed",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 5
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_on_hover",
+      "label": "Pause on Hover",
+      "default": true
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "section_height",
+      "label": "Section Height",
+      "min": 50,
+      "max": 500,
+      "step": 10,
+      "unit": "px",
+      "default": 150
+    },
+    {
+      "type": "range",
+      "id": "spacing_between_items",
+      "label": "Spacing Between Items",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 30
+    }
+  ],
+  "blocks": [
+    {
+      "type": "marquee_item",
+      "name": "Marquee Item",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "range",
+          "id": "image_width",
+          "label": "Image Width",
+          "min": 50,
+          "max": 300,
+          "step": 10,
+          "unit": "px",
+          "default": 100
+        },
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Marquee Item"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        },
+        {
+          "type": "select",
+          "id": "image_position",
+          "label": "Image Position",
+          "options": [
+            { "value": "left", "label": "Left of Text" },
+            { "value": "right", "label": "Right of Text" },
+            { "value": "top", "label": "Above Text" },
+            { "value": "bottom", "label": "Below Text" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "range",
+          "id": "spacing",
+          "label": "Spacing Between Image & Text",
+          "min": 0,
+          "max": 50,
+          "step": 1,
+          "unit": "px",
+          "default": 10
+        },
+        {
+          "type": "select",
+          "id": "text_alignment",
+          "label": "Text Position",
+          "options": [
+            { "value": "top-left", "label": "Top Left" },
+            { "value": "top-center", "label": "Top Center" },
+            { "value": "top-right", "label": "Top Right" },
+            { "value": "middle-left", "label": "Middle Left" },
+            { "value": "middle-center", "label": "Middle Center" },
+            { "value": "middle-right", "label": "Middle Right" },
+            { "value": "bottom-left", "label": "Bottom Left" },
+            { "value": "bottom-center", "label": "Bottom Center" },
+            { "value": "bottom-right", "label": "Bottom Right" }
+          ],
+          "default": "middle-left"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "Text Color",
+          "default": "#000000"
+        },
+        {
+          "type": "range",
+          "id": "font_size",
+          "label": "Font Size",
+          "min": 10,
+          "max": 50,
+          "step": 1,
+          "unit": "px",
+          "default": 16
+        },
+        {
+          "type": "range",
+          "id": "font_size_mobile",
+          "label": "Mobile Font Size",
+          "min": 10,
+          "max": 30,
+          "step": 1,
+          "unit": "px",
+          "default": 14
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Advanced Marquee",
+      "category": "Custom"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+  .advanced-marquee {
+    background-color: {{ section.settings.bg_color }};
+    height: {{ section.settings.section_height }}px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  .marquee-container {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    white-space: nowrap;
+    will-change: transform;
+    animation: marquee-{{ section.settings.direction }} {{ 20 | minus: section.settings.speed }}s linear infinite;
+    {% if section.settings.direction == 'left' %}
+    animation-direction: normal;
+    {% else %}
+    animation-direction: reverse;
+    {% endif %}
+  }
+  
+  .marquee-container:hover {
+    {% if section.settings.pause_on_hover %}
+    animation-play-state: paused;
+    {% endif %}
+  }
+  
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: {{ section.settings.spacing_between_items }}px;
+    position: relative;
+  }
+  
+  .marquee-item a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+  }
+  
+  .marquee-item-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .marquee-image-left {
+    flex-direction: row;
+  }
+  
+  .marquee-image-right {
+    flex-direction: row-reverse;
+  }
+  
+  .marquee-image-top {
+    flex-direction: column;
+  }
+  
+  .marquee-image-bottom {
+    flex-direction: column-reverse;
+  }
+  
+  .marquee-item img {
+    width: {{ block.settings.image_width }}px;
+    height: auto;
+    display: block;
+  }
+  
+  .marquee-text {
+    color: {{ block.settings.text_color }};
+    font-size: {{ block.settings.font_size }}px;
+    white-space: nowrap;
+    position: relative;
+  }
+  
+  /* Text positioning classes */
+  .text-top-left { align-self: flex-start; text-align: left; }
+  .text-top-center { align-self: flex-start; text-align: center; }
+  .text-top-right { align-self: flex-start; text-align: right; }
+  .text-middle-left { align-self: center; text-align: left; }
+  .text-middle-center { align-self: center; text-align: center; }
+  .text-middle-right { align-self: center; text-align: right; }
+  .text-bottom-left { align-self: flex-end; text-align: left; }
+  .text-bottom-center { align-self: flex-end; text-align: center; }
+  .text-bottom-right { align-self: flex-end; text-align: right; }
+  
+  @keyframes marquee-left {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  
+  @keyframes marquee-right {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+  }
+  
+  @media (max-width: 749px) {
+    .marquee-text {
+      font-size: {{ block.settings.font_size_mobile }}px;
+    }
+    
+    .marquee-item {
+      flex-wrap: wrap;
+    }
+    
+    .marquee-image-top, .marquee-image-bottom {
+      align-items: center;
+    }
+  }
+</style>
+
+<div class="advanced-marquee">
+  <div class="marquee-container">
+    {% for block in section.blocks %}
+      {% assign item = block.settings %}
+      <div class="marquee-item" {{ block.shopify_attributes }}>
+        {% if item.link != blank %}<a href="{{ item.link }}">{% endif %}
+          <div class="marquee-item-content marquee-image-{{ item.image_position }}"
+               style="gap: {{ item.spacing }}px;">
+            {% if item.image != blank %}
+              <img src="{{ item.image | img_url: '300x' }}" 
+                   alt="{{ item.image.alt | escape }}"
+                   width="{{ item.image_width }}"
+                   height="auto"
+                   loading="lazy"
+                   style="height:auto;">
+
+            {% endif %}
+            {% if item.text != blank %}
+              <div class="marquee-text text-{{ item.text_alignment }}">
+                {{ item.text }}
+              </div>
+            {% endif %}
+          </div>
+        {% if item.link != blank %}</a>{% endif %}
+      </div>
+    {% endfor %}
+    
+    {% comment %} Duplicate items for seamless looping {% endcomment %}
+    {% for block in section.blocks %}
+      {% assign item = block.settings %}
+      <div class="marquee-item">
+        {% if item.link != blank %}<a href="{{ item.link }}">{% endif %}
+          <div class="marquee-item-content marquee-image-{{ item.image_position }}"
+               style="gap: {{ item.spacing }}px;">
+            {% if item.image != blank %}
+              <img src="{{ item.image | img_url: '300x' }}" 
+                   alt="{{ item.image.alt | escape }}"
+                   width="{{ item.image_width }}"
+                   height="auto"
+                   loading="lazy"
+                   style="height:auto;">
+
+            {% endif %}
+            {% if item.text != blank %}
+              <div class="marquee-text text-{{ item.text_alignment }}">
+                {{ item.text }}
+              </div>
+            {% endif %}
+          </div>
+        {% if item.link != blank %}</a>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>

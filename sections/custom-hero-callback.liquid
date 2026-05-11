@@ -1,0 +1,296 @@
+{% schema %}
+{
+  "name": "Hero With Form Section",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "Background Image"
+    },
+    {
+      "type": "text",
+      "id": "main_heading",
+      "label": "Main Heading",
+      "default": "Welcome to Our Service"
+    },
+    {
+      "type": "textarea",
+      "id": "main_description",
+      "label": "Main Description",
+      "default": "We provide top-tier solutions tailored for your needs."
+    },
+    {
+      "type": "text",
+      "id": "form_heading",
+      "label": "Form Heading",
+      "default": "Get Started Now"
+    },
+    {
+      "type": "text",
+      "id": "left_text",
+      "label": "Text to the left of buttons",
+      "default": "Need Help?"
+    },
+    {
+      "type": "color",
+      "id": "submit_button_color",
+      "label": "Submit Button Color",
+      "default": "#E3E8E1"
+    },
+    {
+      "type": "url",
+      "id": "catalogue_link",
+      "label": "Catalogue Link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero With Form"
+    }
+  ]
+}
+{% endschema %}
+
+<style>
+.hero-form-section {
+  background-image: url({{ section.settings.background_image | image_url }});
+  background-size: cover;
+  background-position: center;
+  padding: 60px 20px;
+  color: #FFFFFF;
+  text-align: center;
+  min-height: 100vh;
+}
+
+.hero-form-content {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.hero-form-section h1 {
+  font-size: 40px;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+  margin-bottom: 2rem;
+  color: #FFFFFF;
+  line-height: 100%;
+  letter-spacing: 0%;
+  width: 682px;
+  height: 102px;
+  margin: auto;
+}
+
+.hero-form .form-label {
+  display: block;
+  text-align: left;
+  margin-bottom: 0.3rem;
+  color: white;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+  letter-spacing: 5px;
+  line-height: 1.3;
+}
+
+.message {
+  margin-left: 3.8rem;
+}
+
+.hero-form .input-group {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.hero-form input[type="text"],
+.hero-form input[type="tel"] {
+  width: 500px;
+  height: 50px;
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+}
+
+.hero-form textarea {
+  width: 1025px;
+  height: 300px;
+  background: transparent;
+  border: 1px solid white;
+  color: white;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-family: 'Roboto', sans-serif;
+  resize: none;
+  margin-bottom: 2rem;
+}
+
+.hero-form .button-group {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 1rem;
+}
+
+.hero-form .submit-button,
+.hero-form .catalogue-button {
+  width: 300px;
+  height: 60px;
+  border: 1px solid white;
+  background: none;
+  color: white;
+  font-size: 16px;
+  font-family: 'Roboto', sans-serif;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-form .submit-button:hover,
+.hero-form .catalogue-button:hover {
+  background-color: #6D8EA1;
+}
+
+em {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+}
+
+@media (max-width: 1100px) {
+  .hero-form .input-group {
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-form input[type="text"],
+  .hero-form input[type="tel"],
+  .hero-form textarea {
+    width: 90%;
+  }
+  .hero-form .button-group {
+    flex-direction: column;
+  }
+}
+  @media (max-width: 768px) {
+  .hero-form-section {
+    padding: 70px 15px;
+    text-align: center;
+  }
+
+  .hero-form-section h1 {
+    font-size: 20px;
+    width: auto;
+    height: auto;
+    margin-bottom: 1rem;
+  }
+
+  .hero-form-content {
+    padding: 0 1rem;
+  }
+
+  .hero-form .form-label {
+    text-align: left;
+    font-size: 13px;
+    margin-bottom: 0.2rem;
+  }
+
+  .hero-form .input-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero-form input[type="text"],
+  .hero-form input[type="tel"],
+  .hero-form textarea {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .hero-form textarea {
+    height: 200px;
+  }
+
+  .hero-form .button-group {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero-form .submit-button,
+  .hero-form .catalogue-button {
+    width: 100%;
+    height: 50px;
+    font-size: 15px;
+  }
+}
+
+</style>
+
+<div class="hero-form-section">
+  <div class="made-in-india"> 
+    <img src="{{ 'Frame 457.png' | asset_url }}" alt="Main Image"  width="170" height="40" />
+  </div>
+  <div class="hero-form-content">
+    <h1>{{ section.settings.main_heading | replace: 'Low MOQs | Wholesale Prices', '<br><em>Low MOQs | Wholesale Prices</em></br>'}}</h1>
+    <p class="description">{{ section.settings.main_description }}</p>
+
+    <form class="hero-form">
+      <div class="input-group">
+        <div>
+          <label class="form-label" for="name">Your Name</label>
+          <input type="text" id="name" name="name" required />
+        </div>
+        <div>
+          <label class="form-label" for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" required />
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label message" for="message">Message</label>
+        <textarea id="message" name="message" required></textarea>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="submit-button">Submit</button>
+        {% if section.settings.catalogue_link %}
+          <a href="{{ section.settings.catalogue_link }}" class="catalogue-button">View Catalogue</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{%- comment -%}
+
+<!-- <form class="custom-form-container">
+    <span>{{ section.settings.left_text }}</span>
+
+    <input type="text" placeholder="Enter Your Name" class="button-link" />
+    <input type="text" placeholder="Enter Your Phone Number" class="button-link" />
+
+    <select name="product" required>
+      <!-- ❶  Drop “hidden”; keep “disabled selected” so it shows but can’t be chosen -->
+      <option value="" disabled selected>Select Your Product</option>
+    
+      {% for product in collections.all.products %}
+        <option value="{{ product.title }}">{{ product.title }}</option>
+      {% endfor %}
+    </select>
+
+
+    <select name="quantity">
+      <option disabled selected>Order Quantity</option>
+      {% for i in (1..100) %}
+        <option value="{{ i }}">{{ i }}</option>
+      {% endfor %}
+    </select>
+
+    <button type="submit" class="submit-button" style="background-color: {{ section.settings.submit_button_color }};">
+      Submit
+    </button>
+  </form> -->
+{%- endcomment -%}

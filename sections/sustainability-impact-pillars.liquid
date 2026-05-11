@@ -1,0 +1,148 @@
+{% comment %}
+  Section: Impact Pillars  – divider with four legs (⎺⎺┴⎺⎺)
+{% endcomment %}
+
+<section class="impact-pillars">
+  <div class="inner">
+
+    <!-- intro -->
+    <h6 class="intro">
+      {{ section.settings.intro }}
+    </h6>
+
+
+    <!-- headline -->
+    <h2 class="headline">{{ section.settings.headline }}</h2>
+    <p class="subcopy">{{ section.settings.subcopy }}</p>
+
+    <!-- fork divider -->
+    <div class="fork-divider" aria-hidden="true">
+      <span class="stem up"></span>     <!-- upward centre stem -->
+      <span class="stem down"></span>   <!-- new downward stem -->
+      <span class="corner left"></span> <!-- left leg -->
+      <span class="corner right"></span><!-- right leg -->
+    </div>
+
+    <!-- pillars -->
+    <div class="pillar-row">
+      {%- for block in section.blocks -%}
+        <div class="pillar" {{ block.shopify_attributes }}>
+          {%- if block.settings.image != blank -%}
+            <div class="pillar-img">
+              <img
+                src="{{ block.settings.image | image_url: width: 480 }}"
+                alt="{{ block.settings.title | escape }}"
+                loading="lazy"
+                width="240" height="240"
+              >
+            </div>
+          {%- endif -%}
+          <h3 class="pillar-title">{{ block.settings.title }}</h3>
+          <p class="pillar-text">{{ block.settings.text }}</p>
+        </div>
+      {%- endfor -%}
+    </div>
+
+  </div>
+</section>
+
+<style>
+/* ====== shell & typography =================================== */
+.impact-pillars{padding:5rem 1rem;text-align:center;font-family:Roboto,Arial,sans-serif}
+.impact-pillars .inner{max-width:1100px;margin:0 auto}
+.intro p{
+  max-width:900px;
+  margin:0 auto 3.5rem;
+  font-size:24px;
+  line-height:1.6;
+  color:#3E5D49;
+  font-family: 'Roboto', sans-serif;
+  font-weight:400;
+}
+
+.headline p{
+  font-family: 'Roboto', sans-serif;
+  font-size:36px;
+  line-height:1.4;
+  letter-spacing: -0.4px;
+  font-weight:400;
+  margin:8rem 0 1rem;
+  color: #000000;
+}
+.subcopy{max-width:600px;margin:0 auto 4rem;font-size:14px;line-height:1.6;color:#3a3a3a}
+
+/* ====== fork divider ========================================= */
+.fork-divider{
+  position:relative;
+  height:80px;                    /* overall vertical space  */
+  max-width:920px;
+  margin:auto;
+}
+
+/* horizontal bar */
+.fork-divider::before{
+  content:"";position:absolute;
+  top:40px;left:32px;right:32px;
+  border-top:1px solid #7F9782;
+}
+
+/* corner legs */
+.fork-divider .corner{
+  position:absolute;top:40px;width:1px;height:16px;background:#7F9782;
+}
+.fork-divider .corner.left {left:32px;}
+.fork-divider .corner.right{right:32px;}
+
+/* center stems */
+.fork-divider .stem{
+  position:absolute;left:50%;width:1px;background:#7F9782;transform:translateX(-50%);
+}
+.fork-divider .stem.up{top:0;height:40px;}      /* upward */
+.fork-divider .stem.down{top:40px;height:16px;} /* downward */
+
+/* ====== pillars ============================================== */
+.pillar-row{display:flex;gap:12rem;justify-content:center;flex-wrap:wrap}
+.pillar{max-width:280px}
+.pillar-img{width:240px;height:240px;margin:0 auto 1.5rem;border-radius:50%;overflow:hidden}
+.pillar-img img{width:100%;height:100%;object-fit:cover}
+.pillar-title{font-size:18px;font-weight:600;margin:0 0 1rem}
+.pillar-text{font-size:13px;line-height:1.6;color:#4d4d4d;margin:0}
+
+/* ====== responsive =========================================== */
+@media(max-width:768px){
+  .headline{font-size:24px}
+  .pillar-img{width:200px;height:200px}
+  .fork-divider{display:none;}
+}
+@media(max-width:480px){
+  .pillar-row{flex-direction:column;gap:3rem}
+  .pillar{margin:0 auto}
+}
+</style>
+
+{% schema %}
+{
+  "name": "Impact Pillars",
+  "settings": [
+    {
+      "type": "richtext","id": "intro","label": "Intro Paragraph", "default": "<p>We're grounded in <strong>purpose</strong>—crafting a future where <em>sustainability</em> is second nature.</p>"},
+    { "type": "richtext", "id": "headline", "label": "Headline", "default": "<p>Headline <em>here</em></p>" },
+    { "type": "textarea", "id": "subcopy", "label": "Subcopy", "default": "Subcopy text…" }
+  ],
+  "blocks": [
+    {
+      "type": "pillar",
+      "name": "Pillar",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Circle Image" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Climate" },
+        { "type": "textarea", "id": "text", "label": "Body", "default": "Body text…" }
+      ]
+    }
+  ],
+  "max_blocks": 3,
+  "presets": [
+    { "name": "Impact Pillars", "blocks": [ { "type": "pillar" }, { "type": "pillar" }, { "type": "pillar" } ] }
+  ]
+}
+{% endschema %}

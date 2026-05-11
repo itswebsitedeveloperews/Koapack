@@ -1,0 +1,260 @@
+<div class="two-column-image-section" id="shopify-section-template--18379992858795__image_banner_two_column_z4pAza">
+  <!-- Left Column -->
+  <div class="image-column">
+    {% if section.settings.left_image != blank %}
+      {{ section.settings.left_image | image_url: width: 1000 | image_tag: loading: 'lazy', class: 'column-image' }}
+    {% else %}
+      {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+    {% endif %}
+    <div class="image-content left-bg">
+      <div class="text-content">
+        <h3>{{ section.settings.left_heading }}</h3>
+        <p>{{ section.settings.left_subheading }}</p>
+      </div>
+      <a href="{{ section.settings.left_button_url }}" class="button">
+        {{ section.settings.left_button_text }}
+      </a>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="image-column">
+    {% if section.settings.right_image != blank %}
+      {{ section.settings.right_image | image_url: width: 1000 | image_tag: loading: 'lazy', class: 'column-image' }}
+    {% else %}
+      {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+    {% endif %}
+    <div class="image-content right-bg">
+      <div class="text-content">
+        <h3>{{ section.settings.right_heading }}</h3>
+        <p>{{ section.settings.right_subheading }}</p>
+      </div>
+      <a href="{{ section.settings.right_button_url }}" class="button">
+        {{ section.settings.right_button_text }}
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  @media (min-width: 750px) {
+    .two-column-image-section {
+      display: flex;
+      width: 100%;
+      margin-top: 60px;
+    }
+
+    .image-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .column-image {
+      width: 100%;
+      height: 600px;
+      object-fit: cover;
+    }
+
+    .image-content {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .left-bg {
+      background-color: #8AA4B3;
+    }
+
+    .right-bg {
+      background-color: #C17A5C;
+    }
+
+    .text-content h3 {
+      color: #FFFFFF;
+      font-size: 12px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      font-family: 'Roboto', sans-serif;
+      margin-bottom: 0;
+      margin-top: 12px;
+    }
+
+    .text-content p {
+      color: #FFFFFF;
+      font-size: 24px;
+      margin: 0;
+      font-weight: 400;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .button {
+      background: none;
+      border: 1px solid #FFFFFF;
+      color: #FFFFFF;
+      padding: 12px 30px;
+      font-size: 14px;
+      letter-spacing: -0.4px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      line-height: 1.1;
+      margin-left: 20px;
+    }
+
+    .button:hover {
+      background: #FFFFFF;
+      color: #000000;
+    }
+  }
+
+  @media (max-width: 749px) {
+    .two-column-image-section {
+      display: flex;
+      flex-direction: column;
+      margin-top: 30px;
+    }
+
+    .image-column {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .column-image {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+    }
+
+    .image-content {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+
+    .left-bg {
+      background-color: #8AA4B3;
+    }
+
+    .right-bg {
+      background-color: #C17A5C;
+    }
+
+    .text-content h3 {
+      color: #FFFFFF;
+      font-size: 10px;
+      font-weight: 400;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      font-family: 'Roboto', sans-serif;
+      margin-bottom: 4px;
+    }
+
+    .text-content p {
+      color: #FFFFFF;
+      font-size: 16px;
+      margin: 0;
+      font-weight: 400;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .button {
+      background: none;
+      border: 1px solid #FFFFFF;
+      color: #FFFFFF;
+      padding: 6px 16px;
+      font-size: 10px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      margin-left: 10px;
+    }
+
+    .button:hover {
+      background: #FFFFFF;
+      color: #000000;
+    }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Two Column Image Banner",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left Column"
+    },
+    {
+      "type": "image_picker",
+      "id": "left_image",
+      "label": "Left Image"
+    },
+    {
+      "type": "text",
+      "id": "left_heading",
+      "label": "Left Heading",
+      "default": "Left Heading"
+    },
+    {
+      "type": "text",
+      "id": "left_subheading",
+      "label": "Left Subheading",
+      "default": "Left Subheading"
+    },
+    {
+      "type": "text",
+      "id": "left_button_text",
+      "label": "Left Button Text",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "left_button_url",
+      "label": "Left Button Link"
+    },
+    {
+      "type": "header",
+      "content": "Right Column"
+    },
+    {
+      "type": "image_picker",
+      "id": "right_image",
+      "label": "Right Image"
+    },
+    {
+      "type": "text",
+      "id": "right_heading",
+      "label": "Right Heading",
+      "default": "Right Heading"
+    },
+    {
+      "type": "text",
+      "id": "right_subheading",
+      "label": "Right Subheading",
+      "default": "Right Subheading"
+    },
+    {
+      "type": "text",
+      "id": "right_button_text",
+      "label": "Right Button Text",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "right_button_url",
+      "label": "Right Button Link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Two Column Image Banner",
+      "category": "Image"
+    }
+  ]
+}
+{% endschema %}
