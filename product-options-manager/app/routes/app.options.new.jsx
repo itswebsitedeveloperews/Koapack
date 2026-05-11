@@ -9,67 +9,32 @@ const FIELD_TEMPLATES = {
   quantity: {
     type: "quantity",
     label: "Quantity",
-    key: "quantity",
     required: true,
-    helpText: "Let shoppers choose a quantity tier.",
-    placeholder: "",
-    priceType: "none",
-    priceValue: "0",
     valuesText: "10\n25\n50\n100",
-    settings: { min: 1, max: 500, step: 1 },
-    conditions: [],
   },
   size: {
     type: "size",
     label: "Size",
-    key: "size",
     required: true,
-    helpText: "Offer sizes as selectable values.",
-    placeholder: "",
-    priceType: "per_value",
-    priceValue: "0",
     valuesText: "Small\nMedium\nLarge\nCustom",
-    settings: { display: "buttons" },
-    conditions: [],
   },
   printing: {
     type: "printing",
     label: "Printing",
-    key: "printing",
     required: false,
-    helpText: "Add print methods with optional upcharges.",
-    placeholder: "",
-    priceType: "per_value",
-    priceValue: "0",
     valuesText: "No printing\nSingle color\nFull color",
-    settings: { display: "dropdown" },
-    conditions: [],
   },
   logo_upload: {
     type: "logo_upload",
     label: "Logo upload",
-    key: "logo_upload",
     required: false,
-    helpText: "Accept artwork files from customers.",
-    placeholder: "",
-    priceType: "fixed",
-    priceValue: "0",
     valuesText: "",
-    settings: { accept: ".png,.jpg,.jpeg,.svg,.pdf", maxSizeMb: 20 },
-    conditions: [],
   },
   pincode: {
     type: "pincode",
     label: "Pincode",
-    key: "pincode",
     required: false,
-    helpText: "Collect delivery or serviceability pincode.",
-    placeholder: "Enter pincode",
-    priceType: "none",
-    priceValue: "0",
     valuesText: "",
-    settings: { pattern: "^[0-9]{5,6}$" },
-    conditions: [],
   },
 };
 
@@ -81,13 +46,12 @@ const FIELD_TYPES = [
   ["pincode", "Pincode"],
   ["text", "Text input"],
   ["dropdown", "Dropdown"],
-  ["swatch", "Swatch"],
   ["checkbox", "Checkbox"],
   ["date", "Date picker"],
 ];
 
 export const action = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  await authenticate.admin(request);
   const formData = await request.formData();
 
   const name = String(formData.get("name") || "").trim();
@@ -97,54 +61,25 @@ export const action = async ({ request }) => {
 
   const fields = parseJsonArray(formData.get("fields"));
   const targets = parseJsonArray(formData.get("targets"));
-  const targetMode = String(formData.get("targetMode") || "all");
 
   await db.optionGroup.create({
     data: {
-      shop: session.shop,
       name,
-      status: String(formData.get("status") || "draft"),
-      description: String(formData.get("description") || "").trim() || null,
-      settings: {
-        previewEnabled: formData.get("previewEnabled") === "on",
-        priceFormula: String(formData.get("priceFormula") || "").trim(),
-      },
+      status: String(formData.get("status") || "active"),
       fields: {
         create: fields.map((field, index) => ({
-          type: field.type,
-          label: field.label,
-          key: field.key,
+          label: field.label || "Option",
+          type: field.type || "text",
           required: Boolean(field.required),
-          helpText: field.helpText || null,
-          placeholder: field.placeholder || null,
           sortOrder: index,
-          priceType: field.priceType || "none",
-          priceValue: field.priceValue || 0,
-          settings: field.settings || {},
-          conditions: field.conditions || [],
-          values: {
-            create: valuesFromText(field.valuesText).map(
-              (value, valueIndex) => ({
-                label: value,
-                value: slugify(value),
-                sortOrder: valueIndex,
-              }),
-            ),
-          },
+          valuesJson: field.valuesText || null,
         })),
       },
       targets: {
-        create:
-          targetMode === "all"
-            ? []
-            : targets.map((target, index) => ({
-                targetType: target.targetType || targetMode,
-                shopifyProductId: target.id || null,
-                shopifyHandle: target.handle || null,
-                title: target.title || null,
-                sortOrder: index,
-                rule: target.rule || {},
-              })),
+        create: targets.map((target) => ({
+          productId: target.id || target.handle || target.title,
+          productTitle: target.title || target.handle || target.id,
+        })),
       },
     },
   });
@@ -157,15 +92,11 @@ export default function NewOptionGroupPage() {
   const navigation = useNavigation();
   const [groupName, setGroupName] = useState("");
   const [status, setStatus] = useState("active");
-  const [description, setDescription] = useState("");
-  const [targetMode, setTargetMode] = useState("all");
   const [manualProduct, setManualProduct] = useState("");
   const [targets, setTargets] = useState([]);
-  const [previewEnabled, setPreviewEnabled] = useState(true);
-  const [priceFormula, setPriceFormula] = useState("");
   const [fields, setFields] = useState(() =>
-    ["quantity", "size", "printing", "logo_upload", "pincode"].map((type) =>
-      createField(type),
+    ["quantity", "size", "printing", "logo_upload", "pincode"].map(
+      createField,
     ),
   );
 
@@ -180,7 +111,7 @@ export default function NewOptionGroupPage() {
   const updateField = (id, updates) => {
     setFields((current) =>
       current.map((field) =>
-        field.id === id ? normalizeField({ ...field, ...updates }) : field,
+        field.id === id ? { ...field, ...updates } : field,
       ),
     );
   };
@@ -194,15 +125,13 @@ export default function NewOptionGroupPage() {
 
     const selected = await shopify.resourcePicker({
       type: "product",
-      multiple: targetMode !== "single_product",
+      multiple: true,
     });
 
     if (!selected) return;
 
-    setTargetMode(targetMode === "all" ? "multiple_products" : targetMode);
     setTargets(
       selected.map((product) => ({
-        targetType: "product",
         id: product.id,
         title: product.title,
         handle: product.handle,
@@ -214,14 +143,12 @@ export default function NewOptionGroupPage() {
     const value = manualProduct.trim();
     if (!value) return;
 
-    setTargetMode(targetMode === "all" ? "single_product" : targetMode);
     setTargets((current) => [
       ...current,
       {
-        targetType: "product",
-        id: value.startsWith("gid://") ? value : null,
+        id: value,
         title: value,
-        handle: value.startsWith("gid://") ? null : value,
+        handle: value,
       },
     ]);
     setManualProduct("");
@@ -232,71 +159,10 @@ export default function NewOptionGroupPage() {
       <s-link slot="breadcrumb" href="/app/options">
         Product Options
       </s-link>
-      <s-stack direction="block" gap="base">
-        <s-section>
-          <div style={fieldGroupStyle}>
-            <label style={labelStyle} htmlFor="group-name">
-              Group name
-            </label>
-            <input
-              id="group-name"
-              style={inputStyle}
-              value={groupName}
-              onChange={(event) => setGroupName(event.target.value)}
-              placeholder="Black Cotton canvas Zipper Box Kit"
-              autoComplete="off"
-            />
-          </div>
 
-          <div style={fieldGroupStyle}>
-            <label style={labelStyle} htmlFor="status">
-              Status
-            </label>
-            <select id="status" style={inputStyle} defaultValue="active">
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-            </select>
-          </div>
-        </s-section>
-
-        <s-section heading="Options">
-          <s-stack direction="inline" gap="small">
-            <s-button>+ Quantity</s-button>
-            <s-button>+ Size</s-button>
-            <s-button>+ Printing</s-button>
-            <s-button>+ Logo upload</s-button>
-            <s-button>+ Pincode</s-button>
-          </s-stack>
-        </s-section>
-
-        <s-section heading="Product targeting">
-          <div style={fieldGroupStyle}>
-            <label style={labelStyle} htmlFor="target-type">
-              Show on
-            </label>
-            <select
-              id="target-type"
-              style={inputStyle}
-              value={targetType}
-              onChange={(event) => setTargetType(event.target.value)}
-            >
-              <option value="single">Single product</option>
-              <option value="multiple">Multiple products</option>
-            </select>
-          </div>
-
-          <s-button>Select product</s-button>
-        </s-section>
-
-        <s-stack direction="inline" justifyContent="end">
-          <s-button variant="primary">Save group</s-button>
-        </s-stack>
-      </s-stack>
-      =======
       <Form method="post">
         <input type="hidden" name="fields" value={fieldsJson} />
         <input type="hidden" name="targets" value={targetsJson} />
-        <input type="hidden" name="targetMode" value={targetMode} />
 
         <s-stack direction="block" gap="base">
           <s-section heading="Group details">
@@ -326,17 +192,6 @@ export default function NewOptionGroupPage() {
                 </select>
               </Field>
             </div>
-
-            <Field label="Description" htmlFor="description">
-              <textarea
-                id="description"
-                name="description"
-                style={textareaStyle}
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder="Internal notes for this option group"
-              />
-            </Field>
           </s-section>
 
           <s-section heading="Option fields">
@@ -367,31 +222,10 @@ export default function NewOptionGroupPage() {
 
           <s-section heading="Product targeting">
             <div style={gridStyle}>
-              <Field label="Show on" htmlFor="target-mode">
-                <select
-                  id="target-mode"
-                  style={inputStyle}
-                  value={targetMode}
-                  onChange={(event) => {
-                    setTargetMode(event.target.value);
-                    if (event.target.value === "all") setTargets([]);
-                  }}
-                >
-                  <option value="all">All products</option>
-                  <option value="single_product">Single product</option>
-                  <option value="multiple_products">Multiple products</option>
-                  <option value="collection">Collection rule</option>
-                  <option value="tag_rule">Product tag rule</option>
-                </select>
-              </Field>
-
-              <Field
-                label="Manual product handle or GID"
-                htmlFor="manual-product"
-              >
+              <Field label="Manual product handle or GID" htmlFor="target">
                 <div style={inlineControlStyle}>
                   <input
-                    id="manual-product"
+                    id="target"
                     style={inputStyle}
                     value={manualProduct}
                     onChange={(event) => setManualProduct(event.target.value)}
@@ -439,29 +273,6 @@ export default function NewOptionGroupPage() {
             )}
           </s-section>
 
-          <s-section heading="Pricing and preview">
-            <label style={checkboxLabelStyle}>
-              <input
-                type="checkbox"
-                name="previewEnabled"
-                checked={previewEnabled}
-                onChange={(event) => setPreviewEnabled(event.target.checked)}
-              />
-              Enable live preview settings for this group
-            </label>
-
-            <Field label="Price formula" htmlFor="price-formula">
-              <textarea
-                id="price-formula"
-                name="priceFormula"
-                style={textareaStyle}
-                value={priceFormula}
-                onChange={(event) => setPriceFormula(event.target.value)}
-                placeholder="base + options + setup_fee"
-              />
-            </Field>
-          </s-section>
-
           <s-stack direction="inline" justifyContent="end" gap="small">
             <s-button href="/app/options">Cancel</s-button>
             <button
@@ -479,13 +290,9 @@ export default function NewOptionGroupPage() {
 }
 
 function OptionFieldEditor({ field, index, onChange, onRemove }) {
-  const hasValues = [
-    "size",
-    "printing",
-    "dropdown",
-    "swatch",
-    "checkbox",
-  ].includes(field.type);
+  const hasValues = ["quantity", "size", "printing", "dropdown", "checkbox"].includes(
+    field.type,
+  );
 
   return (
     <div style={editorStyle}>
@@ -522,41 +329,6 @@ function OptionFieldEditor({ field, index, onChange, onRemove }) {
             onChange={(event) => onChange({ label: event.target.value })}
           />
         </Field>
-
-        <Field label="Key" htmlFor={`${field.id}-key`}>
-          <input
-            id={`${field.id}-key`}
-            style={inputStyle}
-            value={field.key}
-            onChange={(event) => onChange({ key: slugify(event.target.value) })}
-          />
-        </Field>
-
-        <Field label="Price type" htmlFor={`${field.id}-price-type`}>
-          <select
-            id={`${field.id}-price-type`}
-            style={inputStyle}
-            value={field.priceType}
-            onChange={(event) => onChange({ priceType: event.target.value })}
-          >
-            <option value="none">No price change</option>
-            <option value="fixed">Fixed add-on</option>
-            <option value="per_value">Value-based add-on</option>
-            <option value="formula">Formula</option>
-          </select>
-        </Field>
-
-        <Field label="Base price add-on" htmlFor={`${field.id}-price-value`}>
-          <input
-            id={`${field.id}-price-value`}
-            type="number"
-            min="0"
-            step="0.01"
-            style={inputStyle}
-            value={field.priceValue}
-            onChange={(event) => onChange({ priceValue: event.target.value })}
-          />
-        </Field>
       </div>
 
       <label style={checkboxLabelStyle}>
@@ -567,26 +339,6 @@ function OptionFieldEditor({ field, index, onChange, onRemove }) {
         />
         Required
       </label>
-
-      <div style={gridStyle}>
-        <Field label="Help text" htmlFor={`${field.id}-help`}>
-          <input
-            id={`${field.id}-help`}
-            style={inputStyle}
-            value={field.helpText}
-            onChange={(event) => onChange({ helpText: event.target.value })}
-          />
-        </Field>
-
-        <Field label="Placeholder" htmlFor={`${field.id}-placeholder`}>
-          <input
-            id={`${field.id}-placeholder`}
-            style={inputStyle}
-            value={field.placeholder}
-            onChange={(event) => onChange({ placeholder: event.target.value })}
-          />
-        </Field>
-      </div>
 
       {hasValues ? (
         <Field label="Values" htmlFor={`${field.id}-values`}>
@@ -599,23 +351,6 @@ function OptionFieldEditor({ field, index, onChange, onRemove }) {
           />
         </Field>
       ) : null}
-
-      <Field label="Conditional logic" htmlFor={`${field.id}-conditions`}>
-        <input
-          id={`${field.id}-conditions`}
-          style={inputStyle}
-          value={field.conditionsText || ""}
-          onChange={(event) =>
-            onChange({
-              conditionsText: event.target.value,
-              conditions: event.target.value
-                ? [{ rule: event.target.value }]
-                : [],
-            })
-          }
-          placeholder="Example: show when Printing is Full color"
-        />
-      </Field>
     </div>
   );
 }
@@ -632,29 +367,9 @@ function Field({ label, htmlFor, children }) {
 }
 
 function createField(type, index = 0) {
-  return normalizeField({
-    id: `${type}-${Date.now()}-${index}`,
-    ...(FIELD_TEMPLATES[type] || {
-      type,
-      label: "Custom option",
-      key: "custom_option",
-      required: false,
-      helpText: "",
-      placeholder: "",
-      priceType: "none",
-      priceValue: "0",
-      valuesText: "",
-      settings: {},
-      conditions: [],
-    }),
-  });
-}
-
-function normalizeField(field) {
-  const label = field.label || "Custom option";
   return {
-    ...field,
-    key: field.key || slugify(label),
+    id: `${type}-${Date.now()}-${index}`,
+    ...FIELD_TEMPLATES[type],
   };
 }
 
@@ -665,21 +380,6 @@ function parseJsonArray(value) {
   } catch {
     return [];
   }
-}
-
-function valuesFromText(value) {
-  return String(value || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
-
-function slugify(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
 }
 
 const gridStyle = {
@@ -700,7 +400,6 @@ const labelStyle = {
 
 const inputStyle = {
   width: "100%",
-  maxWidth: "520px",
   padding: "8px 12px",
   border: "1px solid #8c9196",
   borderRadius: "6px",

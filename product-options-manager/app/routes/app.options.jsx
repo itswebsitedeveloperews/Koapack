@@ -4,10 +4,9 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  await authenticate.admin(request);
 
   const groups = await db.optionGroup.findMany({
-    where: { shop: session.shop },
     include: {
       _count: {
         select: {
@@ -16,11 +15,10 @@ export const loader = async ({ request }) => {
         },
       },
       targets: {
-        orderBy: { sortOrder: "asc" },
         take: 3,
       },
     },
-    orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    orderBy: { createdAt: "desc" },
   });
 
   return {
@@ -28,38 +26,31 @@ export const loader = async ({ request }) => {
       id: group.id,
       name: group.name,
       status: group.status,
-      description: group.description,
       fieldsCount: group._count.fields,
       targetsCount: group._count.targets,
       targets: group.targets.map((target) => ({
         id: target.id,
-        targetType: target.targetType,
-        title: target.title,
-        shopifyHandle: target.shopifyHandle,
+        productId: target.productId,
+        productTitle: target.productTitle,
       })),
     })),
   };
 };
 
 export const action = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  await authenticate.admin(request);
   const formData = await request.formData();
 
   if (formData.get("intent") !== "duplicate") {
     throw new Response("Unsupported action", { status: 400 });
   }
 
-  const id = String(formData.get("id") || "");
-  const source = await db.optionGroup.findFirst({
-    where: { id, shop: session.shop },
+  const id = Number(formData.get("id"));
+  const source = await db.optionGroup.findUnique({
+    where: { id },
     include: {
-      fields: {
-        include: { values: true },
-        orderBy: { sortOrder: "asc" },
-      },
-      targets: {
-        orderBy: { sortOrder: "asc" },
-      },
+      fields: { orderBy: { sortOrder: "asc" } },
+      targets: true,
     },
   });
 
@@ -69,45 +60,21 @@ export const action = async ({ request }) => {
 
   await db.optionGroup.create({
     data: {
-      shop: session.shop,
       name: `${source.name} copy`,
       status: "draft",
-      description: source.description,
-      sortOrder: source.sortOrder,
-      settings: source.settings,
       fields: {
         create: source.fields.map((field) => ({
-          type: field.type,
           label: field.label,
-          key: field.key,
+          type: field.type,
           required: field.required,
-          helpText: field.helpText,
-          placeholder: field.placeholder,
           sortOrder: field.sortOrder,
-          priceType: field.priceType,
-          priceValue: field.priceValue,
-          settings: field.settings,
-          conditions: field.conditions,
-          values: {
-            create: field.values.map((value) => ({
-              label: value.label,
-              value: value.value,
-              priceValue: value.priceValue,
-              sortOrder: value.sortOrder,
-              metadata: value.metadata,
-            })),
-          },
+          valuesJson: field.valuesJson,
         })),
       },
       targets: {
         create: source.targets.map((target) => ({
-          targetType: target.targetType,
-          shopifyProductId: target.shopifyProductId,
-          shopifyVariantId: target.shopifyVariantId,
-          shopifyHandle: target.shopifyHandle,
-          title: target.title,
-          rule: target.rule,
-          sortOrder: target.sortOrder,
+          productId: target.productId,
+          productTitle: target.productTitle,
         })),
       },
     },
@@ -125,43 +92,11 @@ export default function ProductOptionsPage() {
         Add group
       </s-button>
 
-      <s-section>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={headerCellStyle}>Group name</th>
-              <th style={headerCellStyle}>Options</th>
-              <th style={headerCellStyle}>Status</th>
-              <th style={headerCellStyle}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups.map((group) => (
-              <tr key={group.id}>
-                <td style={bodyCellStyle}>
-                  <strong>{group.name}</strong>
-                </td>
-                <td style={bodyCellStyle}>{group.options}</td>
-                <td style={bodyCellStyle}>
-                  <span style={badgeStyle}>{group.status}</span>
-                </td>
-                <td style={bodyCellStyle}>
-                  <s-stack direction="inline" gap="small">
-                    <s-button href={`/app/options/${group.id}`}>Edit</s-button>
-                    <s-button>Duplicate</s-button>
-                    <s-button tone="critical">Delete</s-button>
-                  </s-stack>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </s-section>
       {groups.length === 0 ? (
         <s-section heading="Create your first option group">
           <s-paragraph>
-            Build reusable option groups with quantity, size, printing, file
-            upload, pincode, pricing, and product targeting rules.
+            Build reusable option groups with quantity, size, printing, logo
+            upload, pincode, and product targeting.
           </s-paragraph>
           <s-button href="/app/options/new" variant="primary">
             Add option group
@@ -185,9 +120,6 @@ export default function ProductOptionsPage() {
                   <tr key={group.id}>
                     <td style={bodyCellStyle}>
                       <strong>{group.name}</strong>
-                      {group.description ? (
-                        <div style={mutedStyle}>{group.description}</div>
-                      ) : null}
                     </td>
                     <td style={bodyCellStyle}>{group.fieldsCount}</td>
                     <td style={bodyCellStyle}>
@@ -203,20 +135,11 @@ export default function ProductOptionsPage() {
                       </span>
                     </td>
                     <td style={bodyCellStyle}>
-                      <s-stack direction="inline" gap="small">
-                        <s-button href={`/app/options/${group.id}`}>
-                          Edit
-                        </s-button>
-                        <Form method="post">
-                          <input
-                            type="hidden"
-                            name="intent"
-                            value="duplicate"
-                          />
-                          <input type="hidden" name="id" value={group.id} />
-                          <s-button submit>Duplicate</s-button>
-                        </Form>
-                      </s-stack>
+                      <Form method="post">
+                        <input type="hidden" name="intent" value="duplicate" />
+                        <input type="hidden" name="id" value={group.id} />
+                        <s-button submit>Duplicate</s-button>
+                      </Form>
                     </td>
                   </tr>
                 ))}
@@ -230,11 +153,7 @@ export default function ProductOptionsPage() {
 }
 
 function TargetSummary({ group }) {
-  const labels = group.targets.map((target) => {
-    if (target.title) return target.title;
-    if (target.shopifyHandle) return target.shopifyHandle;
-    return capitalize(target.targetType);
-  });
+  const labels = group.targets.map((target) => target.productTitle);
 
   return (
     <span>
@@ -257,7 +176,7 @@ const tableWrapStyle = {
 const tableStyle = {
   width: "100%",
   borderCollapse: "collapse",
-  minWidth: "760px",
+  minWidth: "720px",
 };
 
 const headerCellStyle = {
@@ -272,15 +191,6 @@ const bodyCellStyle = {
   verticalAlign: "middle",
 };
 
-const badgeStyle = {
-  display: "inline-block",
-  padding: "2px 8px",
-  borderRadius: "999px",
-  background: "#aee9d1",
-  color: "#202223",
-  fontSize: "12px",
-  fontWeight: 600,
-};
 const mutedStyle = {
   color: "#6d7175",
   fontSize: "13px",
