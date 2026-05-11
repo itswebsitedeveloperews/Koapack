@@ -32,79 +32,34 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
-
 model OptionGroup {
-  id          String   @id @default(cuid())
-  shop        String
-  name        String
-  status      String   @default("draft")
-  description String?
-  sortOrder   Int      @default(0)
-  settings    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  fields  OptionField[]
-  targets ProductTarget[]
-
-  @@index([shop])
-  @@index([shop, status])
+  fields    OptionField[]
+  targets   ProductTarget[]
 }
 
 model OptionField {
-  id          String   @id @default(cuid())
-  groupId     String
-  type        String
-  label       String
-  key         String
-  required    Boolean  @default(false)
-  helpText    String?
-  placeholder String?
-  sortOrder   Int      @default(0)
-  priceType   String   @default("none")
-  priceValue  Decimal  @default(0)
-  settings    Json?
-  conditions  Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            Int      @id @default(autoincrement())
+  optionGroupId Int
+  label         String
+  type          String
+  required      Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  valuesJson    String?
 
-  group  OptionGroup   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  values OptionValue[]
-
-  @@index([groupId])
-}
-
-model OptionValue {
-  id         String   @id @default(cuid())
-  fieldId    String
-  label      String
-  value      String
-  priceValue Decimal  @default(0)
-  sortOrder  Int      @default(0)
-  metadata   Json?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  field OptionField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-
-  @@index([fieldId])
+  optionGroup   OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
 }
 
 model ProductTarget {
-  id               String   @id @default(cuid())
-  groupId          String
-  targetType       String
-  shopifyProductId String?
-  shopifyVariantId String?
-  shopifyHandle    String?
-  title            String?
-  rule             Json?
-  sortOrder        Int      @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            Int    @id @default(autoincrement())
+  optionGroupId Int
+  productId     String
+  productTitle  String
 
-  group OptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
-  @@index([groupId])
-  @@index([shopifyProductId])
+  optionGroup   OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
 }
