@@ -13,11 +13,11 @@ const FIELD_TEMPLATES = {
     required: true,
     config: {
       rows: [
-        { quantity: 10, discount: 0 },
-        { quantity: 50, discount: 0 },
-        { quantity: 100, discount: 0 },
-        { quantity: 300, discount: 0 },
-        { quantity: 500, discount: 50 },
+        // { quantity: 10, discount: 0 },
+        // { quantity: 50, discount: 0 },
+        // { quantity: 100, discount: 0 },
+        // { quantity: 300, discount: 0 },
+        // { quantity: 500, discount: 50 },
       ],
     },
   },
@@ -29,13 +29,13 @@ const FIELD_TEMPLATES = {
     required: true,
     config: {
       value: "",
-      values: [
-        {
-          value: "7 in(L) X 3.5 IN(H) X 3.5 IN(W)",
-          text: "",
-          price: 0,
-        },
-      ],
+      //   values: [
+      //     {
+      //       value: "7 in(L) X 3.5 IN(H) X 3.5 IN(W)",
+      //       text: "",
+      //       price: 0,
+      //     },
+      //   ],
     },
   },
 
