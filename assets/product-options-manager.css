@@ -72,6 +72,89 @@
   color: #40543f;
 }
 
+.pom-upload-box {
+  min-height: 90px;
+  padding: 22px;
+  border: 1px solid #b6b6a8;
+  background: transparent;
+  color: #40543f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.pom-upload-icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #40543f;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.pom-file-hidden {
+  display: none;
+}
+
+.pom-upload-preview {
+  grid-column: 2;
+}
+
+.pom-preview-card {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #d9d9d0;
+  padding: 8px;
+  background: #fff;
+}
+
+.pom-preview-card img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border: 1px solid #d9d9d0;
+}
+
+.pom-error {
+  color: #c00;
+  font-size: 13px;
+}
+
+.pom-product-media-preview {
+  position: relative;
+  margin-bottom: 12px;
+  border: 1px solid #d9d9d0;
+  background: #fff;
+  list-style: none;
+}
+
+.pom-media-preview-inner {
+  position: relative;
+}
+
+.pom-media-preview-inner img {
+  width: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.pom-media-preview-badge {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: #40543f;
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
 @media screen and (max-width: 749px) {
   .pom-field {
     grid-template-columns: 1fr;
