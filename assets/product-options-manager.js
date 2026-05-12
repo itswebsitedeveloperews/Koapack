@@ -190,20 +190,102 @@
 
   function renderUpload(field) {
     const wrap = document.createElement("div");
-    wrap.className = "pom-field";
+    wrap.className = "pom-field pom-upload-field";
 
     const label = document.createElement("label");
     label.className = "pom-label";
     label.textContent = field.label || "Upload Your Design";
     wrap.appendChild(label);
 
+    const uploadBox = document.createElement("label");
+    uploadBox.className = "pom-upload-box";
+
+    uploadBox.innerHTML = `
+    <span class="pom-upload-icon">⇧</span>
+    <strong>${field.config?.buttonText || "Upload Your File"}</strong>
+    <small>Upload or drag your file here</small>
+  `;
+
     const input = document.createElement("input");
     input.type = "file";
-    input.className = "pom-file";
-    input.name = `properties[${field.label || field.name}]`;
-    wrap.appendChild(input);
+    input.className = "pom-file-hidden";
+    input.name = `properties[${field.label || field.name || "Upload"}]`;
+    input.accept = "image/*";
+
+    uploadBox.appendChild(input);
+    wrap.appendChild(uploadBox);
+
+    const preview = document.createElement("div");
+    preview.className = "pom-upload-preview";
+    wrap.appendChild(preview);
+
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+
+      if (!file) {
+        preview.innerHTML = "";
+        removeProductMediaPreview();
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        preview.innerHTML = `<p class="pom-error">Please upload an image file.</p>`;
+        removeProductMediaPreview();
+        return;
+      }
+
+      const imageUrl = URL.createObjectURL(file);
+
+      preview.innerHTML = `
+      <div class="pom-preview-card">
+        <img src="${imageUrl}" alt="Uploaded design preview">
+        <span>${file.name}</span>
+      </div>
+    `;
+
+      showProductMediaPreview(imageUrl, file.name);
+    });
 
     return wrap;
+  }
+
+  function removeProductMediaPreview() {
+    document.querySelectorAll(".pom-product-media-preview").forEach((el) => {
+      el.remove();
+    });
+  }
+
+  function findProductMediaContainer() {
+    return (
+      document.querySelector(".product__media-list") ||
+      document.querySelector("media-gallery ul") ||
+      document.querySelector("media-gallery") ||
+      document.querySelector(".product__media-wrapper") ||
+      document.querySelector(".product__media") ||
+      document.querySelector(".product-media-container")
+    );
+  }
+
+  function showProductMediaPreview(imageUrl, fileName) {
+    removeProductMediaPreview();
+
+    const mediaContainer = findProductMediaContainer();
+
+    if (!mediaContainer) {
+      return;
+    }
+
+    const previewItem = document.createElement("div");
+    previewItem.className = "pom-product-media-preview";
+
+    previewItem.innerHTML = `
+    <div class="pom-media-preview-inner">
+      <img src="${imageUrl}" alt="${fileName || "Uploaded design"}">
+      <span class="pom-media-preview-badge">Your uploaded design</span>
+    </div>
+  `;
+
+    mediaContainer.prepend(previewItem);
   }
 
   function renderInput(field, inputType) {
