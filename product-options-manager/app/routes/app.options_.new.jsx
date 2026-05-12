@@ -558,6 +558,8 @@ function ProductOptionGroupForm({
 }) {
   const fieldsJson = useMemo(() => JSON.stringify(fields), [fields]);
   const targetsJson = useMemo(() => JSON.stringify(targets), [targets]);
+  const [draggedFieldId, setDraggedFieldId] = useState(null);
+  const [dragOverFieldId, setDragOverFieldId] = useState(null);
 
   const addField = (type) => {
     setFields((current) => [...current, createField(type, current.length)]);
@@ -584,6 +586,57 @@ function ProductOptionGroupForm({
 
   const removeField = (id) => {
     setFields((current) => current.filter((field) => field.id !== id));
+  };
+
+  const moveFieldByDrag = (fromId, toId) => {
+    if (!fromId || !toId || fromId === toId) return;
+
+    setFields((current) => {
+      const fromIndex = current.findIndex((field) => field.id === fromId);
+      const toIndex = current.findIndex((field) => field.id === toId);
+
+      if (fromIndex === -1 || toIndex === -1) return current;
+
+      const nextFields = [...current];
+      const [movedField] = nextFields.splice(fromIndex, 1);
+
+      nextFields.splice(toIndex, 0, movedField);
+
+      return nextFields.map((field, index) => ({
+        ...field,
+        sortOrder: index,
+      }));
+    });
+  };
+
+  const handleFieldDragStart = (event, fieldId) => {
+    setDraggedFieldId(fieldId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", fieldId);
+  };
+
+  const handleFieldDragOver = (event, fieldId) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    if (draggedFieldId && draggedFieldId !== fieldId) {
+      setDragOverFieldId(fieldId);
+    }
+  };
+
+  const handleFieldDrop = (event, fieldId) => {
+    event.preventDefault();
+
+    const fromId = event.dataTransfer.getData("text/plain") || draggedFieldId;
+
+    moveFieldByDrag(fromId, fieldId);
+    setDraggedFieldId(null);
+    setDragOverFieldId(null);
+  };
+
+  const handleFieldDragEnd = () => {
+    setDraggedFieldId(null);
+    setDragOverFieldId(null);
   };
 
   const selectProducts = async () => {
@@ -659,6 +712,11 @@ function ProductOptionGroupForm({
                   key={field.id}
                   field={field}
                   index={index}
+                  isDragOver={dragOverFieldId === field.id}
+                  onDragStart={(event) => handleFieldDragStart(event, field.id)}
+                  onDragOver={(event) => handleFieldDragOver(event, field.id)}
+                  onDrop={(event) => handleFieldDrop(event, field.id)}
+                  onDragEnd={handleFieldDragEnd}
                   onChange={(updates) => updateField(field.id, updates)}
                   onRemove={() => removeField(field.id)}
                 />
@@ -764,7 +822,17 @@ function AddOptionControl({ onAdd }) {
   );
 }
 
-function OptionFieldEditor({ field, index, onChange, onRemove }) {
+function OptionFieldEditor({
+  field,
+  index,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  onChange,
+  onRemove,
+}) {
   const updateConfig = (updates) => {
     onChange({ config: { ...(field.config || {}), ...updates } });
   };
@@ -810,7 +878,14 @@ function OptionFieldEditor({ field, index, onChange, onRemove }) {
   };
 
   return (
-    <div style={editorStyle}>
+    <div
+      style={{
+        ...editorStyle,
+        ...(isDragOver ? dragOverEditorStyle : {}),
+      }}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+    >
       <div style={toggleHeaderStyle}>
         <button type="button" style={toggleTitleStyle} onClick={toggleOpen}>
           <span style={optionIconStyle}>{getOptionIcon(field.type)}</span>
@@ -829,7 +904,15 @@ function OptionFieldEditor({ field, index, onChange, onRemove }) {
           >
             ⧉
           </button>
-          <button type="button" style={iconButtonStyle} title="Sort">
+          <button
+            type="button"
+            style={dragHandleButtonStyle}
+            title="Drag to reorder"
+            aria-label="Drag to reorder"
+            draggable
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          >
             ☰
           </button>
           <button
@@ -3424,6 +3507,11 @@ const editorStyle = {
   borderRadius: "8px",
   padding: "10px",
   background: "#ffffff",
+  transition: "box-shadow 0.15s ease, border-color 0.15s ease",
+};
+const dragOverEditorStyle = {
+  borderColor: "#3b82f6",
+  boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.2)",
 };
 const toggleHeaderStyle = {
   display: "grid",
@@ -3469,6 +3557,13 @@ const iconButtonStyle = {
   font: "inherit",
   fontSize: "18px",
   color: "#202223",
+};
+const dragHandleButtonStyle = {
+  ...iconButtonStyle,
+  cursor: "grab",
+  fontSize: "24px",
+  lineHeight: "1",
+  padding: "4px 6px",
 };
 const deleteHeaderButtonStyle = {
   width: "32px",

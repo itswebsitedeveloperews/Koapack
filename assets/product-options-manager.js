@@ -95,13 +95,47 @@
   `;
   }
 
+  function checkIfAllRequiredFieldsAreFilled() {
+    const requiredFields = document.querySelectorAll(
+      ".pom-field input[required], .pom-field select[required]",
+    );
+
+    let allFilled = true;
+
+    requiredFields.forEach((input) => {
+      if (!input.value || input.value === "Required") {
+        allFilled = false;
+      }
+    });
+
+    const addToCartButton = document.querySelector("[data-add-to-cart-button]");
+
+    if (addToCartButton) {
+      if (allFilled) {
+        addToCartButton.disabled = false;
+      } else {
+        addToCartButton.disabled = true;
+      }
+    }
+  }
+
   function saveSelection(field, value) {
     const key = field.label || field.name || "Option";
 
     selectedOptions[key] = value;
     selectedPrices[key] = getOptionPrice(field, value);
 
+    // Check if the field is required
+    if (field.required && !value) {
+      // If value is empty for a required field, set a flag to block adding to cart
+      selectedOptions[key] = "Required";
+    } else {
+      // If the field is filled, make sure it's valid
+      delete selectedOptions[key];
+    }
+
     updatePrice();
+    checkIfAllRequiredFieldsAreFilled();
   }
 
   function removeProductDesignOverlay() {
@@ -802,6 +836,17 @@
 
   function renderField(field) {
     const type = normalizeType(field.type);
+
+    // Disable "Add to Cart" button if no fields/options are available
+    const addToCartButton = document.querySelector("[data-add-to-cart-button]");
+    if (addToCartButton) {
+      const allFields = document.querySelectorAll(".pom-field");
+      if (allFields.length === 0) {
+        addToCartButton.disabled = true; // Disable if no options exist
+      } else {
+        addToCartButton.disabled = false; // Enable if options are present
+      }
+    }
 
     if (
       [
