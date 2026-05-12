@@ -92,6 +92,10 @@
     document.querySelectorAll(".pom-preview-position-input").forEach((el) => {
       el.remove();
     });
+
+    document.querySelectorAll(".pom-merged-preview-file").forEach((el) => {
+      el.remove();
+    });
   }
 
   function findMainProductImageWrapper() {
@@ -107,6 +111,15 @@
         ?.closest(".product-media-container") ||
       document.querySelector("media-gallery img")?.closest("media-gallery") ||
       document.querySelector(".product__media-wrapper")
+    );
+  }
+
+  function getMainProductImageElement() {
+    return (
+      document.querySelector(".product__media img") ||
+      document.querySelector(".product__media-item img") ||
+      document.querySelector(".product-media-container img") ||
+      document.querySelector("media-gallery img")
     );
   }
 
@@ -131,33 +144,140 @@
       height: Number(height.toFixed(2)),
     };
 
-    let hiddenJsonInput = form.querySelector(
-      'input[name="properties[_Upload preview position]"]',
-    );
+    function setPropertyInput(name, value) {
+      let input = form.querySelector(`input[name="properties[${name}]"]`);
 
-    if (!hiddenJsonInput) {
-      hiddenJsonInput = document.createElement("input");
-      hiddenJsonInput.type = "hidden";
-      hiddenJsonInput.className = "pom-preview-position-input";
-      hiddenJsonInput.name = "properties[_Upload preview position]";
-      form.appendChild(hiddenJsonInput);
+      if (!input) {
+        input = document.createElement("input");
+        input.type = "hidden";
+        input.className = "pom-preview-position-input";
+        input.name = `properties[${name}]`;
+        form.appendChild(input);
+      }
+
+      input.value = value;
     }
 
-    hiddenJsonInput.value = JSON.stringify(positionData);
+    setPropertyInput("_Preview X", positionData.x);
+    setPropertyInput("_Preview Y", positionData.y);
+    setPropertyInput("_Preview Width", positionData.width);
+    setPropertyInput("_Preview Height", positionData.height);
 
-    let readableInput = form.querySelector(
-      'input[name="properties[Upload preview position]"]',
+    setPropertyInput(
+      "Upload preview position",
+      `X: ${positionData.x}%, Y: ${positionData.y}%, Width: ${positionData.width}%, Height: ${positionData.height}%`,
     );
 
-    if (!readableInput) {
-      readableInput = document.createElement("input");
-      readableInput.type = "hidden";
-      readableInput.className = "pom-preview-position-input";
-      readableInput.name = "properties[Upload preview position]";
-      form.appendChild(readableInput);
+    setPropertyInput(
+      "_Upload preview position JSON",
+      JSON.stringify(positionData),
+    );
+  }
+
+  function loadImageForCanvas(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+
+      img.crossOrigin = "anonymous";
+
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+
+      img.src = src;
+    });
+  }
+
+  async function createMergedPreviewFile() {
+    const productImageEl = getMainProductImageElement();
+    const overlay = document.querySelector(".pom-design-overlay");
+    const overlayImageEl = overlay?.querySelector("img");
+
+    if (!productImageEl || !overlay || !overlayImageEl) {
+      return null;
     }
 
-    readableInput.value = `X: ${positionData.x}%, Y: ${positionData.y}%, Width: ${positionData.width}%, Height: ${positionData.height}%`;
+    const productImageSrc =
+      productImageEl.currentSrc ||
+      productImageEl.src ||
+      productImageEl.getAttribute("src");
+
+    const overlayImageSrc = overlayImageEl.src;
+
+    if (!productImageSrc || !overlayImageSrc) {
+      return null;
+    }
+
+    const productImage = await loadImageForCanvas(productImageSrc);
+    const uploadedImage = await loadImageForCanvas(overlayImageSrc);
+
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) return null;
+
+    const canvasWidth = productImage.naturalWidth || productImage.width;
+    const canvasHeight = productImage.naturalHeight || productImage.height;
+
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+
+    ctx.drawImage(productImage, 0, 0, canvasWidth, canvasHeight);
+
+    const wrapper = overlay.parentElement;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const overlayRect = overlay.getBoundingClientRect();
+
+    const xPercent =
+      ((overlayRect.left - wrapperRect.left) / wrapperRect.width) * 100;
+    const yPercent =
+      ((overlayRect.top - wrapperRect.top) / wrapperRect.height) * 100;
+    const widthPercent = (overlayRect.width / wrapperRect.width) * 100;
+    const heightPercent = (overlayRect.height / wrapperRect.height) * 100;
+
+    const drawX = (xPercent / 100) * canvasWidth;
+    const drawY = (yPercent / 100) * canvasHeight;
+    const drawWidth = (widthPercent / 100) * canvasWidth;
+    const drawHeight = (heightPercent / 100) * canvasHeight;
+
+    ctx.drawImage(uploadedImage, drawX, drawY, drawWidth, drawHeight);
+
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, "image/png", 0.95);
+    });
+
+    if (!blob) return null;
+
+    return new File([blob], "product-preview.png", {
+      type: "image/png",
+    });
+  }
+
+  function setFileInputFile(input, file) {
+    const dataTransfer = new DataTransfer();
+
+    dataTransfer.items.add(file);
+    input.files = dataTransfer.files;
+  }
+
+  async function attachMergedPreviewImageToForm(form) {
+    const mergedFile = await createMergedPreviewFile();
+
+    if (!mergedFile) return;
+
+    let previewInput = form.querySelector(
+      'input[name="properties[Preview image]"]',
+    );
+
+    if (!previewInput) {
+      previewInput = document.createElement("input");
+      previewInput.type = "file";
+      previewInput.name = "properties[Preview image]";
+      previewInput.className = "pom-merged-preview-file";
+      previewInput.style.display = "none";
+      form.appendChild(previewInput);
+    }
+
+    setFileInputFile(previewInput, mergedFile);
   }
 
   function makeOverlayMoveableAndResizable(overlay) {
@@ -687,7 +807,12 @@
 
   function attachToCartForm() {
     document.querySelectorAll("form[action*='/cart/add']").forEach((form) => {
-      form.addEventListener("submit", () => {
+      if (form.dataset.pomSubmitAttached === "true") return;
+      form.dataset.pomSubmitAttached = "true";
+
+      form.addEventListener("submit", async (event) => {
+        const overlay = document.querySelector(".pom-design-overlay");
+
         Object.entries(selectedOptions).forEach(([key, value]) => {
           let input = form.querySelector(`input[name="properties[${key}]"]`);
 
@@ -701,10 +826,18 @@
           input.value = value;
         });
 
-        const overlay = document.querySelector(".pom-design-overlay");
-
         if (overlay) {
+          event.preventDefault();
+
           saveOverlayPositionToCart(overlay);
+
+          try {
+            await attachMergedPreviewImageToForm(form);
+          } catch (error) {
+            console.error("Preview image merge failed:", error);
+          }
+
+          form.submit();
         }
       });
     });
@@ -746,6 +879,7 @@
 
   init().catch((error) => {
     console.error("Product options error:", error);
+
     root.innerHTML = `
       <div class="pom-error">
         Product options could not be loaded.
