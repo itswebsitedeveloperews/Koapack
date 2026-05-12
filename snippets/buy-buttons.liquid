@@ -59,6 +59,8 @@
         {%- if gift_card_recipient_feature_active -%}
           {%- render 'gift-card-recipient-form', product: product, form: form, section: section -%}
         {%- endif -%}
+        
+        {% render 'product-options-manager', product: product %}
 
         <div class="product-form__buttons">
           {%- liquid
