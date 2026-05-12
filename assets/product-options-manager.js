@@ -144,7 +144,7 @@
       height: Number(height.toFixed(2)),
     };
 
-    function setPropertyInput(name, value) {
+    function setHiddenInput(name, value) {
       let input = form.querySelector(`input[name="properties[${name}]"]`);
 
       if (!input) {
@@ -158,17 +158,15 @@
       input.value = value;
     }
 
-    setPropertyInput("_Preview X", positionData.x);
-    setPropertyInput("_Preview Y", positionData.y);
-    setPropertyInput("_Preview Width", positionData.width);
-    setPropertyInput("_Preview Height", positionData.height);
+    // ONLY hidden internal values
+    // NOT visible in cart
 
-    setPropertyInput(
-      "Upload preview position",
-      `X: ${positionData.x}%, Y: ${positionData.y}%, Width: ${positionData.width}%, Height: ${positionData.height}%`,
-    );
+    setHiddenInput("_Preview X", positionData.x);
+    setHiddenInput("_Preview Y", positionData.y);
+    setHiddenInput("_Preview Width", positionData.width);
+    setHiddenInput("_Preview Height", positionData.height);
 
-    setPropertyInput(
+    setHiddenInput(
       "_Upload preview position JSON",
       JSON.stringify(positionData),
     );
