@@ -1,5 +1,6 @@
 (function () {
   const root = document.getElementById("product-options-manager");
+
   if (!root) return;
 
   const productGid = root.dataset.productGid;
@@ -35,6 +36,7 @@
     const item = getValues(field).find(
       (x) => String(x.value) === String(value),
     );
+
     return item ? Number(item.price || 0) : 0;
   }
 
@@ -43,6 +45,7 @@
       (sum, price) => sum + Number(price || 0),
       0,
     );
+
     const total = basePrice + addonTotal;
 
     document
@@ -54,20 +57,101 @@
       });
 
     let totalBox = root.querySelector(".pom-total-price");
+
     if (!totalBox) {
       totalBox = document.createElement("div");
       totalBox.className = "pom-total-price";
       root.appendChild(totalBox);
     }
 
-    totalBox.innerHTML = `<div class="pom-price-box"><span>Total:</span><strong>${money(total)}</strong></div>`;
+    totalBox.innerHTML = `
+      <div class="pom-price-box">
+        <span>Total:</span>
+        <strong>${money(total)}</strong>
+      </div>
+    `;
   }
 
   function saveSelection(field, value) {
     const key = field.label || field.name || "Option";
+
     selectedOptions[key] = value;
     selectedPrices[key] = getOptionPrice(field, value);
+
     updatePrice();
+  }
+
+  function removeProductDesignOverlay() {
+    document.querySelectorAll(".pom-design-overlay").forEach((el) => {
+      el.remove();
+    });
+  }
+
+  function findMainProductImageWrapper() {
+    return (
+      document
+        .querySelector(".product__media img")
+        ?.closest(".product__media") ||
+      document
+        .querySelector(".product__media-item img")
+        ?.closest(".product__media-item") ||
+      document
+        .querySelector(".product-media-container img")
+        ?.closest(".product-media-container") ||
+      document.querySelector("media-gallery img")?.closest("media-gallery") ||
+      document.querySelector(".product__media-wrapper")
+    );
+  }
+
+  function showProductDesignOverlay(imageUrl, fileName) {
+    removeProductDesignOverlay();
+
+    const wrapper = findMainProductImageWrapper();
+
+    if (!wrapper) {
+      console.warn("Product image wrapper not found.");
+      return;
+    }
+
+    wrapper.classList.add("pom-overlay-parent");
+
+    const overlay = document.createElement("div");
+    overlay.className = "pom-design-overlay";
+
+    overlay.innerHTML = `
+      <button
+        type="button"
+        class="pom-design-overlay-remove"
+        aria-label="Remove preview"
+      >
+        ×
+      </button>
+
+      <img
+        src="${imageUrl}"
+        alt="${fileName || "Uploaded design"}"
+      >
+    `;
+
+    overlay
+      .querySelector(".pom-design-overlay-remove")
+      .addEventListener("click", () => {
+        removeProductDesignOverlay();
+
+        const fileInput = document.querySelector(".pom-file-hidden");
+
+        if (fileInput) {
+          fileInput.value = "";
+        }
+
+        const fileNameEl = document.querySelector(".pom-upload-file-name");
+
+        if (fileNameEl) {
+          fileNameEl.textContent = "";
+        }
+      });
+
+    wrapper.appendChild(overlay);
   }
 
   function renderChoice(field) {
@@ -80,33 +164,42 @@
     const label = document.createElement("label");
     label.className = "pom-label";
     label.textContent = field.label || field.name || "Option";
+
     wrap.appendChild(label);
 
     if (type === "dropdown" || type === "select" || type === "font_select") {
       const select = document.createElement("select");
+
       select.className = "pom-select";
       select.name = `properties[${field.label || field.name}]`;
       select.required = Boolean(field.required);
 
       const empty = document.createElement("option");
+
       empty.value = "";
       empty.textContent = "Select option";
+
       select.appendChild(empty);
 
       values.forEach((item) => {
         const option = document.createElement("option");
+
         option.value = item.value || "";
+
         option.textContent =
           Number(item.price || 0) > 0
             ? `${item.value} (+${money(item.price)})`
             : item.value || item.text || "Option";
+
         select.appendChild(option);
       });
 
-      select.addEventListener("change", () =>
-        saveSelection(field, select.value),
-      );
+      select.addEventListener("change", () => {
+        saveSelection(field, select.value);
+      });
+
       wrap.appendChild(select);
+
       return wrap;
     }
 
@@ -115,8 +208,10 @@
 
     values.forEach((item) => {
       const button = document.createElement("button");
+
       button.type = "button";
       button.className = "pom-option-button";
+
       button.textContent =
         Number(item.price || 0) > 0
           ? `${item.text || item.value} (+${money(item.price)})`
@@ -126,16 +221,22 @@
         buttons
           .querySelectorAll(".pom-option-button")
           .forEach((btn) => btn.classList.remove("is-active"));
+
         button.classList.add("is-active");
+
         saveSelection(field, item.value || item.text);
 
         let input = wrap.querySelector("input[type='hidden']");
+
         if (!input) {
           input = document.createElement("input");
+
           input.type = "hidden";
           input.name = `properties[${field.label || field.name}]`;
+
           wrap.appendChild(input);
         }
+
         input.value = item.value || item.text || "";
       });
 
@@ -143,6 +244,7 @@
     });
 
     wrap.appendChild(buttons);
+
     return wrap;
   }
 
@@ -155,6 +257,7 @@
     const label = document.createElement("label");
     label.className = "pom-label";
     label.textContent = field.label || "Order Quantity";
+
     wrap.appendChild(label);
 
     const buttons = document.createElement("div");
@@ -162,7 +265,9 @@
 
     rows.forEach((row) => {
       const qty = Number(row.quantity || 0);
+
       const button = document.createElement("button");
+
       button.type = "button";
       button.className = "pom-option-button";
       button.textContent = `${qty}+`;
@@ -171,13 +276,18 @@
         buttons
           .querySelectorAll(".pom-option-button")
           .forEach((btn) => btn.classList.remove("is-active"));
+
         button.classList.add("is-active");
 
         const qtyInput = document.querySelector("input[name='quantity']");
-        if (qtyInput) qtyInput.value = qty;
+
+        if (qtyInput) {
+          qtyInput.value = qty;
+        }
 
         selectedOptions[field.label || field.name || "Quantity"] = `${qty}+`;
         selectedPrices[field.label || field.name || "Quantity"] = 0;
+
         updatePrice();
       });
 
@@ -185,6 +295,7 @@
     });
 
     wrap.appendChild(buttons);
+
     return wrap;
   }
 
@@ -195,97 +306,86 @@
     const label = document.createElement("label");
     label.className = "pom-label";
     label.textContent = field.label || "Upload Your Design";
+
     wrap.appendChild(label);
 
     const uploadBox = document.createElement("label");
     uploadBox.className = "pom-upload-box";
 
     uploadBox.innerHTML = `
-    <span class="pom-upload-icon">⇧</span>
-    <strong>${field.config?.buttonText || "Upload Your File"}</strong>
-    <small>Upload or drag your file here</small>
-  `;
+      <button
+        type="button"
+        class="pom-upload-remove"
+        aria-label="Remove file"
+      >
+        ×
+      </button>
+
+      <span class="pom-upload-icon">⇧</span>
+
+      <strong>
+        ${field.config?.buttonText || "Upload Your File"}
+      </strong>
+
+      <small>
+        Upload or drag your file here
+      </small>
+
+      <span class="pom-upload-file-name"></span>
+    `;
 
     const input = document.createElement("input");
+
     input.type = "file";
     input.className = "pom-file-hidden";
-    input.name = `properties[${field.label || field.name || "Upload"}]`;
+    input.name = `properties[${field.label || field.name || "Upload Your Design"}]`;
     input.accept = "image/*";
 
     uploadBox.appendChild(input);
+
     wrap.appendChild(uploadBox);
 
-    const preview = document.createElement("div");
-    preview.className = "pom-upload-preview";
-    wrap.appendChild(preview);
+    const removeButton = uploadBox.querySelector(".pom-upload-remove");
+    const fileNameEl = uploadBox.querySelector(".pom-upload-file-name");
+
+    removeButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      input.value = "";
+      fileNameEl.textContent = "";
+
+      removeProductDesignOverlay();
+    });
 
     input.addEventListener("change", () => {
       const file = input.files && input.files[0];
 
       if (!file) {
-        preview.innerHTML = "";
-        removeProductMediaPreview();
+        fileNameEl.textContent = "";
+        removeProductDesignOverlay();
         return;
       }
 
       if (!file.type.startsWith("image/")) {
-        preview.innerHTML = `<p class="pom-error">Please upload an image file.</p>`;
-        removeProductMediaPreview();
+        alert("Please upload an image file.");
+
+        input.value = "";
+        fileNameEl.textContent = "";
+
+        removeProductDesignOverlay();
+
         return;
       }
 
       const imageUrl = URL.createObjectURL(file);
 
-      preview.innerHTML = `
-      <div class="pom-preview-card">
-        <img src="${imageUrl}" alt="Uploaded design preview">
-        <span>${file.name}</span>
-      </div>
-    `;
+      fileNameEl.textContent = file.name;
 
-      showProductMediaPreview(imageUrl, file.name);
+      showProductDesignOverlay(imageUrl, file.name);
     });
 
     return wrap;
-  }
-
-  function removeProductMediaPreview() {
-    document.querySelectorAll(".pom-product-media-preview").forEach((el) => {
-      el.remove();
-    });
-  }
-
-  function findProductMediaContainer() {
-    return (
-      document.querySelector(".product__media-list") ||
-      document.querySelector("media-gallery ul") ||
-      document.querySelector("media-gallery") ||
-      document.querySelector(".product__media-wrapper") ||
-      document.querySelector(".product__media") ||
-      document.querySelector(".product-media-container")
-    );
-  }
-
-  function showProductMediaPreview(imageUrl, fileName) {
-    removeProductMediaPreview();
-
-    const mediaContainer = findProductMediaContainer();
-
-    if (!mediaContainer) {
-      return;
-    }
-
-    const previewItem = document.createElement("div");
-    previewItem.className = "pom-product-media-preview";
-
-    previewItem.innerHTML = `
-    <div class="pom-media-preview-inner">
-      <img src="${imageUrl}" alt="${fileName || "Uploaded design"}">
-      <span class="pom-media-preview-badge">Your uploaded design</span>
-    </div>
-  `;
-
-    mediaContainer.prepend(previewItem);
   }
 
   function renderInput(field, inputType) {
@@ -295,13 +395,16 @@
     const label = document.createElement("label");
     label.className = "pom-label";
     label.textContent = field.label || field.name || "Option";
+
     wrap.appendChild(label);
 
     const input = document.createElement("input");
+
     input.type = inputType;
     input.className = "pom-input";
     input.name = `properties[${field.label || field.name}]`;
     input.placeholder = field.label || "";
+
     wrap.appendChild(input);
 
     return wrap;
@@ -327,11 +430,22 @@
       return renderChoice(field);
     }
 
-    if (type === "quantity" || type === "quantity_discount")
+    if (type === "quantity" || type === "quantity_discount") {
       return renderQuantityDiscount(field);
-    if (type === "upload" || type === "upload_lift") return renderUpload(field);
-    if (type === "number") return renderInput(field, "number");
-    if (type === "date") return renderInput(field, "date");
+    }
+
+    if (type === "upload" || type === "upload_lift") {
+      return renderUpload(field);
+    }
+
+    if (type === "number") {
+      return renderInput(field, "number");
+    }
+
+    if (type === "date") {
+      return renderInput(field, "date");
+    }
+
     return renderInput(field, "text");
   }
 
@@ -340,12 +454,16 @@
       form.addEventListener("submit", () => {
         Object.entries(selectedOptions).forEach(([key, value]) => {
           let input = form.querySelector(`input[name="properties[${key}]"]`);
+
           if (!input) {
             input = document.createElement("input");
+
             input.type = "hidden";
             input.name = `properties[${key}]`;
+
             form.appendChild(input);
           }
+
           input.value = value;
         });
       });
@@ -358,6 +476,7 @@
     );
 
     const data = await response.json();
+
     root.innerHTML = "";
 
     if (!data.groups || data.groups.length === 0) {
@@ -367,12 +486,18 @@
 
     data.groups.forEach((group) => {
       const groupEl = document.createElement("div");
+
       groupEl.className = "pom-group";
-      group.fields.forEach((field) => groupEl.appendChild(renderField(field)));
+
+      group.fields.forEach((field) => {
+        groupEl.appendChild(renderField(field));
+      });
+
       root.appendChild(groupEl);
     });
 
     attachToCartForm();
+
     updatePrice();
   }
 
