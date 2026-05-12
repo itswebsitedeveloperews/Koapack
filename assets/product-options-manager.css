@@ -143,6 +143,22 @@
   bottom: -9px;
   cursor: nwse-resize;
 }
+
+.pom-price-box {
+  flex-wrap: wrap;
+}
+
+.pom-price-box small {
+  width: 100%;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.pom-discount-text {
+  color: #2f6f3e !important;
+  font-weight: 600;
+}
+
 @media screen and (max-width: 749px) {
   .pom-field {
     grid-template-columns: 1fr;

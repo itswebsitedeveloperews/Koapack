@@ -13,6 +13,8 @@
   const selectedOptions = {};
   const selectedPrices = {};
 
+  let selectedQuantity = 1;
+  let selectedQuantityDiscount = 0;
   function money(amount) {
     return (
       "Rs. " +
@@ -49,7 +51,13 @@
       0,
     );
 
-    const total = basePrice + addonTotal;
+    const unitPrice = basePrice + addonTotal;
+    const qty = Math.max(1, Number(selectedQuantity || 1));
+
+    const subtotal = unitPrice * qty;
+    const discountAmount =
+      subtotal * (Number(selectedQuantityDiscount || 0) / 100);
+    const total = subtotal - discountAmount;
 
     document
       .querySelectorAll(
@@ -67,12 +75,24 @@
       root.appendChild(totalBox);
     }
 
+    const perPieceText =
+      qty > 1
+        ? `<small>for ${qty} Qty (${money(total / qty)} / piece)</small>`
+        : `<small>for 1 Qty</small>`;
+
+    const discountText =
+      selectedQuantityDiscount > 0
+        ? `<small class="pom-discount-text">${selectedQuantityDiscount}% discount applied</small>`
+        : "";
+
     totalBox.innerHTML = `
-      <div class="pom-price-box">
-        <span>Total:</span>
-        <strong>${money(total)}</strong>
-      </div>
-    `;
+    <div class="pom-price-box">
+      <span>Total:</span>
+      <strong>${money(total)}</strong>
+      ${perPieceText}
+      ${discountText}
+    </div>
+  `;
   }
 
   function saveSelection(field, value) {
@@ -620,7 +640,11 @@
     buttons.className = "pom-buttons";
 
     rows.forEach((row) => {
-      const qty = Number(row.quantity || 0);
+      const qty = Number(row.quantity || row.qty || 0);
+      const discount = Number(row.discount || row.discountPercent || 0);
+
+      if (!qty) return;
+
       const button = document.createElement("button");
 
       button.type = "button";
@@ -634,14 +658,26 @@
 
         button.classList.add("is-active");
 
-        const qtyInput = document.querySelector("input[name='quantity']");
+        selectedQuantity = qty;
+        selectedQuantityDiscount = discount;
+
+        const qtyInput =
+          document.querySelector("input[name='quantity']") ||
+          document.querySelector("quantity-input input");
 
         if (qtyInput) {
           qtyInput.value = qty;
+          qtyInput.dispatchEvent(new Event("change", { bubbles: true }));
+          qtyInput.dispatchEvent(new Event("input", { bubbles: true }));
         }
 
         selectedOptions[field.label || field.name || "Quantity"] = `${qty}+`;
-        selectedPrices[field.label || field.name || "Quantity"] = 0;
+
+        if (discount > 0) {
+          selectedOptions["Quantity discount"] = `${discount}%`;
+        } else {
+          delete selectedOptions["Quantity discount"];
+        }
 
         updatePrice();
       });
