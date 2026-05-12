@@ -1,0 +1,13 @@
+{{ 'product-options-manager.css' | asset_url | stylesheet_tag }}
+
+<div
+  id="product-options-manager"
+  data-product-id="{{ product.id }}"
+  data-product-gid="gid://shopify/Product/{{ product.id }}"
+  data-product-handle="{{ product.handle }}"
+  data-base-price="{{ product.selected_or_first_available_variant.price }}"
+>
+  <div class="pom-loading">Loading options...</div>
+</div>
+
+<script src="{{ 'product-options-manager.js' | asset_url }}" defer></script>
