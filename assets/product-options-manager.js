@@ -618,11 +618,50 @@
     const buttons = document.createElement("div");
     buttons.className = "pom-buttons";
 
+    const isColorField = [
+      "button_swatches",
+      "color_swatches",
+      "color_image_swatches",
+      "image_swatches",
+    ].includes(type);
+
+    function resolveSwatchBackground(item) {
+      const candidates = [
+        item?.color,
+        item?.hex,
+        item?.value,
+        item?.text,
+        item?.swatch,
+      ].filter(Boolean);
+
+      const first = candidates[0];
+      if (!first) return null;
+
+      const s = String(first).trim();
+
+      // If backend already provides a valid CSS color string, use it.
+      if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s)) {
+        return s;
+      }
+      if (/^(rgb|hsl)a?\(/i.test(s)) {
+        return s;
+      }
+
+      // Sometimes value/text might be an existing HTML color name or already usable.
+      // Fallback: return raw string so CSS can try to interpret it.
+      return s || null;
+    }
+
     values.forEach((item) => {
       const button = document.createElement("button");
 
       button.type = "button";
       button.className = "pom-option-button";
+
+      const swatchBg = isColorField ? resolveSwatchBackground(item) : null;
+      if (swatchBg) {
+        button.style.setProperty("--pom-swatch--background", swatchBg);
+      }
 
       button.textContent =
         Number(item.price || 0) > 0
@@ -635,6 +674,11 @@
           .forEach((btn) => btn.classList.remove("is-active"));
 
         button.classList.add("is-active");
+
+        // Ensure active state uses the chosen swatch color (when available)
+        if (swatchBg) {
+          button.style.setProperty("--pom-swatch--background", swatchBg);
+        }
 
         saveSelection(field, item.value || item.text);
 

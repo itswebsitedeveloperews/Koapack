@@ -36,9 +36,9 @@
 }
 
 .pom-option-button.is-active {
-  background: #40543f;
+  background: var(--pom-swatch--background, #40543f);
   color: #fff;
-  border-color: #40543f;
+  border-color: var(--pom-swatch--background, #40543f);
   font-weight: 700;
 }
 
