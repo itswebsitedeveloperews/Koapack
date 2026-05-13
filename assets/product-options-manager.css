@@ -69,12 +69,12 @@
   white-space: nowrap;
 }
 
-.pom-option-button:hover .pom-swatch-preview-text {
+.pom-option-button .pom-swatch-preview-text {
   /* keep label hidden; tooltip shown via ::after */
   display: none;
 }
 
-.pom-option-button:hover .pom-swatch-preview-text::after {
+.pom-option-button:hover .pom-swatch-preview::after {
   content: attr(data-tooltip);
   position: absolute;
   top: -30px;
