@@ -680,8 +680,11 @@
         const text = document.createElement("span");
         text.className = "pom-swatch-preview-text";
         text.textContent = labelText;
+        // Tooltip text on hover
+        text.dataset.tooltip = labelText;
 
         button.innerHTML = "";
+
         button.appendChild(swatch);
         button.appendChild(text);
       } else {

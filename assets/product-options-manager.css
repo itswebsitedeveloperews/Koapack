@@ -34,7 +34,9 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  position: relative;
 }
+
 .pom-option-button.color-swatche {
   padding: 0;
   border: 0;
@@ -63,13 +65,29 @@
 }
 
 /* Tooltip: show label text when hovering the swatch button */
+.pom-swatch-preview-text {
+  white-space: nowrap;
+}
+
 .pom-option-button:hover .pom-swatch-preview-text {
+  /* keep label hidden; tooltip shown via ::after */
   display: none;
 }
 
-.pom-option-button:hover .pom-swatch-preview-text::after,
-.pom-swatch-preview::after {
+.pom-option-button:hover .pom-swatch-preview-text::after {
   content: attr(data-tooltip);
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 10;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .pom-option-button.is-active {
