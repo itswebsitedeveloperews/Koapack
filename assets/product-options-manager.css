@@ -91,6 +91,13 @@
   pointer-events: none;
 }
 
+.pom-option-button.color-swatche img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .pom-option-button.is-active {
   background: var(--pom-swatch--background, #40543f);
   color: #fff;

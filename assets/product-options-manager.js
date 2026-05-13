@@ -618,9 +618,8 @@
     const buttons = document.createElement("div");
     buttons.className = "pom-buttons";
 
-    const isColorField = [
-      "button_swatches",
-      "color_swatches",
+    const isColorField = ["button_swatches", "color_swatches"].includes(type);
+    const isColorImageSwatchField = [
       "color_image_swatches",
       "image_swatches",
     ].includes(type);
@@ -660,6 +659,17 @@
 
       const swatchBg = isColorField ? resolveSwatchBackground(item) : null;
 
+      let swatchImage = null;
+      if (isColorImageSwatchField) {
+        swatchImage =
+          item?.image ||
+          item?.src ||
+          item?.url ||
+          item?.thumbnail ||
+          item?.preview ||
+          null;
+      }
+
       if (swatchBg) {
         button.style.setProperty("--pom-swatch--background", swatchBg);
         button.classList.add("color-swatche");
@@ -670,8 +680,9 @@
           ? `${item.text || item.value} (+${money(item.price)})`
           : item.text || item.value || "Option";
 
-      // For swatch-like fields, render: [colored span] + label text
-      // so the swatch visually matches the active background.
+      // Render swatch-like fields:
+      // - color_*_swatches: colored preview + label
+      // - color_image_swatches/image_swatches: image preview + label
       if (swatchBg) {
         const swatch = document.createElement("span");
         swatch.className = "pom-swatch-preview";
@@ -680,11 +691,31 @@
         const text = document.createElement("span");
         text.className = "pom-swatch-preview-text";
         text.textContent = labelText;
-        // Tooltip text on hover
-        swatch.dataset.tooltip = labelText;
+        text.dataset.tooltip = labelText;
 
         button.innerHTML = "";
+        button.appendChild(swatch);
+        button.appendChild(text);
+      } else if (swatchImage) {
+        const swatch = document.createElement("span");
+        swatch.className = "pom-swatch-preview";
+        swatch.style.background = "transparent";
 
+        const img = document.createElement("img");
+        img.src = swatchImage;
+        img.alt = labelText;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "cover";
+        img.style.display = "block";
+        swatch.appendChild(img);
+
+        const text = document.createElement("span");
+        text.className = "pom-swatch-preview-text";
+        text.textContent = labelText;
+        text.dataset.tooltip = labelText;
+
+        button.innerHTML = "";
         button.appendChild(swatch);
         button.appendChild(text);
       } else {
