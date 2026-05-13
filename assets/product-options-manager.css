@@ -75,7 +75,8 @@
   display: none;
 }
 
-.pom-option-button:hover .pom-swatch-preview::after {
+.pom-option-button:hover
+  .pom-swatch-preview[data-tooltip]:not([data-tooltip=""])::after {
   content: attr(data-tooltip);
   position: absolute;
   top: -30px;
