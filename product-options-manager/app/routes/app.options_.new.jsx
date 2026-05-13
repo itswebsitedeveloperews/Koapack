@@ -1383,34 +1383,23 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
   };
 
   const handleUploadClick = (index) => {
+    // Create a local file input to upload an image for this swatch value.
     const input = document.createElement("input");
     input.type = "file";
+
+    // Ensure we only react to successful uploads.
+    // (No backend upload is performed here.)
     input.accept = "image/*";
 
-    input.addEventListener("change", async () => {
+    input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) return;
 
-      // Upload to Shopify so we store a stable CDN URL (not a temporary blob: URL)
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("fileName", file.name || "swatch");
+      const imageUrl = URL.createObjectURL(file);
 
-      const resp = await fetch("/app/upload-swatch-image", {
-        method: "POST",
-        body: fd,
-        credentials: "include",
-      });
-
-      if (!resp.ok) {
-        console.error("Swatch image upload failed", await resp.text());
-        return;
-      }
-
-      const json = await resp.json();
-      if (!json?.imageUrl) return;
-
-      updateValue(index, "image", json.imageUrl);
+      // Save object URL for instant preview.
+      // NOTE: This URL may become invalid on navigation/refresh.
+      updateValue(index, "image", imageUrl);
     });
 
     input.click();
