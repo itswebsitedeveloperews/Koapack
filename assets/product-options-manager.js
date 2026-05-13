@@ -681,7 +681,7 @@
         text.className = "pom-swatch-preview-text";
         text.textContent = labelText;
         // Tooltip text on hover
-        text.dataset.tooltip = labelText;
+        // text.dataset.tooltip = labelText;
 
         button.innerHTML = "";
 
