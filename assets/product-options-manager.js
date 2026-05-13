@@ -659,8 +659,10 @@
       button.className = "pom-option-button";
 
       const swatchBg = isColorField ? resolveSwatchBackground(item) : null;
+
       if (swatchBg) {
         button.style.setProperty("--pom-swatch--background", swatchBg);
+        button.classList.add("color-swatche");
       }
 
       const labelText =
