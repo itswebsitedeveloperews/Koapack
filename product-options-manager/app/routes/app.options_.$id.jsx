@@ -1445,33 +1445,26 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
   };
 
   const handleUploadClick = (index) => {
-    // Make sure ShopifyApp is available
-    if (!window.ShopifyApp) {
-      console.error(
-        "ShopifyApp not available. Ensure the app is embedded in Shopify.",
-      );
-      return;
-    }
+    // Create a local file input to upload an image for this swatch value.
+    const input = document.createElement("input");
+    input.type = "file";
 
-    // Open the Shopify media picker
-    ShopifyApp.Modal.open({
-      src: "/admin/media",
-      title: "Select Media",
-      iframe: true,
-      size: "large",
-      onClose: function () {
-        // Do nothing when modal is closed
-      },
-      onConfirm: function (selectedMedia) {
-        // selectedMedia will be an array of media selected by the user
-        if (selectedMedia.length > 0) {
-          const mediaUrl = selectedMedia[0].src; // Get the media URL (you can change this depending on what data you need)
+    // Ensure we only react to successful uploads.
+    // (No backend upload is performed here.)
+    input.accept = "image/*";
 
-          // Update the swatch or product options with the selected media
-          updateValue(index, "image", mediaUrl);
-        }
-      },
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      // IMPORTANT: We store the object URL so it immediately works in preview.
+      // If your backend expects permanent URLs, you must replace this with
+      // a real upload flow.
+      const imageUrl = URL.createObjectURL(file);
+      updateValue(index, "image", imageUrl);
     });
+
+    input.click();
   };
 
   return (
