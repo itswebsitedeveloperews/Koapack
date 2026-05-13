@@ -1395,10 +1395,10 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
       const file = input.files?.[0];
       if (!file) return;
 
-      // IMPORTANT: We store the object URL so it immediately works in preview.
-      // If your backend expects permanent URLs, you must replace this with
-      // a real upload flow.
       const imageUrl = URL.createObjectURL(file);
+
+      // Save object URL for instant preview.
+      // NOTE: This URL may become invalid on navigation/refresh.
       updateValue(index, "image", imageUrl);
     });
 

@@ -1444,6 +1444,29 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
     });
   };
 
+  const handleUploadClick = (index) => {
+    // Create a local file input to upload an image for this swatch value.
+    const input = document.createElement("input");
+    input.type = "file";
+
+    // Ensure we only react to successful uploads.
+    // (No backend upload is performed here.)
+    input.accept = "image/*";
+
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      // IMPORTANT: We store the object URL so it immediately works in preview.
+      // If your backend expects permanent URLs, you must replace this with
+      // a real upload flow.
+      const imageUrl = URL.createObjectURL(file);
+      updateValue(index, "image", imageUrl);
+    });
+
+    input.click();
+  };
+
   return (
     <>
       <CommonNameLabel field={field} onChange={onChange} />
@@ -1480,7 +1503,11 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
           {mode.includes("image") ? (
             <div style={imageCellStyle}>
               <span>▧</span>
-              <button type="button" style={smallDarkButtonStyle}>
+              <button
+                type="button"
+                style={smallDarkButtonStyle}
+                onClick={() => handleUploadClick(index)}
+              >
                 Upload
               </button>
             </div>

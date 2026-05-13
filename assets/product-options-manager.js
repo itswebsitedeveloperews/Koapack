@@ -691,7 +691,7 @@
         const text = document.createElement("span");
         text.className = "pom-swatch-preview-text";
         text.textContent = labelText;
-        text.dataset.tooltip = labelText;
+        swatch.dataset.tooltip = labelText;
 
         button.innerHTML = "";
         button.appendChild(swatch);
