@@ -55,6 +55,7 @@
   box-shadow: none !important;
   outline-width: 1px !important;
   flex: 0 0 auto;
+  display: block;
 }
 
 .pom-swatch-preview-text {
