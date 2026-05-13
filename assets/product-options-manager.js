@@ -663,10 +663,28 @@
         button.style.setProperty("--pom-swatch--background", swatchBg);
       }
 
-      button.textContent =
+      const labelText =
         Number(item.price || 0) > 0
           ? `${item.text || item.value} (+${money(item.price)})`
           : item.text || item.value || "Option";
+
+      // For swatch-like fields, render: [colored span] + label text
+      // so the swatch visually matches the active background.
+      if (swatchBg) {
+        const swatch = document.createElement("span");
+        swatch.className = "pom-swatch-preview";
+        swatch.style.background = swatchBg;
+
+        const text = document.createElement("span");
+        text.className = "pom-swatch-preview-text";
+        text.textContent = labelText;
+
+        button.innerHTML = "";
+        button.appendChild(swatch);
+        button.appendChild(text);
+      } else {
+        button.textContent = labelText;
+      }
 
       button.addEventListener("click", () => {
         buttons

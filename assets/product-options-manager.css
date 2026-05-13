@@ -33,6 +33,22 @@
   background: transparent;
   color: #40543f;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pom-swatch-preview {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: inline-block;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  flex: 0 0 auto;
+}
+
+.pom-swatch-preview-text {
+  line-height: 1;
 }
 
 .pom-option-button.is-active {
