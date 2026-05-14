@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
+import { ResourcePicker } from "@shopify/app-bridge/actions";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
@@ -1424,7 +1425,8 @@ function ChoiceOptionEditor({
   shopifyMediaImages = [],
 }) {
   const values = field.config?.values || [];
-  const [mediaPickerIndex, setMediaPickerIndex] = useState(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pendingIndex, setPendingIndex] = useState(null);
 
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
@@ -1454,44 +1456,23 @@ function ChoiceOptionEditor({
   };
 
   const handleUploadClick = (index) => {
-    // Create a local file input to upload an image for this swatch value.
     const input = document.createElement("input");
     input.type = "file";
-
-    // Ensure we only react to successful uploads.
-    // (No backend upload is performed here.)
     input.accept = "image/*";
 
     input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) return;
-
       const imageUrl = URL.createObjectURL(file);
-
-      // Save object URL for instant preview.
-      // NOTE: This URL may become invalid on navigation/refresh.
       updateValue(index, "image", imageUrl);
     });
 
     input.click();
   };
 
-  const selectShopifyMediaImage = (index, image) => {
-    updateValue(index, "image", image.url);
-    setMediaPickerIndex(null);
-  };
-
-  const handleMediaClick = async (index) => {
-    const selected = await openShopifyMediaPicker(shopify);
-    const image = getSelectedMediaImage(selected);
-
-    if (image?.url) {
-      updateValue(index, "image", image.url);
-      setMediaPickerIndex(null);
-      return;
-    }
-
-    setMediaPickerIndex(index);
+  const handleMediaClick = (index) => {
+    setPendingIndex(index);
+    setPickerOpen(true);
   };
 
   return (
@@ -1610,41 +1591,22 @@ function ChoiceOptionEditor({
         </div>
       ))}
 
-      {mediaPickerIndex !== null ? (
-        <div style={mediaPickerStyle}>
-          <div style={mediaPickerHeaderStyle}>
-            <strong>Shopify media images</strong>
-            <button
-              type="button"
-              style={plainButtonStyle}
-              onClick={() => setMediaPickerIndex(null)}
-            >
-              Close
-            </button>
-          </div>
-          {shopifyMediaImages.length ? (
-            <div style={mediaGridStyle}>
-              {shopifyMediaImages.map((image) => (
-                <button
-                  key={image.id || image.url}
-                  type="button"
-                  style={mediaImageButtonStyle}
-                  onClick={() => selectShopifyMediaImage(mediaPickerIndex, image)}
-                  title={image.alt || "Select image"}
-                >
-                  <img
-                    src={image.url}
-                    alt={image.alt || "Shopify media"}
-                    style={mediaImageStyle}
-                  />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p style={helpTextStyle}>No Shopify media images found.</p>
-          )}
-        </div>
-      ) : null}
+      <ResourcePicker
+        resourceType="file"
+        open={pickerOpen}
+        onCancel={() => setPickerOpen(false)}
+        onSelection={(payload) => {
+          setPickerOpen(false);
+          if (payload.selection?.length && pendingIndex !== null) {
+            const selected = payload.selection[0];
+            const imageUrl = selected.preview?.image?.url || selected.url;
+            if (imageUrl) {
+              updateValue(pendingIndex, "image", imageUrl);
+            }
+            setPendingIndex(null);
+          }
+        }}
+      />
 
       <button type="button" style={addDiscountButtonStyle} onClick={addValue}>
         + Add value
@@ -3604,70 +3566,6 @@ function cloneConfig(config) {
   return JSON.parse(JSON.stringify(config || {}));
 }
 
-async function openShopifyMediaPicker(shopify) {
-  const pickerOptions = {
-    multiple: false,
-    accept: "image/*",
-    type: "image",
-    fileTypes: ["image"],
-  };
-  const pickerMethods = [
-    shopify?.filePicker,
-    shopify?.mediaPicker,
-    shopify?.files?.pick,
-    shopify?.files?.openPicker,
-  ].filter((method) => typeof method === "function");
-
-  for (const method of pickerMethods) {
-    try {
-      const selected = await method.call(shopify, pickerOptions);
-      if (selected) return selected;
-    } catch (error) {
-      console.warn("Shopify media picker failed", error);
-    }
-  }
-
-  try {
-    return await shopify?.resourcePicker?.({
-      type: "file",
-      multiple: false,
-      filter: { fileType: "IMAGE" },
-    });
-  } catch (error) {
-    console.warn("Shopify file resource picker unavailable", error);
-    return null;
-  }
-}
-
-function getSelectedMediaImage(selected) {
-  const item = Array.isArray(selected)
-    ? selected[0]
-    : selected?.files?.[0] ||
-      selected?.media?.[0] ||
-      selected?.selection?.[0] ||
-      selected?.selected?.[0] ||
-      selected;
-
-  if (!item) return null;
-
-  const url =
-    item.url ||
-    item.preview?.image?.url ||
-    item.previewImage?.url ||
-    item.image?.url ||
-    item.image?.originalSrc ||
-    item.originalSrc ||
-    item.src;
-
-  return url
-    ? {
-        id: item.id,
-        url,
-        alt: item.alt || item.altText || item.image?.altText || "",
-      }
-    : null;
-}
-
 function Field({ label, htmlFor, children }) {
   return (
     <div style={fieldGroupStyle}>
@@ -3961,39 +3859,6 @@ const smallLightButtonStyle = {
   cursor: "pointer",
   font: "inherit",
   fontWeight: 600,
-};
-const mediaPickerStyle = {
-  border: "1px solid #dfe3e8",
-  borderRadius: "8px",
-  padding: "12px",
-  margin: "12px 0",
-  background: "#ffffff",
-};
-const mediaPickerHeaderStyle = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "12px",
-  marginBottom: "12px",
-};
-const mediaGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
-  gap: "8px",
-};
-const mediaImageButtonStyle = {
-  border: "1px solid #dfe3e8",
-  borderRadius: "8px",
-  padding: "4px",
-  background: "#ffffff",
-  cursor: "pointer",
-  aspectRatio: "1 / 1",
-};
-const mediaImageStyle = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  borderRadius: "5px",
 };
 const priceGroupHeaderStyle = {
   display: "grid",
