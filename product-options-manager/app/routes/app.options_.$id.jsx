@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { ResourcePicker } from "@shopify/app-bridge/actions";
@@ -1479,7 +1479,7 @@ function ChoiceOptionEditor({
   shopifyMediaImages = [],
 }) {
   const values = field.config?.values || [];
-  const [blobUrls, setBlobUrls] = useState({}); // track blob URLs for cleanup
+  const [blobUrls, setBlobUrls] = useState({});
 
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
@@ -1503,17 +1503,15 @@ function ChoiceOptionEditor({
   };
 
   const removeValue = (index) => {
+    const oldUrl = values[index]?.image;
+    if (oldUrl && oldUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(oldUrl);
+    }
     updateConfig({
       values: values.filter((_, valueIndex) => valueIndex !== index),
     });
-    // Clean up blob URL if any
-    const imageUrl = values[index]?.image;
-    if (imageUrl && imageUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(imageUrl);
-    }
   };
 
-  // Upload from local file system
   const handleUploadClick = (index) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1521,7 +1519,6 @@ function ChoiceOptionEditor({
     input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) return;
-      // Revoke previous blob URL if any
       const oldUrl = values[index]?.image;
       if (oldUrl && oldUrl.startsWith("blob:")) {
         URL.revokeObjectURL(oldUrl);
@@ -1532,7 +1529,6 @@ function ChoiceOptionEditor({
     input.click();
   };
 
-  // Open Shopify media picker using the official ResourcePicker action
   const openMediaPicker = async (index) => {
     if (!shopify) {
       console.error("Shopify App Bridge not available");
@@ -1540,23 +1536,19 @@ function ChoiceOptionEditor({
     }
 
     try {
-      // Create a ResourcePicker instance
       const resourcePicker = ResourcePicker.create(shopify, {
         resourceType: ResourcePicker.ResourceType.File,
         multiple: false,
         selectMultiple: false,
         showHidden: false,
-        // Optionally restrict to images
         options: {
           accept: "image/*",
         },
       });
 
-      // Subscribe to the selection event
       resourcePicker.subscribe(ResourcePicker.Action.SELECT, (payload) => {
         if (payload.selection && payload.selection.length > 0) {
           const selected = payload.selection[0];
-          // Extract the image URL
           const imageUrl = selected.preview?.image?.url || selected.url;
           if (imageUrl) {
             updateValue(index, "image", imageUrl);
@@ -1564,18 +1556,17 @@ function ChoiceOptionEditor({
             console.warn("Selected item has no image URL", selected);
           }
         }
-        resourcePicker.unsubscribe(); // Clean up
+        resourcePicker.unsubscribe();
       });
 
       resourcePicker.subscribe(ResourcePicker.Action.CANCEL, () => {
         resourcePicker.unsubscribe();
       });
 
-      // Open the picker
       resourcePicker.dispatch(ResourcePicker.Action.OPEN);
     } catch (error) {
       console.error("Failed to open Shopify media picker", error);
-      alert("Unable to open media picker. Check console for details.");
+      alert("Unable to open media picker. See console for details.");
     }
   };
 
@@ -1590,9 +1581,9 @@ function ChoiceOptionEditor({
         if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
       });
     };
-  }, []);
+  }, [blobUrls]);
 
-  // Update blobUrls when values change (to track for cleanup)
+  // Track blob URLs for cleanup
   useEffect(() => {
     const newBlobUrls = {};
     values.forEach((val, idx) => {
@@ -1645,8 +1636,7 @@ function ChoiceOptionEditor({
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
                     onError={(e) => {
-                      // If blob URL fails, show placeholder
-                      if (item.image.startsWith("blob:")) {
+                      if (item.image && item.image.startsWith("blob:")) {
                         e.target.style.display = "none";
                       }
                     }}
