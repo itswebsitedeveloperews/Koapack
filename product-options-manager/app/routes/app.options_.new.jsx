@@ -1453,27 +1453,26 @@ function ChoiceOptionEditor({
     });
   };
 
-  const handleUploadClick = (index) => {
-    // Create a local file input to upload an image for this swatch value.
-    const input = document.createElement("input");
-    input.type = "file";
+  const handleUploadClick = async (index) => {
+    // Replace local object-url storage with Shopify Resource Picker.
+    // This ensures the selected image URL is permanent on the storefront.
 
-    // Ensure we only react to successful uploads.
-    // (No backend upload is performed here.)
-    input.accept = "image/*";
+    // Open Shopify Resource Picker and request a single IMAGE.
+    if (!shopify?.resourcePicker) return;
 
-    input.addEventListener("change", () => {
-      const file = input.files?.[0];
-      if (!file) return;
-
-      const imageUrl = URL.createObjectURL(file);
-
-      // Save object URL for instant preview.
-      // NOTE: This URL may become invalid on navigation/refresh.
-      updateValue(index, "image", imageUrl);
+    const selected = await shopify.resourcePicker({
+      type: "file",
+      multiple: false,
+      accept: "image/*",
+      filter: { fileType: "IMAGE" },
     });
 
-    input.click();
+    const image = getSelectedMediaImage(selected);
+
+    if (!image?.url) return;
+
+    updateValue(index, "image", image.url);
+    setMediaPickerIndex(null);
   };
 
   const selectShopifyMediaImage = (index, image) => {
@@ -1629,7 +1628,9 @@ function ChoiceOptionEditor({
                   key={image.id || image.url}
                   type="button"
                   style={mediaImageButtonStyle}
-                  onClick={() => selectShopifyMediaImage(mediaPickerIndex, image)}
+                  onClick={() =>
+                    selectShopifyMediaImage(mediaPickerIndex, image)
+                  }
                   title={image.alt || "Select image"}
                 >
                   <img
