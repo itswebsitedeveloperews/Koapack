@@ -1479,6 +1479,7 @@ function ChoiceOptionEditor({
   shopifyMediaImages = [],
 }) {
   const values = field.config?.values || [];
+  const [blobUrls, setBlobUrls] = useState({}); // track blob URLs for cleanup
 
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
@@ -1505,8 +1506,14 @@ function ChoiceOptionEditor({
     updateConfig({
       values: values.filter((_, valueIndex) => valueIndex !== index),
     });
+    // Clean up blob URL if any
+    const imageUrl = values[index]?.image;
+    if (imageUrl && imageUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(imageUrl);
+    }
   };
 
+  // Upload from local file system
   const handleUploadClick = (index) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1514,80 +1521,87 @@ function ChoiceOptionEditor({
     input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) return;
-      const imageUrl = URL.createObjectURL(file);
-      updateValue(index, "image", imageUrl);
+      // Revoke previous blob URL if any
+      const oldUrl = values[index]?.image;
+      if (oldUrl && oldUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(oldUrl);
+      }
+      const newUrl = URL.createObjectURL(file);
+      updateValue(index, "image", newUrl);
     });
     input.click();
   };
 
-  // Reliable media picker with fallbacks
-  const openMediaPicker = async () => {
-    // Try multiple picker methods
-    const pickerOptions = { multiple: false, accept: "image/*", type: "image" };
-
-    // 1. Try shopify.resourcePicker (most common)
-    if (shopify?.resourcePicker) {
-      try {
-        const result = await shopify.resourcePicker({
-          type: "file",
-          multiple: false,
-        });
-        if (result && result.length) return result[0];
-      } catch (err) {
-        console.warn("resourcePicker failed", err);
-      }
+  // Open Shopify media picker using the official ResourcePicker action
+  const openMediaPicker = async (index) => {
+    if (!shopify) {
+      console.error("Shopify App Bridge not available");
+      return;
     }
 
-    // 2. Try filePicker / mediaPicker (older App Bridge)
-    const legacyMethods = ["filePicker", "mediaPicker"];
-    for (const method of legacyMethods) {
-      if (typeof shopify?.[method] === "function") {
-        try {
-          const result = await shopify[method](pickerOptions);
-          if (result) return result;
-        } catch (err) {
-          console.warn(`${method} failed`, err);
+    try {
+      // Create a ResourcePicker instance
+      const resourcePicker = ResourcePicker.create(shopify, {
+        resourceType: ResourcePicker.ResourceType.File,
+        multiple: false,
+        selectMultiple: false,
+        showHidden: false,
+        // Optionally restrict to images
+        options: {
+          accept: "image/*",
+        },
+      });
+
+      // Subscribe to the selection event
+      resourcePicker.subscribe(ResourcePicker.Action.SELECT, (payload) => {
+        if (payload.selection && payload.selection.length > 0) {
+          const selected = payload.selection[0];
+          // Extract the image URL
+          const imageUrl = selected.preview?.image?.url || selected.url;
+          if (imageUrl) {
+            updateValue(index, "image", imageUrl);
+          } else {
+            console.warn("Selected item has no image URL", selected);
+          }
         }
-      }
-    }
+        resourcePicker.unsubscribe(); // Clean up
+      });
 
-    // 3. Try resourcePicker with type "product" (unlikely but fallback)
-    if (shopify?.resourcePicker) {
-      try {
-        const result = await shopify.resourcePicker({
-          type: "product",
-          multiple: false,
-        });
-        if (result && result.length && result[0].images?.[0]?.src) {
-          // If we get a product, extract its first image
-          return { url: result[0].images[0].src };
-        }
-      } catch (err) {
-        console.warn("product picker fallback failed", err);
-      }
-    }
+      resourcePicker.subscribe(ResourcePicker.Action.CANCEL, () => {
+        resourcePicker.unsubscribe();
+      });
 
-    console.error("No working media picker method found");
-    return null;
+      // Open the picker
+      resourcePicker.dispatch(ResourcePicker.Action.OPEN);
+    } catch (error) {
+      console.error("Failed to open Shopify media picker", error);
+      alert("Unable to open media picker. Check console for details.");
+    }
   };
 
-  const handleMediaClick = async (index) => {
-    const selected = await openMediaPicker();
-    if (selected) {
-      const imageUrl =
-        selected.url ||
-        selected.preview?.image?.url ||
-        selected.originalSrc ||
-        selected.src;
-      if (imageUrl) {
-        updateValue(index, "image", imageUrl);
-      } else {
-        console.warn("Selected item has no image URL", selected);
-      }
-    } else {
-      alert("Unable to open media picker. Check console for errors.");
-    }
+  const handleMediaClick = (index) => {
+    openMediaPicker(index);
   };
+
+  // Cleanup blob URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      Object.values(blobUrls).forEach((url) => {
+        if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+      });
+    };
+  }, []);
+
+  // Update blobUrls when values change (to track for cleanup)
+  useEffect(() => {
+    const newBlobUrls = {};
+    values.forEach((val, idx) => {
+      if (val.image && val.image.startsWith("blob:")) {
+        newBlobUrls[idx] = val.image;
+      }
+    });
+    setBlobUrls(newBlobUrls);
+  }, [values]);
 
   return (
     <>
@@ -1630,6 +1644,12 @@ function ChoiceOptionEditor({
                     src={item.image}
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
+                    onError={(e) => {
+                      // If blob URL fails, show placeholder
+                      if (item.image.startsWith("blob:")) {
+                        e.target.style.display = "none";
+                      }
+                    }}
                   />
                 ) : null}
                 {!item.image ? <span>Image</span> : null}
