@@ -587,7 +587,7 @@
 
       <img
         src="${imageUrl}"
-        alt="Uploaded design"
+        alt="${fileName || "Uploaded design"}"
         draggable="false"
       >
 
