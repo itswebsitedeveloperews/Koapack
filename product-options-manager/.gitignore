@@ -1,3 +1,5 @@
+# Ignore product-options-manager.zip and other large files
+product-options-manager.zip
 node_modules
 
 # macOS
