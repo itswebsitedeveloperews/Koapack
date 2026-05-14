@@ -2,8 +2,6 @@ import { useMemo, useState, useEffect } from "react";
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
-import { useAppBridge } from "@shopify/app-bridge-react";
-
 import db from "../db.server";
 
 export const loader = async ({ request, params }) => {
