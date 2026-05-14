@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import { ResourcePicker } from "@shopify/app-bridge/actions";
+// No need to import ResourcePicker from actions
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
@@ -1529,28 +1529,39 @@ function ChoiceOptionEditor({
     input.click();
   };
 
+  // Use shopify.resourcePicker – the recommended method for the React bridge
   const openMediaPicker = async (index) => {
     if (!shopify?.resourcePicker) {
-      console.error("resourcePicker not available");
+      console.error("Shopify resourcePicker is not available.");
+      alert("Media picker not available. Please check your App Bridge setup.");
       return;
     }
+
     try {
+      console.log("Opening resource picker...");
       const result = await shopify.resourcePicker({
-        type: "file", // or "image"? Documentation says "file" includes images.
+        type: "file", // "file" includes images; you can also try "image" if available
         multiple: false,
       });
-      if (result && result.length) {
-        const file = result[0];
-        // For images, the URL might be in file.url or file.preview?.image?.url
-        const imageUrl = file.preview?.image?.url || file.url;
+
+      console.log("Picker result:", result);
+
+      if (result && result.length > 0) {
+        const selected = result[0];
+        // For images, the URL is often under selected.preview.image.url or selected.url
+        const imageUrl = selected.preview?.image?.url || selected.url;
         if (imageUrl) {
           updateValue(index, "image", imageUrl);
+          console.log("Image URL set:", imageUrl);
         } else {
-          console.warn("Selected file has no image URL", file);
+          console.warn("Selected file has no image URL", selected);
         }
+      } else {
+        console.log("No file selected.");
       }
-    } catch (err) {
-      console.error("resourcePicker error", err);
+    } catch (error) {
+      console.error("Error calling resourcePicker:", error);
+      alert("Failed to open media picker. See console for details.");
     }
   };
 
@@ -1620,6 +1631,7 @@ function ChoiceOptionEditor({
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
                     onError={(e) => {
+                      // If a blob URL fails to load (e.g., after revocation), hide it gracefully.
                       if (item.image && item.image.startsWith("blob:")) {
                         e.target.style.display = "none";
                       }
