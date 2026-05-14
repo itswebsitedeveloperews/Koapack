@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
-import { useAppBridge } from "@shopify/app-bridge-react";
-// No need to import ResourcePicker from actions
+import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 
@@ -1427,6 +1426,7 @@ function ChoiceOptionEditor({
   const values = field.config?.values || [];
   const [blobUrls, setBlobUrls] = useState({});
 
+  // ---------- Helper to update a single swatch ----------
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
     nextValues[index] = { ...nextValues[index], [key]: value };
@@ -1458,6 +1458,7 @@ function ChoiceOptionEditor({
     });
   };
 
+  // ---------- 1. Local file upload (blob) ----------
   const handleUploadClick = (index) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1475,39 +1476,33 @@ function ChoiceOptionEditor({
     input.click();
   };
 
-  // Use shopify.resourcePicker – the recommended method for the React bridge
+  // ---------- 2. Shopify media picker (using shopify.resourcePicker) ----------
   const openMediaPicker = async (index) => {
     if (!shopify?.resourcePicker) {
       console.error("Shopify resourcePicker is not available.");
-      alert("Media picker not available. Please check your App Bridge setup.");
       return;
     }
 
     try {
-      console.log("Opening resource picker...");
+      // ✅ Correct: type = "file" works for images, videos, and other files.
       const result = await shopify.resourcePicker({
-        type: "file", // "file" includes images; you can also try "image" if available
+        type: "file",
         multiple: false,
       });
 
-      console.log("Picker result:", result);
-
-      if (result && result.length > 0) {
+      if (result && result.length) {
         const selected = result[0];
-        // For images, the URL is often under selected.preview.image.url or selected.url
-        const imageUrl = selected.preview?.image?.url || selected.url;
+        // Shopify file picker returns the URL in the "url" field.
+        const imageUrl = selected.url;
         if (imageUrl) {
           updateValue(index, "image", imageUrl);
-          console.log("Image URL set:", imageUrl);
         } else {
-          console.warn("Selected file has no image URL", selected);
+          console.warn("Selected item has no URL", selected);
         }
-      } else {
-        console.log("No file selected.");
       }
     } catch (error) {
-      console.error("Error calling resourcePicker:", error);
-      alert("Failed to open media picker. See console for details.");
+      console.error("Error calling shopify.resourcePicker:", error);
+      alert("Could not open media picker. See console for details.");
     }
   };
 
@@ -1515,7 +1510,7 @@ function ChoiceOptionEditor({
     openMediaPicker(index);
   };
 
-  // Cleanup blob URLs when component unmounts
+  // ---------- Clean up blob URLs when the component unmounts ----------
   useEffect(() => {
     return () => {
       Object.values(blobUrls).forEach((url) => {
@@ -1524,7 +1519,6 @@ function ChoiceOptionEditor({
     };
   }, [blobUrls]);
 
-  // Track blob URLs for cleanup
   useEffect(() => {
     const newBlobUrls = {};
     values.forEach((val, idx) => {
@@ -1577,7 +1571,7 @@ function ChoiceOptionEditor({
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
                     onError={(e) => {
-                      // If a blob URL fails to load (e.g., after revocation), hide it gracefully.
+                      // Hide broken blob images gracefully
                       if (item.image && item.image.startsWith("blob:")) {
                         e.target.style.display = "none";
                       }
@@ -1600,7 +1594,7 @@ function ChoiceOptionEditor({
                     style={smallLightButtonStyle}
                     onClick={() => handleMediaClick(index)}
                   >
-                    Media
+                    Select from Media
                   </button>
                 ) : null}
               </div>
