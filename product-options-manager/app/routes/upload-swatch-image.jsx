@@ -150,6 +150,24 @@ export const action = async ({ request }) => {
     return Response.json({ ok: true, url });
   } catch (e) {
     console.error("Swatch image upload failed:", e);
+    if (isShopifyFileScopeError(e)) {
+      return Response.json(
+        {
+          ok: false,
+          error:
+            "Missing Shopify Files permission. Add read_files/write_files scopes, then restart the app and reauthorize it in Shopify.",
+        },
+        { status: 403 },
+      );
+    }
     return Response.json({ ok: false, error: "Upload failed" }, { status: 500 });
   }
 };
+
+function isShopifyFileScopeError(error) {
+  const message = String(error?.message || error || "");
+  return (
+    message.includes("Access denied") &&
+    (message.includes("stagedUploadsCreate") || message.includes("filesCreate"))
+  );
+}

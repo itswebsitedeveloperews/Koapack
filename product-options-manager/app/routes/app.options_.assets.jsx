@@ -18,7 +18,17 @@ export const action = async ({ request }) => {
     throw new Response("Image file is required", { status: 400 });
   }
 
-  await uploadImageToShopifyFiles(admin, file);
+  try {
+    await uploadImageToShopifyFiles(admin, file);
+  } catch (error) {
+    if (isShopifyFileScopeError(error)) {
+      throw new Response(
+        "Missing Shopify Files permission. Add read_files/write_files scopes, then restart the app and reauthorize it in Shopify.",
+        { status: 403 },
+      );
+    }
+    throw error;
+  }
 
   return redirect("/app/options/assets");
 };
@@ -233,6 +243,14 @@ async function uploadImageToShopifyFiles(admin, file) {
   }
 
   return payload?.data?.filesCreate?.files?.[0];
+}
+
+function isShopifyFileScopeError(error) {
+  const message = String(error?.message || error || "");
+  return (
+    message.includes("Access denied") &&
+    (message.includes("stagedUploadsCreate") || message.includes("filesCreate"))
+  );
 }
 
 const inputStyle = {
