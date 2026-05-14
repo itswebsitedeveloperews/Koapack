@@ -3,6 +3,7 @@ import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { ResourcePicker } from "@shopify/app-bridge/actions";
 import { authenticate } from "../shopify.server";
+
 import db from "../db.server";
 
 export const loader = async ({ request }) => {
@@ -1615,6 +1616,7 @@ function ChoiceOptionEditor({
     </>
   );
 }
+
 function PersonalizeOptionEditor({ field, onChange, updateConfig }) {
   const values = field.config?.values || [
     { value: "yes", text: "Add Personalization", price: 0 },
