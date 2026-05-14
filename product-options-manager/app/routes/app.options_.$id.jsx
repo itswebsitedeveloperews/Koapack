@@ -1480,8 +1480,6 @@ function ChoiceOptionEditor({
   shopifyMediaImages = [],
 }) {
   const values = field.config?.values || [];
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [pendingIndex, setPendingIndex] = useState(null);
 
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
@@ -1525,9 +1523,29 @@ function ChoiceOptionEditor({
     input.click();
   };
 
-  const handleMediaClick = (index) => {
-    setPendingIndex(index);
-    setPickerOpen(true);
+  const handleMediaClick = async (index) => {
+    if (!shopify?.resourcePicker) {
+      console.warn("Shopify resourcePicker not available");
+      return;
+    }
+
+    try {
+      const selected = await shopify.resourcePicker({
+        type: "file",
+        multiple: false,
+      });
+
+      if (selected && selected.length > 0) {
+        const file = selected[0];
+        // Extract image URL – it may be under preview.image.url or directly url
+        const imageUrl = file.preview?.image?.url || file.url;
+        if (imageUrl) {
+          updateValue(index, "image", imageUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to open media picker", error);
+    }
   };
 
   return (
@@ -1645,23 +1663,6 @@ function ChoiceOptionEditor({
           </button>
         </div>
       ))}
-
-      <ResourcePicker
-        resourceType="file"
-        open={pickerOpen}
-        onCancel={() => setPickerOpen(false)}
-        onSelection={(payload) => {
-          setPickerOpen(false);
-          if (payload.selection?.length && pendingIndex !== null) {
-            const selected = payload.selection[0];
-            const imageUrl = selected.preview?.image?.url || selected.url;
-            if (imageUrl) {
-              updateValue(pendingIndex, "image", imageUrl);
-            }
-            setPendingIndex(null);
-          }
-        }}
-      />
 
       <button type="button" style={addDiscountButtonStyle} onClick={addValue}>
         + Add value
