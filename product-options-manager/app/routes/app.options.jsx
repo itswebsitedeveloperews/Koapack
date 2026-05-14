@@ -91,6 +91,9 @@ export default function ProductOptionsPage() {
       <s-button slot="primary-action" href="/app/options/new" variant="primary">
         Add group
       </s-button>
+      <s-button slot="secondary-actions" href="/app/options/assets">
+        Assets
+      </s-button>
 
       {groups.length === 0 ? (
         <s-section heading="Create your first option group">

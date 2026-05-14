@@ -1109,6 +1109,7 @@ function ConfigEditor({
         onChange={onChange}
         updateConfig={updateConfig}
         mode="image"
+        shopifyMediaImages={shopifyMediaImages}
       />
     );
   }
@@ -1153,6 +1154,7 @@ function ConfigEditor({
         field={{ ...field, type }}
         onChange={onChange}
         updateConfig={updateConfig}
+        shopifyMediaImages={shopifyMediaImages}
       />
     );
   }
@@ -2171,7 +2173,12 @@ function DimensionOptionEditor({ field, onChange, updateConfig }) {
   );
 }
 
-function ImageLibraryOptionEditor({ field, onChange, updateConfig }) {
+function ImageLibraryOptionEditor({
+  field,
+  onChange,
+  updateConfig,
+  shopifyMediaImages = [],
+}) {
   const categories = field.config?.categories ||
     field.config?.values || [{ value: "", text: "", image: "", list: "" }];
 
@@ -2289,9 +2296,40 @@ function ImageLibraryOptionEditor({ field, onChange, updateConfig }) {
         <div key={index} style={imageLibraryRowStyle}>
           <div style={imageCellStyle}>
             <span>▧</span>
-            <button type="button" style={smallDarkButtonStyle}>
-              Upload
-            </button>
+            {item.image ? (
+              <img
+                src={item.image}
+                alt={item.text || item.value || "Selected asset"}
+                style={assetThumbStyle}
+              />
+            ) : null}
+            {shopifyMediaImages.length > 0 ? (
+              <select
+                aria-label="Select uploaded image"
+                style={{ ...mediaSelectStyle, gridColumn: "2" }}
+                value=""
+                onChange={(event) => {
+                  const imageUrl = event.target.value;
+                  if (imageUrl) updateCategory(index, "image", imageUrl);
+                }}
+              >
+                <option value="">Media</option>
+                {shopifyMediaImages.map((image, mediaIndex) => (
+                  <option
+                    key={image.id || image.url || mediaIndex}
+                    value={image.url}
+                  >
+                    {image.alt ||
+                      image.url?.split("/").pop()?.split("?")[0] ||
+                      `Image ${mediaIndex + 1}`}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <a style={assetLinkStyle} href="/app/options/assets">
+                Add asset
+              </a>
+            )}
           </div>
           <input
             style={inputStyle}
@@ -3918,6 +3956,20 @@ const mediaSelectStyle = {
   height: "32px",
   padding: "4px 8px",
   fontSize: "12px",
+};
+const assetThumbStyle = {
+  gridColumn: "1",
+  gridRow: "1",
+  width: "48px",
+  height: "48px",
+  objectFit: "cover",
+  border: "1px solid #dfe3e8",
+  borderRadius: "6px",
+};
+const assetLinkStyle = {
+  color: "#005bd3",
+  fontSize: "12px",
+  fontWeight: 600,
 };
 const priceGroupHeaderStyle = {
   display: "grid",
