@@ -724,13 +724,20 @@
           null;
       }
 
-      if (swatchImage) {
+      // blob: URLs are session-only (created via URL.createObjectURL) and will 404 after reload
+      if (swatchImage && !isBlobUrl(swatchImage)) {
         button.dataset.pomSwatchImage = swatchImage;
       }
 
       if (swatchBg) {
         button.style.setProperty("--pom-swatch--background", swatchBg);
         button.classList.add("color-swatche");
+      }
+
+      // blob: URLs are session-only (created via URL.createObjectURL) and will 404
+      // blob: URLs are session-only (created via URL.createObjectURL) and will 404 after reload/navigation.
+      function isBlobUrl(url) {
+        return typeof url === "string" && url.startsWith("blob:");
       }
 
       const labelText =
