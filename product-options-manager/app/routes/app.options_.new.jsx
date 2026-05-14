@@ -1458,39 +1458,81 @@ function ChoiceOptionEditor({
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-
     input.addEventListener("change", () => {
       const file = input.files?.[0];
       if (!file) return;
       const imageUrl = URL.createObjectURL(file);
       updateValue(index, "image", imageUrl);
     });
-
     input.click();
   };
 
-  const handleMediaClick = async (index) => {
-    if (!shopify?.resourcePicker) {
-      console.warn("Shopify resourcePicker not available");
-      return;
+  // Reliable media picker with fallbacks
+  const openMediaPicker = async () => {
+    // Try multiple picker methods
+    const pickerOptions = { multiple: false, accept: "image/*", type: "image" };
+
+    // 1. Try shopify.resourcePicker (most common)
+    if (shopify?.resourcePicker) {
+      try {
+        const result = await shopify.resourcePicker({
+          type: "file",
+          multiple: false,
+        });
+        if (result && result.length) return result[0];
+      } catch (err) {
+        console.warn("resourcePicker failed", err);
+      }
     }
 
-    try {
-      const selected = await shopify.resourcePicker({
-        type: "file",
-        multiple: false,
-      });
-
-      if (selected && selected.length > 0) {
-        const file = selected[0];
-        // Extract image URL – it may be under preview.image.url or directly url
-        const imageUrl = file.preview?.image?.url || file.url;
-        if (imageUrl) {
-          updateValue(index, "image", imageUrl);
+    // 2. Try filePicker / mediaPicker (older App Bridge)
+    const legacyMethods = ["filePicker", "mediaPicker"];
+    for (const method of legacyMethods) {
+      if (typeof shopify?.[method] === "function") {
+        try {
+          const result = await shopify[method](pickerOptions);
+          if (result) return result;
+        } catch (err) {
+          console.warn(`${method} failed`, err);
         }
       }
-    } catch (error) {
-      console.error("Failed to open media picker", error);
+    }
+
+    // 3. Try resourcePicker with type "product" (unlikely but fallback)
+    if (shopify?.resourcePicker) {
+      try {
+        const result = await shopify.resourcePicker({
+          type: "product",
+          multiple: false,
+        });
+        if (result && result.length && result[0].images?.[0]?.src) {
+          // If we get a product, extract its first image
+          return { url: result[0].images[0].src };
+        }
+      } catch (err) {
+        console.warn("product picker fallback failed", err);
+      }
+    }
+
+    console.error("No working media picker method found");
+    return null;
+  };
+
+  const handleMediaClick = async (index) => {
+    const selected = await openMediaPicker();
+    if (selected) {
+      const imageUrl =
+        selected.url ||
+        selected.preview?.image?.url ||
+        selected.originalSrc ||
+        selected.src;
+      if (imageUrl) {
+        updateValue(index, "image", imageUrl);
+      } else {
+        console.warn("Selected item has no image URL", selected);
+      }
+    } else {
+      alert("Unable to open media picker. Check console for errors.");
     }
   };
 
