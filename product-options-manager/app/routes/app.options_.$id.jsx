@@ -86,10 +86,11 @@ async function loadShopifyMediaImages(admin) {
   try {
     const response = await admin.graphql(`#graphql
       query ProductOptionMediaImages {
-        files(first: 50, mediaType: IMAGE, sortKey: CREATED_AT, reverse: true) {
+        files(first: 50, query: "media_type:IMAGE", sortKey: CREATED_AT, reverse: true) {
           nodes {
             id
             alt
+            createdAt
             ... on MediaImage {
               image {
                 url
@@ -1473,13 +1474,18 @@ function ChoiceOptionEditor({
   onChange,
   updateConfig,
   mode,
-  shopify,
   shopifyMediaImages = [],
 }) {
-  const values = field.config?.values || [];
-  const [showMediaGrid, setShowMediaGrid] = useState(false);
-  const [pendingIndex, setPendingIndex] = useState(null);
+  const values = useMemo(
+    () => field.config?.values || [],
+    [field.config?.values],
+  );
+  const [blobUrls, setBlobUrls] = useState({});
+  const [mediaImages, setMediaImages] = useState(() =>
+    shopifyMediaImages.filter((image) => image?.url),
+  );
 
+  // ---------- Helper to update a single swatch ----------
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
     nextValues[index] = { ...nextValues[index], [key]: value };
@@ -1511,45 +1517,77 @@ function ChoiceOptionEditor({
     });
   };
 
-  const handleUploadClick = (index) => {
+  const rememberMediaImage = (image) => {
+    if (!image?.url) return;
+    setMediaImages((current) =>
+      current.some((currentImage) => currentImage.url === image.url)
+        ? current
+        : [image, ...current],
+    );
+  };
+
+  // ---------- 1. Upload local file to Shopify Files ----------
+  const handleUploadClick = async (index) => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
-    input.addEventListener("change", () => {
+
+    input.addEventListener("change", async () => {
       const file = input.files?.[0];
       if (!file) return;
+
       const oldUrl = values[index]?.image;
       if (oldUrl && oldUrl.startsWith("blob:")) {
         URL.revokeObjectURL(oldUrl);
       }
-      const newUrl = URL.createObjectURL(file);
-      updateValue(index, "image", newUrl);
+
+      const fd = new FormData();
+      fd.append("file", file);
+
+      try {
+        const res = await fetch("/upload-swatch-image", {
+          method: "POST",
+          body: fd,
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data?.ok || !data?.url) {
+          throw new Error(data?.error || "Upload failed");
+        }
+
+        updateValue(index, "image", data.url);
+        rememberMediaImage({ url: data.url, alt: file.name });
+      } catch (err) {
+        console.error("Upload swatch image failed:", err);
+        alert(String(err?.message || err || "Upload failed"));
+      }
     });
+
     input.click();
   };
 
-  const handleMediaClick = (index) => {
-    setPendingIndex(index);
-    setShowMediaGrid(true);
-  };
-
-  const selectMediaImage = (imageUrl) => {
-    if (pendingIndex !== null) {
-      updateValue(pendingIndex, "image", imageUrl);
-      setShowMediaGrid(false);
-      setPendingIndex(null);
-    }
-  };
-
-  // Cleanup blob URLs
+  // ---------- Clean up blob URLs when the component unmounts ----------
   useEffect(() => {
-    const blobUrls = values
-      .map((v) => v.image)
-      .filter((url) => url && url.startsWith("blob:"));
     return () => {
-      blobUrls.forEach((url) => URL.revokeObjectURL(url));
+      Object.values(blobUrls).forEach((url) => {
+        if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
+      });
     };
+  }, [blobUrls]);
+
+  useEffect(() => {
+    const newBlobUrls = {};
+    values.forEach((val, idx) => {
+      if (val.image && val.image.startsWith("blob:")) {
+        newBlobUrls[idx] = val.image;
+      }
+    });
+    setBlobUrls(newBlobUrls);
   }, [values]);
+
+  useEffect(() => {
+    setMediaImages(shopifyMediaImages.filter((image) => image?.url));
+  }, [shopifyMediaImages]);
 
   return (
     <>
@@ -1593,6 +1631,7 @@ function ChoiceOptionEditor({
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
                     onError={(e) => {
+                      // Hide broken blob images gracefully
                       if (item.image && item.image.startsWith("blob:")) {
                         e.target.style.display = "none";
                       }
@@ -1609,14 +1648,28 @@ function ChoiceOptionEditor({
                 >
                   Upload
                 </button>
-                {mode === "color_image" ? (
-                  <button
-                    type="button"
-                    style={smallLightButtonStyle}
-                    onClick={() => handleMediaClick(index)}
+                {mediaImages.length > 0 ? (
+                  <select
+                    aria-label="Select uploaded image"
+                    style={mediaSelectStyle}
+                    value=""
+                    onChange={(event) => {
+                      const imageUrl = event.target.value;
+                      if (imageUrl) updateValue(index, "image", imageUrl);
+                    }}
                   >
-                    Select from Media
-                  </button>
+                    <option value="">Media</option>
+                    {mediaImages.map((image, mediaIndex) => (
+                      <option
+                        key={image.id || image.url || mediaIndex}
+                        value={image.url}
+                      >
+                        {image.alt ||
+                          image.url?.split("/").pop()?.split("?")[0] ||
+                          `Image ${mediaIndex + 1}`}
+                      </option>
+                    ))}
+                  </select>
                 ) : null}
               </div>
             </div>
@@ -1671,43 +1724,6 @@ function ChoiceOptionEditor({
           </button>
         </div>
       ))}
-
-      {/* Media image grid modal */}
-      {showMediaGrid && (
-        <div style={mediaPickerStyle}>
-          <div style={mediaPickerHeaderStyle}>
-            <strong>Shopify media images</strong>
-            <button
-              type="button"
-              style={plainButtonStyle}
-              onClick={() => setShowMediaGrid(false)}
-            >
-              Close
-            </button>
-          </div>
-          {shopifyMediaImages.length ? (
-            <div style={mediaGridStyle}>
-              {shopifyMediaImages.map((image) => (
-                <button
-                  key={image.id || image.url}
-                  type="button"
-                  style={mediaImageButtonStyle}
-                  onClick={() => selectMediaImage(image.url)}
-                  title={image.alt || "Select image"}
-                >
-                  <img
-                    src={image.url}
-                    alt={image.alt || "Shopify media"}
-                    style={mediaImageStyle}
-                  />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p style={helpTextStyle}>No Shopify media images found.</p>
-          )}
-        </div>
-      )}
 
       <button type="button" style={addDiscountButtonStyle} onClick={addValue}>
         + Add value
@@ -3139,7 +3155,7 @@ function AdvancedOptionEditor({ field, updateConfig }) {
             <option value="">Select dimension option</option>
           </select>
           <p style={helpTextStyle}>
-            Connect to product option of type "Dimension"
+            Connect to product option of type &quot;Dimension&quot;
           </p>
         </Field>
 
@@ -3466,8 +3482,8 @@ function ChoiceAdvancedSettings({
           }
         />
         <p style={helpTextStyle}>
-          Split each Text field into Group/Text. Enter ":" to split "Color:Red"
-          into group "Color" and text "Red"
+          Split each Text field into Group/Text. Enter &quot;:&quot; to split
+          &quot;Color:Red&quot; into group &quot;Color&quot; and text &quot;Red&quot;
         </p>
       </Field>
 
@@ -3984,15 +4000,11 @@ const smallDarkButtonStyle = {
   font: "inherit",
   fontWeight: 600,
 };
-const smallLightButtonStyle = {
-  border: "1px solid #dfe3e8",
-  borderRadius: "8px",
-  padding: "6px 10px",
-  background: "#ffffff",
-  color: "#202223",
-  cursor: "pointer",
-  font: "inherit",
-  fontWeight: 600,
+const mediaSelectStyle = {
+  ...inputStyle,
+  height: "32px",
+  padding: "4px 8px",
+  fontSize: "12px",
 };
 const priceGroupHeaderStyle = {
   display: "grid",
@@ -4309,42 +4321,4 @@ const successInfoBoxStyle = {
   color: "#0c5132",
   marginTop: "16px",
   marginBottom: "16px",
-};
-
-const mediaPickerStyle = {
-  border: "1px solid #dfe3e8",
-  borderRadius: "8px",
-  padding: "12px",
-  margin: "12px 0",
-  background: "#ffffff",
-};
-
-const mediaPickerHeaderStyle = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "12px",
-  marginBottom: "12px",
-};
-
-const mediaGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
-  gap: "8px",
-};
-
-const mediaImageButtonStyle = {
-  border: "1px solid #dfe3e8",
-  borderRadius: "8px",
-  padding: "4px",
-  background: "#ffffff",
-  cursor: "pointer",
-  aspectRatio: "1 / 1",
-};
-
-const mediaImageStyle = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  borderRadius: "5px",
 };
