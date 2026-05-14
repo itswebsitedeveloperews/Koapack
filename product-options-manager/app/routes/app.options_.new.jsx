@@ -48,11 +48,10 @@ async function loadShopifyMediaImages(admin) {
   try {
     const response = await admin.graphql(`#graphql
       query ProductOptionMediaImages {
-        files(first: 50, query: "media_type:IMAGE", sortKey: CREATED_AT, reverse: true) {
+        files(first: 50, mediaType: IMAGE, sortKey: CREATED_AT, reverse: true) {
           nodes {
             id
             alt
-            createdAt
             ... on MediaImage {
               image {
                 url
@@ -1424,9 +1423,9 @@ function ChoiceOptionEditor({
   shopifyMediaImages = [],
 }) {
   const values = field.config?.values || [];
-  const [blobUrls, setBlobUrls] = useState({});
+  const [showMediaGrid, setShowMediaGrid] = useState(false);
+  const [pendingIndex, setPendingIndex] = useState(null);
 
-  // ---------- Helper to update a single swatch ----------
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
     nextValues[index] = { ...nextValues[index], [key]: value };
@@ -1458,7 +1457,6 @@ function ChoiceOptionEditor({
     });
   };
 
-  // ---------- 1. Local file upload (blob) ----------
   const handleUploadClick = (index) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -1476,57 +1474,27 @@ function ChoiceOptionEditor({
     input.click();
   };
 
-  // ---------- 2. Shopify media picker (using shopify.resourcePicker) ----------
-  const openMediaPicker = async (index) => {
-    if (!shopify?.resourcePicker) {
-      console.error("Shopify resourcePicker is not available.");
-      return;
-    }
-
-    try {
-      // ✅ Correct: type = "file" works for images, videos, and other files.
-      const result = await shopify.resourcePicker({
-        type: "file",
-        multiple: false,
-      });
-
-      if (result && result.length) {
-        const selected = result[0];
-        // Shopify file picker returns the URL in the "url" field.
-        const imageUrl = selected.url;
-        if (imageUrl) {
-          updateValue(index, "image", imageUrl);
-        } else {
-          console.warn("Selected item has no URL", selected);
-        }
-      }
-    } catch (error) {
-      console.error("Error calling shopify.resourcePicker:", error);
-      alert("Could not open media picker. See console for details.");
-    }
-  };
-
   const handleMediaClick = (index) => {
-    openMediaPicker(index);
+    setPendingIndex(index);
+    setShowMediaGrid(true);
   };
 
-  // ---------- Clean up blob URLs when the component unmounts ----------
-  useEffect(() => {
-    return () => {
-      Object.values(blobUrls).forEach((url) => {
-        if (url && url.startsWith("blob:")) URL.revokeObjectURL(url);
-      });
-    };
-  }, [blobUrls]);
+  const selectMediaImage = (imageUrl) => {
+    if (pendingIndex !== null) {
+      updateValue(pendingIndex, "image", imageUrl);
+      setShowMediaGrid(false);
+      setPendingIndex(null);
+    }
+  };
 
+  // Cleanup blob URLs
   useEffect(() => {
-    const newBlobUrls = {};
-    values.forEach((val, idx) => {
-      if (val.image && val.image.startsWith("blob:")) {
-        newBlobUrls[idx] = val.image;
-      }
-    });
-    setBlobUrls(newBlobUrls);
+    const blobUrls = values
+      .map((v) => v.image)
+      .filter((url) => url && url.startsWith("blob:"));
+    return () => {
+      blobUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, [values]);
 
   return (
@@ -1571,7 +1539,6 @@ function ChoiceOptionEditor({
                     alt={item.text || item.value || "Selected swatch"}
                     style={imagePreviewImgStyle}
                     onError={(e) => {
-                      // Hide broken blob images gracefully
                       if (item.image && item.image.startsWith("blob:")) {
                         e.target.style.display = "none";
                       }
@@ -1650,6 +1617,43 @@ function ChoiceOptionEditor({
           </button>
         </div>
       ))}
+
+      {/* Media image grid modal */}
+      {showMediaGrid && (
+        <div style={mediaPickerStyle}>
+          <div style={mediaPickerHeaderStyle}>
+            <strong>Shopify media images</strong>
+            <button
+              type="button"
+              style={plainButtonStyle}
+              onClick={() => setShowMediaGrid(false)}
+            >
+              Close
+            </button>
+          </div>
+          {shopifyMediaImages.length ? (
+            <div style={mediaGridStyle}>
+              {shopifyMediaImages.map((image) => (
+                <button
+                  key={image.id || image.url}
+                  type="button"
+                  style={mediaImageButtonStyle}
+                  onClick={() => selectMediaImage(image.url)}
+                  title={image.alt || "Select image"}
+                >
+                  <img
+                    src={image.url}
+                    alt={image.alt || "Shopify media"}
+                    style={mediaImageStyle}
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p style={helpTextStyle}>No Shopify media images found.</p>
+          )}
+        </div>
+      )}
 
       <button type="button" style={addDiscountButtonStyle} onClick={addValue}>
         + Add value
@@ -4218,4 +4222,42 @@ const successInfoBoxStyle = {
   color: "#0c5132",
   marginTop: "16px",
   marginBottom: "16px",
+};
+
+const mediaPickerStyle = {
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  padding: "12px",
+  margin: "12px 0",
+  background: "#ffffff",
+};
+
+const mediaPickerHeaderStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
+  marginBottom: "12px",
+};
+
+const mediaGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
+  gap: "8px",
+};
+
+const mediaImageButtonStyle = {
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  padding: "4px",
+  background: "#ffffff",
+  cursor: "pointer",
+  aspectRatio: "1 / 1",
+};
+
+const mediaImageStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "5px",
 };
