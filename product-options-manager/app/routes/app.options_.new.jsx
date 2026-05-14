@@ -1,8 +1,16 @@
 import { useMemo, useState } from "react";
-import { Form, redirect, useNavigation } from "react-router";
+import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+
+export const loader = async ({ request }) => {
+  const { admin } = await authenticate.admin(request);
+
+  return {
+    shopifyMediaImages: await loadShopifyMediaImages(admin),
+  };
+};
 
 export const action = async ({ request }) => {
   await authenticate.admin(request);
@@ -36,7 +44,46 @@ export const action = async ({ request }) => {
   return redirect("/app/options");
 };
 
+async function loadShopifyMediaImages(admin) {
+  try {
+    const response = await admin.graphql(`#graphql
+      query ProductOptionMediaImages {
+        files(first: 50, query: "media_type:IMAGE", sortKey: CREATED_AT, reverse: true) {
+          nodes {
+            id
+            alt
+            createdAt
+            ... on MediaImage {
+              image {
+                url
+                altText
+                width
+                height
+              }
+            }
+          }
+        }
+      }
+    `);
+    const payload = await response.json();
+
+    return (payload.data?.files?.nodes || [])
+      .map((file) => ({
+        id: file.id,
+        url: file.image?.url,
+        alt: file.image?.altText || file.alt || "",
+        width: file.image?.width,
+        height: file.image?.height,
+      }))
+      .filter((image) => image.url);
+  } catch (error) {
+    console.error("Unable to load Shopify media images", error);
+    return [];
+  }
+}
+
 export default function NewOptionGroupPage() {
+  const { shopifyMediaImages = [] } = useLoaderData();
   const shopify = useAppBridge();
   const navigation = useNavigation();
 
@@ -64,6 +111,7 @@ export default function NewOptionGroupPage() {
       setManualProduct={setManualProduct}
       isSubmitting={navigation.state === "submitting"}
       shopify={shopify}
+      shopifyMediaImages={shopifyMediaImages}
     />
   );
 }
@@ -555,6 +603,7 @@ function ProductOptionGroupForm({
   setManualProduct,
   isSubmitting,
   shopify,
+  shopifyMediaImages,
 }) {
   const fieldsJson = useMemo(() => JSON.stringify(fields), [fields]);
   const targetsJson = useMemo(() => JSON.stringify(targets), [targets]);
@@ -719,6 +768,8 @@ function ProductOptionGroupForm({
                   onDragEnd={handleFieldDragEnd}
                   onChange={(updates) => updateField(field.id, updates)}
                   onRemove={() => removeField(field.id)}
+                  shopify={shopify}
+                  shopifyMediaImages={shopifyMediaImages}
                 />
               ))}
             </div>
@@ -832,6 +883,8 @@ function OptionFieldEditor({
   onDragEnd,
   onChange,
   onRemove,
+  shopify,
+  shopifyMediaImages,
 }) {
   const updateConfig = (updates) => {
     onChange({ config: { ...(field.config || {}), ...updates } });
@@ -967,6 +1020,8 @@ function OptionFieldEditor({
               field={field}
               onChange={onChange}
               updateConfig={updateConfig}
+              shopify={shopify}
+              shopifyMediaImages={shopifyMediaImages}
             />
           )}
         </div>
@@ -983,7 +1038,13 @@ function normalizeType(value) {
     .replace(/\s+/g, "_");
 }
 
-function ConfigEditor({ field, onChange, updateConfig }) {
+function ConfigEditor({
+  field,
+  onChange,
+  updateConfig,
+  shopify,
+  shopifyMediaImages,
+}) {
   const type = normalizeType(field.type);
 
   if (type === "personalize") {
@@ -1070,6 +1131,8 @@ function ConfigEditor({ field, onChange, updateConfig }) {
         onChange={onChange}
         updateConfig={updateConfig}
         mode="color_image"
+        shopify={shopify}
+        shopifyMediaImages={shopifyMediaImages}
       />
     );
   }
@@ -1352,8 +1415,16 @@ function BasicOptionEditor({ field, onChange, updateConfig }) {
   );
 }
 
-function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
+function ChoiceOptionEditor({
+  field,
+  onChange,
+  updateConfig,
+  mode,
+  shopify,
+  shopifyMediaImages = [],
+}) {
   const values = field.config?.values || [];
+  const [mediaPickerIndex, setMediaPickerIndex] = useState(null);
 
   const updateValue = (index, key, value) => {
     const nextValues = [...values];
@@ -1405,6 +1476,24 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
     input.click();
   };
 
+  const selectShopifyMediaImage = (index, image) => {
+    updateValue(index, "image", image.url);
+    setMediaPickerIndex(null);
+  };
+
+  const handleMediaClick = async (index) => {
+    const selected = await openShopifyMediaPicker(shopify);
+    const image = getSelectedMediaImage(selected);
+
+    if (image?.url) {
+      updateValue(index, "image", image.url);
+      setMediaPickerIndex(null);
+      return;
+    }
+
+    setMediaPickerIndex(index);
+  };
+
   return (
     <>
       <CommonNameLabel field={field} onChange={onChange} />
@@ -1440,14 +1529,34 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
         <div key={index} style={choiceRowStyle(mode)}>
           {mode.includes("image") ? (
             <div style={imageCellStyle}>
-              <span>▧</span>
-              <button
-                type="button"
-                style={smallDarkButtonStyle}
-                onClick={() => handleUploadClick(index)}
-              >
-                Upload
-              </button>
+              <div style={imagePreviewStyle}>
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.text || item.value || "Selected swatch"}
+                    style={imagePreviewImgStyle}
+                  />
+                ) : null}
+                {!item.image ? <span>Image</span> : null}
+              </div>
+              <div style={imageActionsStyle}>
+                <button
+                  type="button"
+                  style={smallDarkButtonStyle}
+                  onClick={() => handleUploadClick(index)}
+                >
+                  Upload
+                </button>
+                {mode === "color_image" ? (
+                  <button
+                    type="button"
+                    style={smallLightButtonStyle}
+                    onClick={() => handleMediaClick(index)}
+                  >
+                    Media
+                  </button>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
@@ -1500,6 +1609,42 @@ function ChoiceOptionEditor({ field, onChange, updateConfig, mode }) {
           </button>
         </div>
       ))}
+
+      {mediaPickerIndex !== null ? (
+        <div style={mediaPickerStyle}>
+          <div style={mediaPickerHeaderStyle}>
+            <strong>Shopify media images</strong>
+            <button
+              type="button"
+              style={plainButtonStyle}
+              onClick={() => setMediaPickerIndex(null)}
+            >
+              Close
+            </button>
+          </div>
+          {shopifyMediaImages.length ? (
+            <div style={mediaGridStyle}>
+              {shopifyMediaImages.map((image) => (
+                <button
+                  key={image.id || image.url}
+                  type="button"
+                  style={mediaImageButtonStyle}
+                  onClick={() => selectShopifyMediaImage(mediaPickerIndex, image)}
+                  title={image.alt || "Select image"}
+                >
+                  <img
+                    src={image.url}
+                    alt={image.alt || "Shopify media"}
+                    style={mediaImageStyle}
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p style={helpTextStyle}>No Shopify media images found.</p>
+          )}
+        </div>
+      ) : null}
 
       <button type="button" style={addDiscountButtonStyle} onClick={addValue}>
         + Add value
@@ -3459,6 +3604,70 @@ function cloneConfig(config) {
   return JSON.parse(JSON.stringify(config || {}));
 }
 
+async function openShopifyMediaPicker(shopify) {
+  const pickerOptions = {
+    multiple: false,
+    accept: "image/*",
+    type: "image",
+    fileTypes: ["image"],
+  };
+  const pickerMethods = [
+    shopify?.filePicker,
+    shopify?.mediaPicker,
+    shopify?.files?.pick,
+    shopify?.files?.openPicker,
+  ].filter((method) => typeof method === "function");
+
+  for (const method of pickerMethods) {
+    try {
+      const selected = await method.call(shopify, pickerOptions);
+      if (selected) return selected;
+    } catch (error) {
+      console.warn("Shopify media picker failed", error);
+    }
+  }
+
+  try {
+    return await shopify?.resourcePicker?.({
+      type: "file",
+      multiple: false,
+      filter: { fileType: "IMAGE" },
+    });
+  } catch (error) {
+    console.warn("Shopify file resource picker unavailable", error);
+    return null;
+  }
+}
+
+function getSelectedMediaImage(selected) {
+  const item = Array.isArray(selected)
+    ? selected[0]
+    : selected?.files?.[0] ||
+      selected?.media?.[0] ||
+      selected?.selection?.[0] ||
+      selected?.selected?.[0] ||
+      selected;
+
+  if (!item) return null;
+
+  const url =
+    item.url ||
+    item.preview?.image?.url ||
+    item.previewImage?.url ||
+    item.image?.url ||
+    item.image?.originalSrc ||
+    item.originalSrc ||
+    item.src;
+
+  return url
+    ? {
+        id: item.id,
+        url,
+        alt: item.alt || item.altText || item.image?.altText || "",
+      }
+    : null;
+}
+
 function Field({ label, htmlFor, children }) {
   return (
     <div style={fieldGroupStyle}>
@@ -3702,19 +3911,89 @@ const colorInputStyle = {
 const colorInputSmallStyle = { ...colorInputStyle, height: "36px" };
 const imageCellStyle = {
   display: "grid",
-  gridTemplateColumns: "48px 88px",
+  gridTemplateColumns: "48px 116px",
   gap: "8px",
   alignItems: "center",
+};
+const imagePreviewStyle = {
+  position: "relative",
+  display: "grid",
+  placeItems: "center",
+  width: "48px",
+  height: "48px",
+  border: "1px solid #dfe3e8",
+  borderRadius: "6px",
+  background: "#f6f6f7",
+  color: "#6d7175",
+  fontSize: "11px",
+  overflow: "hidden",
+};
+const imagePreviewImgStyle = {
+  position: "absolute",
+  inset: 0,
+  zIndex: 1,
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  background: "#ffffff",
+};
+const imageActionsStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gap: "4px",
 };
 const smallDarkButtonStyle = {
   border: 0,
   borderRadius: "8px",
-  padding: "8px 12px",
+  padding: "6px 10px",
   background: "#202223",
   color: "white",
   cursor: "pointer",
   font: "inherit",
   fontWeight: 600,
+};
+const smallLightButtonStyle = {
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  padding: "6px 10px",
+  background: "#ffffff",
+  color: "#202223",
+  cursor: "pointer",
+  font: "inherit",
+  fontWeight: 600,
+};
+const mediaPickerStyle = {
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  padding: "12px",
+  margin: "12px 0",
+  background: "#ffffff",
+};
+const mediaPickerHeaderStyle = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "12px",
+  marginBottom: "12px",
+};
+const mediaGridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
+  gap: "8px",
+};
+const mediaImageButtonStyle = {
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  padding: "4px",
+  background: "#ffffff",
+  cursor: "pointer",
+  aspectRatio: "1 / 1",
+};
+const mediaImageStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  borderRadius: "5px",
 };
 const priceGroupHeaderStyle = {
   display: "grid",
