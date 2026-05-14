@@ -45,6 +45,60 @@
     return item ? Number(item.price || 0) : 0;
   }
 
+  function getProductMediaImage() {
+    const activeImage = document.querySelector(
+      "media-gallery .product__media-item.is-active .product__media img",
+    );
+
+    if (activeImage) return activeImage;
+
+    return document.querySelector(
+      "media-gallery .product__media-item .product__media img, .product__media img, .product__media-list img",
+    );
+  }
+
+  function rememberOriginalProductImage(image) {
+    if (!image || image.dataset.pomOriginalSrc) return;
+
+    image.dataset.pomOriginalSrc = image.getAttribute("src") || "";
+    image.dataset.pomOriginalSrcset = image.getAttribute("srcset") || "";
+    image.dataset.pomOriginalSizes = image.getAttribute("sizes") || "";
+  }
+
+  function setProductMediaImage(imageUrl) {
+    const image = getProductMediaImage();
+
+    if (!image || !imageUrl) return;
+
+    rememberOriginalProductImage(image);
+
+    image.removeAttribute("srcset");
+    image.src = imageUrl;
+
+    const modalOpener = image.closest(".product__modal-opener");
+    const zoomButton = modalOpener?.querySelector(".product__media-toggle");
+
+    if (zoomButton) {
+      zoomButton.dataset.pomSwatchImage = imageUrl;
+    }
+  }
+
+  function restoreProductMediaImage() {
+    const image = getProductMediaImage();
+
+    if (!image?.dataset.pomOriginalSrc) return;
+
+    image.src = image.dataset.pomOriginalSrc;
+
+    if (image.dataset.pomOriginalSrcset) {
+      image.setAttribute("srcset", image.dataset.pomOriginalSrcset);
+    }
+
+    if (image.dataset.pomOriginalSizes) {
+      image.setAttribute("sizes", image.dataset.pomOriginalSizes);
+    }
+  }
+
   function updatePrice() {
     const addonTotal = Object.values(selectedPrices).reduce(
       (sum, price) => sum + Number(price || 0),
@@ -670,6 +724,10 @@
           null;
       }
 
+      if (swatchImage) {
+        button.dataset.pomSwatchImage = swatchImage;
+      }
+
       if (swatchBg) {
         button.style.setProperty("--pom-swatch--background", swatchBg);
         button.classList.add("color-swatche");
@@ -732,6 +790,12 @@
         // Ensure active state uses the chosen swatch color (when available)
         if (swatchBg) {
           button.style.setProperty("--pom-swatch--background", swatchBg);
+        }
+
+        if (swatchImage) {
+          setProductMediaImage(swatchImage);
+        } else if (isColorImageSwatchField) {
+          restoreProductMediaImage();
         }
 
         saveSelection(field, item.value || item.text);
