@@ -1,4 +1,3 @@
-import { json } from "react-router";
 import { authenticate } from "../shopify.server";
 
 /**
@@ -12,14 +11,17 @@ export const action = async ({ request }) => {
   const file = formData.get("file");
 
   if (!file || !(file instanceof File)) {
-    return json({ ok: false, error: "Missing file" }, { status: 400 });
+    return Response.json({ ok: false, error: "Missing file" }, { status: 400 });
   }
 
   const originalFilename = String(file.name || "swatch-image");
   const mimeType = String(file.type || "image/*");
 
   if (!mimeType.startsWith("image/")) {
-    return json({ ok: false, error: "Only image uploads are allowed" }, { status: 400 });
+    return Response.json(
+      { ok: false, error: "Only image uploads are allowed" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -59,7 +61,7 @@ export const action = async ({ request }) => {
     const stagedPayload = await stagedResult.json();
     const stagedErrors = stagedPayload?.data?.stagedUploadsCreate?.userErrors || [];
     if (stagedErrors.length) {
-      return json(
+      return Response.json(
         { ok: false, error: stagedErrors.map((e) => e.message).join("; ") },
         { status: 400 },
       );
@@ -67,7 +69,7 @@ export const action = async ({ request }) => {
 
     const stagedTarget = stagedPayload?.data?.stagedUploadsCreate?.stagedTargets?.[0];
     if (!stagedTarget?.url || !stagedTarget?.resourceUrl) {
-      return json(
+      return Response.json(
         { ok: false, error: "Upload target was not returned by Shopify" },
         { status: 500 },
       );
@@ -85,7 +87,7 @@ export const action = async ({ request }) => {
     });
 
     if (!uploadResponse.ok) {
-      return json(
+      return Response.json(
         { ok: false, error: "Shopify staged upload failed" },
         { status: 502 },
       );
@@ -128,7 +130,7 @@ export const action = async ({ request }) => {
     const payload = await result.json();
     const userErrors = payload?.data?.filesCreate?.userErrors || [];
     if (userErrors.length) {
-      return json(
+      return Response.json(
         { ok: false, error: userErrors.map((e) => e.message).join("; ") },
         { status: 400 },
       );
@@ -139,15 +141,15 @@ export const action = async ({ request }) => {
       payload?.data?.filesCreate?.files?.[0]?.url;
 
     if (!url) {
-      return json(
+      return Response.json(
         { ok: false, error: "Upload succeeded but URL was not returned" },
         { status: 500 },
       );
     }
 
-    return json({ ok: true, url });
+    return Response.json({ ok: true, url });
   } catch (e) {
     console.error("Swatch image upload failed:", e);
-    return json({ ok: false, error: "Upload failed" }, { status: 500 });
+    return Response.json({ ok: false, error: "Upload failed" }, { status: 500 });
   }
 };
