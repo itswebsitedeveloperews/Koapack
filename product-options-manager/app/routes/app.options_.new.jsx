@@ -1476,43 +1476,27 @@ function ChoiceOptionEditor({
   };
 
   const openMediaPicker = async (index) => {
-    if (!shopify) {
-      console.error("Shopify App Bridge not available");
+    if (!shopify?.resourcePicker) {
+      console.error("resourcePicker not available");
       return;
     }
-
     try {
-      const resourcePicker = ResourcePicker.create(shopify, {
-        resourceType: ResourcePicker.ResourceType.File,
+      const result = await shopify.resourcePicker({
+        type: "file", // or "image"? Documentation says "file" includes images.
         multiple: false,
-        selectMultiple: false,
-        showHidden: false,
-        options: {
-          accept: "image/*",
-        },
       });
-
-      resourcePicker.subscribe(ResourcePicker.Action.SELECT, (payload) => {
-        if (payload.selection && payload.selection.length > 0) {
-          const selected = payload.selection[0];
-          const imageUrl = selected.preview?.image?.url || selected.url;
-          if (imageUrl) {
-            updateValue(index, "image", imageUrl);
-          } else {
-            console.warn("Selected item has no image URL", selected);
-          }
+      if (result && result.length) {
+        const file = result[0];
+        // For images, the URL might be in file.url or file.preview?.image?.url
+        const imageUrl = file.preview?.image?.url || file.url;
+        if (imageUrl) {
+          updateValue(index, "image", imageUrl);
+        } else {
+          console.warn("Selected file has no image URL", file);
         }
-        resourcePicker.unsubscribe();
-      });
-
-      resourcePicker.subscribe(ResourcePicker.Action.CANCEL, () => {
-        resourcePicker.unsubscribe();
-      });
-
-      resourcePicker.dispatch(ResourcePicker.Action.OPEN);
-    } catch (error) {
-      console.error("Failed to open Shopify media picker", error);
-      alert("Unable to open media picker. See console for details.");
+      }
+    } catch (err) {
+      console.error("resourcePicker error", err);
     }
   };
 
