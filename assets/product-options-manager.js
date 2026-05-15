@@ -149,47 +149,92 @@
   `;
   }
 
-  function checkIfAllRequiredFieldsAreFilled() {
-    const requiredFields = document.querySelectorAll(
-      ".pom-field input[required], .pom-field select[required]",
+  function getFieldKey(field) {
+    return field.label || field.name || "Option";
+  }
+
+  function findAddToCartButtons() {
+    return document.querySelectorAll(
+      "[data-add-to-cart-button], form[action*='/cart/add'] button[type='submit'], form[action*='/cart/add'] input[type='submit']",
     );
+  }
 
-    let allFilled = true;
+  function setFieldInvalid(fieldEl, isInvalid) {
+    fieldEl.classList.toggle("pom-field--invalid", isInvalid);
 
-    requiredFields.forEach((input) => {
-      if (!input.value || input.value === "Required") {
-        allFilled = false;
-      }
-    });
+    let error = fieldEl.querySelector(".pom-field-error");
 
-    const addToCartButton = document.querySelector("[data-add-to-cart-button]");
+    if (!isInvalid) {
+      if (error) error.remove();
+      return;
+    }
 
-    if (addToCartButton) {
-      if (allFilled) {
-        addToCartButton.disabled = false;
-      } else {
-        addToCartButton.disabled = true;
-      }
+    if (!error) {
+      error = document.createElement("div");
+      error.className = "pom-field-error";
+      error.textContent = "This field is required.";
+      fieldEl.appendChild(error);
     }
   }
 
+  function getRequiredFieldValue(fieldEl) {
+    const fileInput = fieldEl.querySelector("input[type='file']");
+
+    if (fileInput) {
+      return fileInput.files?.length ? "selected" : "";
+    }
+
+    const checkedInput = fieldEl.querySelector(
+      "input[type='checkbox']:checked, input[type='radio']:checked",
+    );
+
+    if (checkedInput) return checkedInput.value;
+
+    const input = fieldEl.querySelector("select, textarea, input");
+
+    return input?.value || "";
+  }
+
+  function validateRequiredFields({ showErrors = false } = {}) {
+    const requiredFields = root.querySelectorAll(
+      ".pom-field[data-pom-required='true']",
+    );
+    let firstInvalid = null;
+    let allFilled = true;
+
+    requiredFields.forEach((fieldEl) => {
+      const value = String(getRequiredFieldValue(fieldEl) || "").trim();
+      const isInvalid = !value || value === "Required";
+
+      if (isInvalid) {
+        allFilled = false;
+        if (!firstInvalid) firstInvalid = fieldEl;
+      }
+
+      setFieldInvalid(fieldEl, showErrors && isInvalid);
+    });
+
+    findAddToCartButtons().forEach((button) => {
+      button.disabled = !allFilled;
+      button.setAttribute("aria-disabled", String(!allFilled));
+    });
+
+    if (showErrors && firstInvalid) {
+      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInvalid.querySelector("input, select, textarea, button")?.focus();
+    }
+
+    return allFilled;
+  }
+
   function saveSelection(field, value) {
-    const key = field.label || field.name || "Option";
+    const key = getFieldKey(field);
 
     selectedOptions[key] = value;
     selectedPrices[key] = getOptionPrice(field, value);
 
-    // Check if the field is required
-    if (field.required && !value) {
-      // If value is empty for a required field, set a flag to block adding to cart
-      selectedOptions[key] = "Required";
-    } else {
-      // If the field is filled, make sure it's valid
-      delete selectedOptions[key];
-    }
-
     updatePrice();
-    checkIfAllRequiredFieldsAreFilled();
+    validateRequiredFields();
   }
 
   function removeProductDesignOverlay() {
@@ -627,6 +672,7 @@
 
     const wrap = document.createElement("div");
     wrap.className = "pom-field";
+    wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");
     label.className = "pom-label";
@@ -638,7 +684,7 @@
       const select = document.createElement("select");
 
       select.className = "pom-select";
-      select.name = `properties[${field.label || field.name}]`;
+      select.name = `properties[${getFieldKey(field)}]`;
       select.required = Boolean(field.required);
 
       const empty = document.createElement("option");
@@ -671,6 +717,14 @@
 
     const buttons = document.createElement("div");
     buttons.className = "pom-buttons";
+
+    const selectedInput = document.createElement("input");
+
+    selectedInput.type = "hidden";
+    selectedInput.name = `properties[${getFieldKey(field)}]`;
+    selectedInput.value = "";
+
+    wrap.appendChild(selectedInput);
 
     const isColorField = ["button_swatches", "color_swatches"].includes(type);
     const isColorImageSwatchField = [
@@ -807,16 +861,8 @@
 
         saveSelection(field, item.value || item.text);
 
-        let input = wrap.querySelector("input[type='hidden']");
-
-        if (!input) {
-          input = document.createElement("input");
-          input.type = "hidden";
-          input.name = `properties[${field.label || field.name}]`;
-          wrap.appendChild(input);
-        }
-
-        input.value = item.value || item.text || "";
+        selectedInput.value = item.value || item.text || "";
+        validateRequiredFields();
       });
 
       buttons.appendChild(button);
@@ -832,6 +878,7 @@
 
     const wrap = document.createElement("div");
     wrap.className = "pom-field";
+    wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");
     label.className = "pom-label";
@@ -841,6 +888,14 @@
 
     const buttons = document.createElement("div");
     buttons.className = "pom-buttons";
+
+    const selectedInput = document.createElement("input");
+
+    selectedInput.type = "hidden";
+    selectedInput.name = `properties[${getFieldKey(field)}]`;
+    selectedInput.value = "";
+
+    wrap.appendChild(selectedInput);
 
     rows.forEach((row) => {
       const qty = Number(row.quantity || row.qty || 0);
@@ -875,6 +930,7 @@
         }
 
         selectedOptions[field.label || field.name || "Quantity"] = `${qty}+`;
+        selectedInput.value = `${qty}+`;
 
         if (discount > 0) {
           selectedOptions["Quantity discount"] = `${discount}%`;
@@ -883,6 +939,7 @@
         }
 
         updatePrice();
+        validateRequiredFields();
       });
 
       buttons.appendChild(button);
@@ -896,6 +953,7 @@
   function renderUpload(field) {
     const wrap = document.createElement("div");
     wrap.className = "pom-field pom-upload-field";
+    wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");
     label.className = "pom-label";
@@ -932,8 +990,9 @@
 
     input.type = "file";
     input.className = "pom-file-hidden";
-    input.name = `properties[${field.label || field.name || "Upload Your Design"}]`;
+    input.name = `properties[${getFieldKey(field)}]`;
     input.accept = "image/*";
+    input.required = Boolean(field.required);
 
     uploadBox.appendChild(input);
     wrap.appendChild(uploadBox);
@@ -949,6 +1008,7 @@
       fileNameEl.textContent = "";
 
       removeProductDesignOverlay();
+      validateRequiredFields();
     });
 
     input.addEventListener("change", () => {
@@ -957,6 +1017,7 @@
       if (!file) {
         fileNameEl.textContent = "";
         removeProductDesignOverlay();
+        validateRequiredFields();
         return;
       }
 
@@ -967,6 +1028,7 @@
         fileNameEl.textContent = "";
 
         removeProductDesignOverlay();
+        validateRequiredFields();
 
         return;
       }
@@ -976,6 +1038,7 @@
       fileNameEl.textContent = file.name;
 
       showProductDesignOverlay(imageUrl, file.name);
+      validateRequiredFields();
     });
 
     return wrap;
@@ -984,6 +1047,7 @@
   function renderInput(field, inputType) {
     const wrap = document.createElement("div");
     wrap.className = "pom-field";
+    wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");
     label.className = "pom-label";
@@ -995,8 +1059,11 @@
 
     input.type = inputType;
     input.className = "pom-input";
-    input.name = `properties[${field.label || field.name}]`;
+    input.name = `properties[${getFieldKey(field)}]`;
     input.placeholder = field.label || "";
+    input.required = Boolean(field.required);
+    input.addEventListener("input", () => validateRequiredFields());
+    input.addEventListener("change", () => validateRequiredFields());
 
     wrap.appendChild(input);
 
@@ -1059,10 +1126,16 @@
       form.dataset.pomSubmitAttached = "true";
 
       form.addEventListener("submit", async (event) => {
+        if (!validateRequiredFields({ showErrors: true })) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+
         const overlay = document.querySelector(".pom-design-overlay");
 
         Object.entries(selectedOptions).forEach(([key, value]) => {
-          let input = form.querySelector(`input[name="properties[${key}]"]`);
+          let input = form.querySelector(`[name="properties[${key}]"]`);
 
           if (!input) {
             input = document.createElement("input");
@@ -1123,6 +1196,7 @@
 
     attachToCartForm();
     updatePrice();
+    validateRequiredFields();
   }
 
   init().catch((error) => {

@@ -115,6 +115,20 @@
   background: transparent;
 }
 
+.pom-field--invalid .pom-select,
+.pom-field--invalid .pom-input,
+.pom-field--invalid .pom-upload-box,
+.pom-field--invalid .pom-option-button {
+  border-color: #d72c0d;
+}
+
+.pom-field-error {
+  grid-column: 2;
+  margin-top: -8px;
+  color: #d72c0d;
+  font-size: 13px;
+}
+
 .pom-file {
   width: 100%;
   min-height: 80px;

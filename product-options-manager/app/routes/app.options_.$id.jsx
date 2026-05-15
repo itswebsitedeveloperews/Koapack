@@ -1651,27 +1651,12 @@ function ChoiceOptionEditor({
                   Upload
                 </button>
                 {mediaImages.length > 0 ? (
-                  <select
-                    aria-label="Select uploaded image"
-                    style={mediaSelectStyle}
-                    value=""
-                    onChange={(event) => {
-                      const imageUrl = event.target.value;
-                      if (imageUrl) updateValue(index, "image", imageUrl);
-                    }}
-                  >
-                    <option value="">Media</option>
-                    {mediaImages.map((image, mediaIndex) => (
-                      <option
-                        key={image.id || image.url || mediaIndex}
-                        value={image.url}
-                      >
-                        {image.alt ||
-                          image.url?.split("/").pop()?.split("?")[0] ||
-                          `Image ${mediaIndex + 1}`}
-                      </option>
-                    ))}
-                  </select>
+                  <MediaImagePicker
+                    images={mediaImages}
+                    onSelect={(imageUrl) =>
+                      updateValue(index, "image", imageUrl)
+                    }
+                  />
                 ) : null}
               </div>
             </div>
@@ -1731,6 +1716,57 @@ function ChoiceOptionEditor({
         + Add value
       </button>
     </>
+  );
+}
+
+function MediaImagePicker({ images = [], onSelect, style }) {
+  const [open, setOpen] = useState(false);
+  const availableImages = images.filter((image) => image?.url);
+
+  if (availableImages.length === 0) return null;
+
+  return (
+    <div style={{ ...mediaPickerWrapStyle, ...style }}>
+      <button
+        type="button"
+        aria-label="Select uploaded image"
+        style={mediaPickerButtonStyle}
+        onClick={() => setOpen((current) => !current)}
+      >
+        Media
+      </button>
+      {open ? (
+        <div style={mediaPickerMenuStyle}>
+          {availableImages.map((image, mediaIndex) => {
+            const label = getMediaImageLabel(image, mediaIndex);
+
+            return (
+              <button
+                key={image.id || image.url || mediaIndex}
+                type="button"
+                aria-label={`Select ${label}`}
+                title={label}
+                style={mediaPickerItemStyle}
+                onClick={() => {
+                  onSelect(image.url);
+                  setOpen(false);
+                }}
+              >
+                <img src={image.url} alt="" style={mediaPickerImgStyle} />
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function getMediaImageLabel(image, index) {
+  return (
+    image.alt ||
+    image.url?.split("/").pop()?.split("?")[0] ||
+    `Image ${index + 1}`
   );
 }
 
@@ -2358,27 +2394,13 @@ function ImageLibraryOptionEditor({
               />
             ) : null}
             {shopifyMediaImages.length > 0 ? (
-              <select
-                aria-label="Select uploaded image"
-                style={{ ...mediaSelectStyle, gridColumn: "2" }}
-                value=""
-                onChange={(event) => {
-                  const imageUrl = event.target.value;
-                  if (imageUrl) updateCategory(index, "image", imageUrl);
-                }}
-              >
-                <option value="">Media</option>
-                {shopifyMediaImages.map((image, mediaIndex) => (
-                  <option
-                    key={image.id || image.url || mediaIndex}
-                    value={image.url}
-                  >
-                    {image.alt ||
-                      image.url?.split("/").pop()?.split("?")[0] ||
-                      `Image ${mediaIndex + 1}`}
-                  </option>
-                ))}
-              </select>
+              <MediaImagePicker
+                images={shopifyMediaImages}
+                style={{ gridColumn: "2" }}
+                onSelect={(imageUrl) =>
+                  updateCategory(index, "image", imageUrl)
+                }
+              />
             ) : (
               <a style={assetLinkStyle} href="/app/options/assets">
                 Add asset
@@ -3521,7 +3543,8 @@ function ChoiceAdvancedSettings({
         />
         <p style={helpTextStyle}>
           Split each Text field into Group/Text. Enter &quot;:&quot; to split
-          &quot;Color:Red&quot; into group &quot;Color&quot; and text &quot;Red&quot;
+          &quot;Color:Red&quot; into group &quot;Color&quot; and text
+          &quot;Red&quot;
         </p>
       </Field>
 
@@ -4038,11 +4061,50 @@ const smallDarkButtonStyle = {
   font: "inherit",
   fontWeight: 600,
 };
-const mediaSelectStyle = {
+const mediaPickerWrapStyle = {
+  position: "relative",
+};
+const mediaPickerButtonStyle = {
   ...inputStyle,
   height: "32px",
   padding: "4px 8px",
   fontSize: "12px",
+  textAlign: "left",
+  cursor: "pointer",
+  background: "#ffffff",
+};
+const mediaPickerMenuStyle = {
+  position: "absolute",
+  zIndex: 30,
+  top: "36px",
+  left: 0,
+  width: "273px",
+  maxHeight: "220px",
+  overflowY: "auto",
+  display: "grid",
+  gridTemplateColumns: "repeat(3, 82px)",
+  gap: "6px",
+  padding: "8px",
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  boxShadow: "0 8px 24px rgba(32, 34, 35, 0.18)",
+  background: "#ffffff",
+};
+const mediaPickerItemStyle = {
+  width: "82px",
+  height: "82px",
+  padding: 0,
+  border: "1px solid #dfe3e8",
+  borderRadius: "6px",
+  background: "#ffffff",
+  cursor: "pointer",
+  overflow: "hidden",
+};
+const mediaPickerImgStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  display: "block",
 };
 const assetThumbStyle = {
   gridColumn: "1",
