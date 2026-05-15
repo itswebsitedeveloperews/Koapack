@@ -116,21 +116,19 @@ button.pom-upload-remove {
   appearance: none !important;
 }
 
-/* Hide arrows/spinners from input[type="number"] */
-
-/* Chrome, Safari, Edge, Opera */
 /* .pom-field input[type="number"]::-webkit-outer-spin-button,
 .pom-field input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-/* Firefox */
+
 .pom-field input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
-*/ .pom-option-button {
+*/
+.pom-option-button {
   border: 1px solid rgb(74, 91, 72, 0.5);
   background: transparent;
   padding: 12px 24px;
