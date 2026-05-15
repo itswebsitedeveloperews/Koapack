@@ -8,35 +8,43 @@
 }
 
 .pom-field {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 16px;
-  align-items: start;
+  display: flex;
+  column-gap: 16px;
+  margin-bottom: 24px !important;
+  flex-wrap: wrap;
+  position: relative;
+  width: 100%;
 }
 
 .pom-label {
   font-size: 16px;
-  color: #333;
   padding-top: 12px;
+  width: calc(44% - 8px);
+  color: #000c;
+  letter-spacing: -0.36px;
+  line-height: 1.1875;
 }
 
-.pom-buttons {
+.pom-buttons,
+.pom-select {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  width: calc(56% - 8px);
+  gap: 10px;
+  cursor: pointer;
 }
 
 .pom-option-button {
-  padding: 12px 20px;
-  border: 1px solid #b6b6a8;
+  border: 1px solid rgb(74, 91, 72, 0.5);
   background: transparent;
-  color: #40543f;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  position: relative;
+  padding: 12px 24px;
+  font-size: 14px;
+  box-shadow: unset;
+  color: #4a5b48;
+  letter-spacing: -0.36px;
+  line-height: 1.142;
+  font-weight: 400;
 }
-
 .pom-option-button.color-swatche {
   padding: 0;
   border: 0;
@@ -100,19 +108,24 @@
 }
 
 .pom-option-button.is-active {
-  background: var(--pom-swatch--background, #40543f);
+  background: var(--pom-swatch--background, #4a5b48);
   color: #fff;
-  border-color: var(--pom-swatch--background, #40543f);
+  border-color: var(--pom-swatch--background, #4a5b48);
   font-weight: 700;
 }
 
 .pom-select,
 .pom-input {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid #b6b6a8;
-  background: transparent;
+  border: 1px solid rgb(74, 91, 72, 0.5) !important;
+  background-color: transparent !important;
+  padding: 12px 24px;
+  font-size: 14px !important;
+  box-shadow: unset !important;
+  color: #4a5b48 !important;
+  letter-spacing: -0.36px;
+  line-height: 1.142;
+  font-weight: 400;
+  outline: none !important;
 }
 
 .pom-field--invalid .pom-select,

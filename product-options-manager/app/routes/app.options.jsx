@@ -41,11 +41,25 @@ export const action = async ({ request }) => {
   await authenticate.admin(request);
   const formData = await request.formData();
 
-  if (formData.get("intent") !== "duplicate") {
+  const intent = String(formData.get("intent") || "");
+  const id = Number(formData.get("id"));
+
+  if (!id) {
+    throw new Response("Option group ID is required", { status: 400 });
+  }
+
+  if (intent === "delete") {
+    await db.optionGroup.delete({
+      where: { id },
+    });
+
+    return redirect("/app/options");
+  }
+
+  if (intent !== "duplicate") {
     throw new Response("Unsupported action", { status: 400 });
   }
 
-  const id = Number(formData.get("id"));
   const source = await db.optionGroup.findUnique({
     where: { id },
     include: {
@@ -143,6 +157,7 @@ export default function ProductOptionsPage() {
                         <s-button href={`/app/options/${group.id}`}>
                           Edit
                         </s-button>
+
                         <Form method="post">
                           <input
                             type="hidden"
@@ -151,6 +166,22 @@ export default function ProductOptionsPage() {
                           />
                           <input type="hidden" name="id" value={group.id} />
                           <s-button submit>Duplicate</s-button>
+                        </Form>
+
+                        <Form method="post">
+                          <input type="hidden" name="intent" value="delete" />
+                          <input type="hidden" name="id" value={group.id} />
+                          <button
+                            type="submit"
+                            style={deleteButtonStyle}
+                            onClick={(event) => {
+                              if (!confirm(`Delete "${group.name}"?`)) {
+                                event.preventDefault();
+                              }
+                            }}
+                          >
+                            Delete
+                          </button>
                         </Form>
                       </s-stack>
                     </td>
@@ -218,3 +249,14 @@ const statusBadgeStyle = (status) => ({
   fontSize: "12px",
   fontWeight: 600,
 });
+
+const deleteButtonStyle = {
+  border: "1px solid #d72c0d",
+  borderRadius: "8px",
+  padding: "6px 12px",
+  background: "#ffffff",
+  color: "#d72c0d",
+  cursor: "pointer",
+  font: "inherit",
+  lineHeight: "1",
+};
