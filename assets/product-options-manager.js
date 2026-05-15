@@ -1062,7 +1062,7 @@
     wrap.appendChild(label);
 
     const inputWrap = document.createElement("div");
-    inputWrap.className = "pom-input-wrap";
+    inputWrap.className = "pom-buttons";
 
     const input = document.createElement("input");
     input.type = inputType;
