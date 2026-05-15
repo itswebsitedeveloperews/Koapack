@@ -12,3 +12,10 @@ build/
 dist/
 node_modules/
 '@ | Add-Content product-options-manager/.gitignore
+# Product Options Manager generated files
+product-options-manager/.react-router/
+product-options-manager/prisma/dev.sqlite
+product-options-manager/prisma/dev.sqlite-journal
+product-options-manager/node_modules/
+product-options-manager/build/
+product-options-manager/dist/

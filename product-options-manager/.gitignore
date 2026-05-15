@@ -31,3 +31,10 @@ pnpm-debug.log*
 .vscode/
 .idea/
 EOF
+# Generated files
+.react-router/
+prisma/dev.sqlite
+prisma/dev.sqlite-journal
+node_modules/
+build/
+dist/
