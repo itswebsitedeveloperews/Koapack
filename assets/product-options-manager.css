@@ -4,7 +4,22 @@
 
 .pom-group {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.pom-field.pincode-pom-field {
+  display: block;
+  order: 1;
+  width: calc(56% - 8px);
+}
+
+.pom-field.pincode-pom-field .pom-label,
+.pom-field.pincode-pom-field .pom-buttons {
+  width: 100%;
+}
+
+.pom-total-price {
+  width: calc(44% - 8px);
 }
 
 .pom-field {
@@ -433,5 +448,12 @@ button.pom-upload-remove {
   }
   .pom-advanced-help {
     line-height: 1.5;
+  }
+  .pom-total-price .price {
+    font-size: 30px;
+  }
+
+  .pom-price-box {
+    font-size: 12px;
   }
 }
