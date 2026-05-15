@@ -819,6 +819,7 @@
         const swatch = document.createElement("span");
         swatch.className = "pom-swatch-preview";
         swatch.style.background = "transparent";
+        button.classList.add("color-img-swatche");
 
         const img = document.createElement("img");
         img.src = swatchImage;
