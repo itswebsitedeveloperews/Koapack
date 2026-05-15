@@ -430,4 +430,7 @@ button.pom-upload-remove {
   .pom-upload-box .pom-advanced-help {
     font-size: 10px;
   }
+  .pom-advanced-help {
+    line-height: 1.5;
+  }
 }
