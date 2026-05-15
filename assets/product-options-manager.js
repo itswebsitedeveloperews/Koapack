@@ -65,13 +65,14 @@
   }
 
   function appendAdvancedHelp(parent, field) {
-    const helpText = String(getAdvancedHelp(field) || "").trim();
+    const helpTextRaw = getAdvancedHelp(field);
+    const helpText = String(helpTextRaw || "").trim();
 
     if (!helpText) return;
 
     const help = document.createElement("div");
-    help.className = "advanced-help";
-    help.textContent = helpText;
+    help.className = "pom-advanced-help";
+    help.innerHTML = helpText;
 
     parent.appendChild(help);
   }
