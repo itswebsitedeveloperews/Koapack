@@ -1,0 +1,14 @@
+@'
+
+# Generated React Router files
+.react-router/
+
+# Local Prisma SQLite database
+prisma/dev.sqlite
+prisma/dev.sqlite-journal
+
+# Build/generated files
+build/
+dist/
+node_modules/
+'@ | Add-Content product-options-manager/.gitignore
