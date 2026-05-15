@@ -3,7 +3,8 @@
 }
 
 .pom-group {
-  display: block;
+  display: flex;
+  flex-direction: column;
 }
 
 .pom-field {
