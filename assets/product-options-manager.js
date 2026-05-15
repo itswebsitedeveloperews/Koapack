@@ -1003,7 +1003,7 @@
 
       input.value = "";
       fileNameEl.textContent = "";
-      buttonTextEl.style.display = "";
+      buttonTextEl.style.opacity = "";
 
       removeButton.remove();
 
@@ -1016,7 +1016,7 @@
 
       if (!file) {
         fileNameEl.textContent = "";
-        buttonTextEl.style.display = "";
+        buttonTextEl.style.opacity = "";
         removeButton.remove();
 
         removeProductDesignOverlay();
@@ -1029,7 +1029,7 @@
 
         input.value = "";
         fileNameEl.textContent = "";
-        buttonTextEl.style.display = "";
+        buttonTextEl.style.opacity = "";
         removeButton.remove();
 
         removeProductDesignOverlay();
