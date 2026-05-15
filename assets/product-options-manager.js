@@ -144,7 +144,7 @@
       <div class="price">${money(total)}</div>
       <span class="tax-text"> Inc. of All Taxes</span>
     <span>${perPieceText}
-      ${discountText}</span>
+      </span>
       <span class="bulk-text">Buy in bulk and save</span>
     </div>
   `;
