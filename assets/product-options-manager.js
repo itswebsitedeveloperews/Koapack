@@ -1061,17 +1061,21 @@
 
     wrap.appendChild(label);
 
-    const input = document.createElement("input");
+    const inputWrap = document.createElement("div");
+    inputWrap.className = "pom-input-wrap";
 
+    const input = document.createElement("input");
     input.type = inputType;
     input.className = "pom-input";
     input.name = `properties[${getFieldKey(field)}]`;
     input.placeholder = field.label || "";
     input.required = Boolean(field.required);
+
     input.addEventListener("input", () => validateRequiredFields());
     input.addEventListener("change", () => validateRequiredFields());
 
-    wrap.appendChild(input);
+    inputWrap.appendChild(input);
+    wrap.appendChild(inputWrap);
 
     return wrap;
   }
