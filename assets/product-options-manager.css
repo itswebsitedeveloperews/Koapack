@@ -128,6 +128,7 @@ button.pom-upload-remove {
   appearance: textfield;
 }
 */
+
 .pom-option-button {
   border: 1px solid rgb(74, 91, 72, 0.5);
   background: transparent;
@@ -252,15 +253,19 @@ button.pom-upload-remove {
 
 .pom-price-box {
   margin-top: 24px;
-  font-size: 18px;
-  display: flex;
-  gap: 12px;
-  align-items: baseline;
+  font-size: 14px;
+  color: #6d8ea1;
+}
+.pom-price-box span {
+  display: block;
 }
 
-.pom-price-box strong {
-  font-size: 32px;
-  color: #40543f;
+.pom-price-box .bulk-text {
+  color: #1e1e1e;
+}
+.pom-total-price .price {
+  font-size: 40px;
+  color: #4a5b48;
 }
 
 .pom-overlay-parent {
