@@ -56,18 +56,22 @@
 }
 
 .pom-option-button.color-swatche.is-active {
-  outline-color: #1e1e1e !important;
-  background-color: transparent !important;
+  outline-color: #1e1e1e;
+  background-color: transparent;
 }
 .pom-swatch-preview {
-  border-radius: 50% !important;
+  border-radius: 50%;
   width: 33px;
   height: 33px;
-  border: 3px solid #f5f1e8 !important;
-  box-shadow: none !important;
-  outline-width: 1px !important;
+  border: 3px solid #f5f1e8;
+  box-shadow: none;
+  outline-width: 1px;
   flex: 0 0 auto;
   display: block;
+}
+
+.pom-swatch-preview img {
+  border-radius: 50%;
 }
 
 .pom-swatch-preview-text {
