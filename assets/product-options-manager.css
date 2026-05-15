@@ -426,4 +426,8 @@ button.pom-upload-remove {
     background-size: 34px !important;
     padding-left: 40px;
   }
+
+  .pom-upload-box .pom-advanced-help {
+    font-size: 10px;
+  }
 }
