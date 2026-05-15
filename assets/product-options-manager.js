@@ -131,20 +131,19 @@
 
     const perPieceText =
       qty > 1
-        ? `<small>for ${qty} Qty (${money(total / qty)} / piece)</small>`
-        : `<small>for 1 Qty</small>`;
+        ? `<span>for ${qty} Qty (${money(total / qty)} / piece)</span>`
+        : `<span>for 1 Qty (${money(total / qty)} / piece)</span>`;
 
     const discountText =
       selectedQuantityDiscount > 0
-        ? `<small class="pom-discount-text">${selectedQuantityDiscount}% discount applied</small>`
+        ? `<span class="pom-discount-text">${selectedQuantityDiscount}% discount applied</span>`
         : "";
 
     totalBox.innerHTML = `
     <div class="pom-price-box">
       <div class="price">${money(total)}</div>
       <span class="tax-text"> Inc. of All Taxes</span>
-    <span>${perPieceText}
-      </span>
+   ${perPieceText}
       <span class="bulk-text">Buy in bulk and save</span>
     </div>
   `;
