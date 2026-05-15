@@ -1039,7 +1039,7 @@
 
       const imageUrl = URL.createObjectURL(file);
 
-      buttonTextEl.style.display = "none";
+      buttonTextEl.style.opacity = "0";
       fileNameEl.textContent = file.name;
       fileNameEl.appendChild(removeButton);
 
