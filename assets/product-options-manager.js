@@ -48,18 +48,30 @@
 
   function getAdvancedHelp(field) {
     return (
+      // Support various legacy field shapes
       field?.advancedHelp ||
       field?.advanced_help ||
       field?.["advanced-help"] ||
       field?.helpText ||
       field?.help_text ||
       field?.help ||
+      // Common nested locations
       field?.config?.advancedHelp ||
       field?.config?.advanced_help ||
       field?.config?.["advanced-help"] ||
       field?.config?.helpText ||
       field?.config?.help_text ||
       field?.config?.help ||
+      // Actual admin editor stores: field.config.advanced.help
+      field?.config?.advanced?.help ||
+      field?.config?.advanced?.helpText ||
+      field?.config?.advanced?.help_text ||
+      field?.config?.advanced?.["advanced-help"] ||
+      // Sometimes advanced is stored at field.config.advanced
+      field?.advanced?.help ||
+      field?.advanced?.helpText ||
+      field?.advanced?.help_text ||
+      field?.advanced?.["advanced-help"] ||
       ""
     );
   }
