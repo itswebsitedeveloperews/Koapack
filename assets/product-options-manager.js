@@ -141,10 +141,11 @@
 
     totalBox.innerHTML = `
     <div class="pom-price-box">
-      <span>Total:</span>
       <strong>${money(total)}</strong>
-      ${perPieceText}
-      ${discountText}
+      <span class="tax-text"> Inc. of All Taxes</span>
+    <span>${perPieceText}
+      ${discountText}</span>
+      <span class="bulk-text">Buy in bulk and save</span>
     </div>
   `;
   }
