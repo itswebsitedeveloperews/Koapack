@@ -1134,6 +1134,23 @@
   function renderField(field) {
     const type = normalizeType(field.type);
 
+    const fieldKey = String(getFieldKey(field) || "")
+      .trim()
+      .toLowerCase();
+
+    const isPincodeField =
+      fieldKey === "enter pincode" ||
+      fieldKey === "pincode" ||
+      fieldKey.includes("pincode");
+
+    function addPincodeClass(fieldEl) {
+      if (isPincodeField && fieldEl) {
+        fieldEl.classList.add("pincode-pom-field");
+      }
+
+      return fieldEl;
+    }
+
     const addToCartButton = document.querySelector("[data-add-to-cart-button]");
 
     if (addToCartButton) {
@@ -1160,26 +1177,26 @@
         "personalize",
       ].includes(type)
     ) {
-      return renderChoice(field);
+      return addPincodeClass(renderChoice(field));
     }
 
     if (type === "quantity" || type === "quantity_discount") {
-      return renderQuantityDiscount(field);
+      return addPincodeClass(renderQuantityDiscount(field));
     }
 
     if (type === "upload" || type === "upload_lift") {
-      return renderUpload(field);
+      return addPincodeClass(renderUpload(field));
     }
 
     if (type === "number") {
-      return renderInput(field, "number");
+      return addPincodeClass(renderInput(field, "number"));
     }
 
     if (type === "date") {
-      return renderInput(field, "date");
+      return addPincodeClass(renderInput(field, "date"));
     }
 
-    return renderInput(field, "text");
+    return addPincodeClass(renderInput(field, "text"));
   }
 
   function attachToCartForm() {
