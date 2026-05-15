@@ -375,8 +375,21 @@ button.pom-upload-remove {
   flex-basis: 100%;
 }
 
-@media screen and (max-width: 749px) {
+@media screen and (max-width: 767px) {
   .pom-field {
     grid-template-columns: 1fr;
+  }
+  .pom-upload {
+    padding: 14px;
+  }
+  span.pom-upload-file-name {
+    padding: 0 14px;
+  }
+  .pom-upload-box .pom-upload-button-text:before {
+    font-size: 18px;
+  }
+  .pom-upload-box .pom-upload-button-text {
+    background-size: 34px !important;
+    padding-left: 40px;
   }
 }
