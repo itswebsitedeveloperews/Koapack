@@ -179,6 +179,19 @@ button.pom-upload-remove {
   white-space: nowrap;
 }
 
+.pom-advanced-help {
+  width: calc(56% - 8px);
+  margin-top: -16px;
+  margin-bottom: 24px;
+  color: #4a5b48;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.pom-field--invalid .pom-advanced-help {
+  color: #d72c0d;
+}
+
 .pom-option-button .pom-swatch-preview-text {
   /* keep label hidden; tooltip shown via ::after */
   display: none;
