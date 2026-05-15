@@ -962,25 +962,17 @@
 
     wrap.appendChild(label);
 
-    const uploadBox = document.createElement("label");
+    const uploadBox = document.createElement("div");
     uploadBox.className = "pom-upload-box";
 
     uploadBox.innerHTML = `
-      <button
-        type="button"
-        class="pom-upload-remove"
-        aria-label="Remove file"
-      >
-        ×
-      </button>
-      <span>
-        ${field.config?.buttonText || "Upload Your File"}
-      </span>
-      <span class="pom-upload-file-name"></span>
-    `;
+    <span class="pom-upload-button-text">
+      ${field.config?.buttonText || "Upload Your File"}
+    </span>
+    <span class="pom-upload-file-name"></span>
+  `;
 
     const input = document.createElement("input");
-
     input.type = "file";
     input.className = "pom-file-hidden";
     input.name = `properties[${getFieldKey(field)}]`;
@@ -990,8 +982,18 @@
     uploadBox.appendChild(input);
     wrap.appendChild(uploadBox);
 
-    const removeButton = uploadBox.querySelector(".pom-upload-remove");
+    const buttonTextEl = uploadBox.querySelector(".pom-upload-button-text");
     const fileNameEl = uploadBox.querySelector(".pom-upload-file-name");
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "pom-upload-remove";
+    removeButton.setAttribute("aria-label", "Remove file");
+    removeButton.textContent = "×";
+
+    uploadBox.addEventListener("click", () => {
+      input.click();
+    });
 
     removeButton.addEventListener("click", (event) => {
       event.preventDefault();
@@ -999,6 +1001,9 @@
 
       input.value = "";
       fileNameEl.textContent = "";
+      buttonTextEl.style.display = "";
+
+      removeButton.remove();
 
       removeProductDesignOverlay();
       validateRequiredFields();
@@ -1009,6 +1014,9 @@
 
       if (!file) {
         fileNameEl.textContent = "";
+        buttonTextEl.style.display = "";
+        removeButton.remove();
+
         removeProductDesignOverlay();
         validateRequiredFields();
         return;
@@ -1019,16 +1027,19 @@
 
         input.value = "";
         fileNameEl.textContent = "";
+        buttonTextEl.style.display = "";
+        removeButton.remove();
 
         removeProductDesignOverlay();
         validateRequiredFields();
-
         return;
       }
 
       const imageUrl = URL.createObjectURL(file);
 
+      buttonTextEl.style.display = "none";
       fileNameEl.textContent = file.name;
+      fileNameEl.appendChild(removeButton);
 
       showProductDesignOverlay(imageUrl, file.name);
       validateRequiredFields();
