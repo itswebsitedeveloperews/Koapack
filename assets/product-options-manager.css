@@ -44,6 +44,7 @@
   line-height: 1.142;
   font-weight: 400;
   cursor: pointer;
+  position: relative;
 }
 .pom-option-button.color-swatche {
   padding: 0;
