@@ -32,6 +32,9 @@
   gap: 10px;
 }
 
+.pom-upload-box {
+  width: calc(56% - 8px);
+}
 .pom-option-button {
   border: 1px solid rgb(74, 91, 72, 0.5);
   background: transparent;

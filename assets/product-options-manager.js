@@ -973,17 +973,9 @@
       >
         ×
       </button>
-
-      <span class="pom-upload-icon">⇧</span>
-
-      <strong>
+      <span>
         ${field.config?.buttonText || "Upload Your File"}
-      </strong>
-
-      <small>
-        Upload or drag your file here
-      </small>
-
+      </span>
       <span class="pom-upload-file-name"></span>
     `;
 
