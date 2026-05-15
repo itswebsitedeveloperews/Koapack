@@ -44,14 +44,37 @@
   letter-spacing: -0.36px;
   line-height: 1.142;
   font-weight: 400;
+  cursor: pointer;
+  position: relative;
 }
 
+span.pom-upload-file-name {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  left: 0;
+  padding: 0 40px;
+}
+button.pom-upload-remove {
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  right: 7px;
+  font-size: 24px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
 .pom-upload-box .pom-file-hidden {
   display: none;
 }
 .pom-upload-box .pom-upload-button-text {
   display: block;
-  background-image: url(/cdn/shop/files/FileArrowUp.svg?v=1753967501);
+  background-image: url(https://koapack.in/cdn/shop/files/FileArrowUp.svg?v=1753967501);
   background-repeat: no-repeat;
   background-size: 44px;
   padding-left: 50px;
