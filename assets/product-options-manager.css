@@ -31,7 +31,6 @@
   flex-wrap: wrap;
   width: calc(56% - 8px);
   gap: 10px;
-  cursor: pointer;
 }
 
 .pom-option-button {
@@ -44,6 +43,7 @@
   letter-spacing: -0.36px;
   line-height: 1.142;
   font-weight: 400;
+  cursor: pointer;
 }
 .pom-option-button.color-swatche {
   padding: 0;
@@ -107,7 +107,8 @@
   object-fit: cover;
 }
 
-.pom-option-button.is-active {
+.pom-option-button.is-active,
+.pom-option-button:hover {
   background: var(--pom-swatch--background, #4a5b48);
   color: #fff;
   border-color: var(--pom-swatch--background, #4a5b48);
