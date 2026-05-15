@@ -258,14 +258,21 @@ button.pom-upload-remove {
 }
 .pom-price-box span {
   display: block;
+  line-height: 1.2;
+}
+
+.pom-price-box .tax-text {
+  margin-bottom: 10px;
 }
 
 .pom-price-box .bulk-text {
   color: #1e1e1e;
+  line-height: 1.5;
 }
 .pom-total-price .price {
   font-size: 40px;
   color: #4a5b48;
+  line-height: 1.2;
 }
 
 .pom-overlay-parent {
