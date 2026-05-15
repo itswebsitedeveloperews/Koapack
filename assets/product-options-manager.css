@@ -102,6 +102,7 @@ button.pom-upload-remove {
 }
 
 .pom-field input[type="number"] {
+  width: 100%;
   border: 1px solid rgb(74, 91, 72, 0.5) !important;
   background-color: transparent !important;
   padding: 13px 24px;
@@ -359,6 +360,18 @@ button.pom-upload-remove {
 .pom-discount-text {
   color: #2f6f3e !important;
   font-weight: 600;
+}
+
+.advanced-help {
+  width: 100%;
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6d7175;
+}
+
+.pom-buttons .advanced-help {
+  flex-basis: 100%;
 }
 
 @media screen and (max-width: 749px) {

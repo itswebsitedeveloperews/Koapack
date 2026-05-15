@@ -15,6 +15,7 @@
 
   let selectedQuantity = 1;
   let selectedQuantityDiscount = 0;
+
   function money(amount) {
     return (
       "Rs. " +
@@ -43,6 +44,36 @@
     );
 
     return item ? Number(item.price || 0) : 0;
+  }
+
+  function getAdvancedHelp(field) {
+    return (
+      field?.advancedHelp ||
+      field?.advanced_help ||
+      field?.["advanced-help"] ||
+      field?.helpText ||
+      field?.help_text ||
+      field?.help ||
+      field?.config?.advancedHelp ||
+      field?.config?.advanced_help ||
+      field?.config?.["advanced-help"] ||
+      field?.config?.helpText ||
+      field?.config?.help_text ||
+      field?.config?.help ||
+      ""
+    );
+  }
+
+  function appendAdvancedHelp(parent, field) {
+    const helpText = String(getAdvancedHelp(field) || "").trim();
+
+    if (!helpText) return;
+
+    const help = document.createElement("div");
+    help.className = "advanced-help";
+    help.textContent = helpText;
+
+    parent.appendChild(help);
   }
 
   function getProductMediaImage() {
@@ -134,19 +165,14 @@
         ? `<span>for ${qty} Qty (${money(total / qty)} / piece)</span>`
         : `<span>for 1 Qty (${money(total / qty)} / piece)</span>`;
 
-    const discountText =
-      selectedQuantityDiscount > 0
-        ? `<span class="pom-discount-text">${selectedQuantityDiscount}% discount applied</span>`
-        : "";
-
     totalBox.innerHTML = `
-    <div class="pom-price-box">
-      <div class="price">${money(total)}</div>
-      <span class="tax-text"> Inc. of All Taxes</span>
-   ${perPieceText}
-      <span class="bulk-text">Buy in bulk and save</span>
-    </div>
-  `;
+      <div class="pom-price-box">
+        <div class="price">${money(total)}</div>
+        <span class="tax-text"> Inc. of All Taxes</span>
+        ${perPieceText}
+        <span class="bulk-text">Buy in bulk and save</span>
+      </div>
+    `;
   }
 
   function getFieldKey(field) {
@@ -310,9 +336,6 @@
 
       input.value = value;
     }
-
-    // ONLY hidden internal values
-    // NOT visible in cart
 
     setHiddenInput("_Preview X", positionData.x);
     setHiddenInput("_Preview Y", positionData.y);
@@ -658,6 +681,8 @@
         if (fileNameEl) {
           fileNameEl.textContent = "";
         }
+
+        validateRequiredFields();
       });
 
     wrapper.appendChild(overlay);
@@ -681,6 +706,9 @@
     wrap.appendChild(label);
 
     if (type === "dropdown" || type === "select" || type === "font_select") {
+      const selectWrap = document.createElement("div");
+      selectWrap.className = "pom-buttons";
+
       const select = document.createElement("select");
 
       select.className = "pom-select";
@@ -710,7 +738,10 @@
         saveSelection(field, select.value);
       });
 
-      wrap.appendChild(select);
+      selectWrap.appendChild(select);
+      appendAdvancedHelp(selectWrap, field);
+
+      wrap.appendChild(selectWrap);
 
       return wrap;
     }
@@ -746,17 +777,19 @@
 
       const s = String(first).trim();
 
-      // If backend already provides a valid CSS color string, use it.
       if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(s)) {
         return s;
       }
+
       if (/^(rgb|hsl)a?\(/i.test(s)) {
         return s;
       }
 
-      // Sometimes value/text might be an existing HTML color name or already usable.
-      // Fallback: return raw string so CSS can try to interpret it.
       return s || null;
+    }
+
+    function isBlobUrl(url) {
+      return typeof url === "string" && url.startsWith("blob:");
     }
 
     values.forEach((item) => {
@@ -768,6 +801,7 @@
       const swatchBg = isColorField ? resolveSwatchBackground(item) : null;
 
       let swatchImage = null;
+
       if (isColorImageSwatchField) {
         swatchImage =
           item?.image ||
@@ -778,7 +812,6 @@
           null;
       }
 
-      // blob: URLs are session-only (created via URL.createObjectURL) and will 404 after reload
       if (swatchImage && !isBlobUrl(swatchImage)) {
         button.dataset.pomSwatchImage = swatchImage;
       }
@@ -788,20 +821,11 @@
         button.classList.add("color-swatche");
       }
 
-      // blob: URLs are session-only (created via URL.createObjectURL) and will 404
-      // blob: URLs are session-only (created via URL.createObjectURL) and will 404 after reload/navigation.
-      function isBlobUrl(url) {
-        return typeof url === "string" && url.startsWith("blob:");
-      }
-
       const labelText =
         Number(item.price || 0) > 0
           ? `${item.text || item.value} (+${money(item.price)})`
           : item.text || item.value || "Option";
 
-      // Render swatch-like fields:
-      // - color_*_swatches: colored preview + label
-      // - color_image_swatches/image_swatches: image preview + label
       if (swatchBg) {
         const swatch = document.createElement("span");
         swatch.className = "pom-swatch-preview";
@@ -849,7 +873,6 @@
 
         button.classList.add("is-active");
 
-        // Ensure active state uses the chosen swatch color (when available)
         if (swatchBg) {
           button.style.setProperty("--pom-swatch--background", swatchBg);
         }
@@ -868,6 +891,8 @@
 
       buttons.appendChild(button);
     });
+
+    appendAdvancedHelp(buttons, field);
 
     wrap.appendChild(buttons);
 
@@ -946,6 +971,8 @@
       buttons.appendChild(button);
     });
 
+    appendAdvancedHelp(buttons, field);
+
     wrap.appendChild(buttons);
 
     return wrap;
@@ -966,13 +993,13 @@
     uploadBox.className = "pom-upload-box";
 
     uploadBox.innerHTML = `
-    <div class="pom-upload">
-    <span class="pom-upload-button-text">
-      ${field.config?.buttonText || "Upload Your File"}
-    </span>
-    <span class="pom-upload-file-name"></span>
-    </div>
-  `;
+      <div class="pom-upload">
+        <span class="pom-upload-button-text">
+          ${field.config?.buttonText || "Upload Your File"}
+        </span>
+        <span class="pom-upload-file-name"></span>
+      </div>
+    `;
 
     const input = document.createElement("input");
     input.type = "file";
@@ -983,6 +1010,8 @@
 
     uploadBox.appendChild(input);
     wrap.appendChild(uploadBox);
+
+    appendAdvancedHelp(uploadBox, field);
 
     const buttonTextEl = uploadBox.querySelector(".pom-upload-button-text");
     const fileNameEl = uploadBox.querySelector(".pom-upload-file-name");
@@ -1075,6 +1104,9 @@
     input.addEventListener("change", () => validateRequiredFields());
 
     inputWrap.appendChild(input);
+
+    appendAdvancedHelp(inputWrap, field);
+
     wrap.appendChild(inputWrap);
 
     return wrap;
@@ -1083,14 +1115,15 @@
   function renderField(field) {
     const type = normalizeType(field.type);
 
-    // Disable "Add to Cart" button if no fields/options are available
     const addToCartButton = document.querySelector("[data-add-to-cart-button]");
+
     if (addToCartButton) {
       const allFields = document.querySelectorAll(".pom-field");
+
       if (allFields.length === 0) {
-        addToCartButton.disabled = true; // Disable if no options exist
+        addToCartButton.disabled = true;
       } else {
-        addToCartButton.disabled = false; // Enable if options are present
+        addToCartButton.disabled = false;
       }
     }
 
