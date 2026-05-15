@@ -31,9 +31,49 @@
   width: calc(56% - 8px);
   gap: 10px;
 }
-
 .pom-upload-box {
   width: calc(56% - 8px);
+}
+.pom-upload {
+  border: 1px solid rgb(74, 91, 72, 0.5);
+  background-color: transparent;
+  padding: 26px 40px;
+  font-size: 14px;
+  box-shadow: unset;
+  color: #4a5b48;
+  letter-spacing: -0.36px;
+  line-height: 1.142;
+  font-weight: 400;
+}
+
+.pom-upload-box .pom-file-hidden {
+  display: none;
+}
+.pom-upload-box .pom-upload-button-text {
+  display: block;
+  background-image: url(/cdn/shop/files/FileArrowUp.svg?v=1753967501);
+  background-repeat: no-repeat;
+  background-size: 44px;
+  padding-left: 50px;
+  font-size: 0;
+}
+.pom-upload-box .pom-upload-button-text::before {
+  content: "Upload Your File";
+  color: #3e5d49;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.28px;
+  line-height: 1.16;
+  display: block;
+}
+
+.pom-upload-box .pom-upload-button-text::after {
+  content: "Upload Or Drag Your File Here";
+  color: #585858;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.16;
+  display: block;
 }
 .pom-option-button {
   border: 1px solid rgb(74, 91, 72, 0.5);

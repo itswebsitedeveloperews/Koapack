@@ -966,10 +966,12 @@
     uploadBox.className = "pom-upload-box";
 
     uploadBox.innerHTML = `
+    <div class="pom-upload">
     <span class="pom-upload-button-text">
       ${field.config?.buttonText || "Upload Your File"}
     </span>
     <span class="pom-upload-file-name"></span>
+    </div>
   `;
 
     const input = document.createElement("input");
