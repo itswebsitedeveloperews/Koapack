@@ -165,12 +165,19 @@
         el.textContent = money(total);
       });
 
+    const groups = root.querySelectorAll(".pom-group");
+    const priceParent = groups.length ? groups[groups.length - 1] : root;
+
     let totalBox = root.querySelector(".pom-total-price");
 
     if (!totalBox) {
       totalBox = document.createElement("div");
       totalBox.className = "pom-total-price";
-      root.appendChild(totalBox);
+    }
+
+    // Move total price inside .pom-group
+    if (totalBox.parentElement !== priceParent) {
+      priceParent.appendChild(totalBox);
     }
 
     const perPieceText =
@@ -179,15 +186,14 @@
         : `<span>for 1 Qty (${money(total / qty)} / piece)</span>`;
 
     totalBox.innerHTML = `
-      <div class="pom-price-box">
-        <div class="price">${money(total)}</div>
-        <span class="tax-text"> Inc. of All Taxes</span>
-        ${perPieceText}
-        <span class="bulk-text">Buy in bulk and save</span>
-      </div>
-    `;
+    <div class="pom-price-box">
+      <div class="price">${money(total)}</div>
+      <span class="tax-text"> Inc. of All Taxes</span>
+      ${perPieceText}
+      <span class="bulk-text">Buy in bulk and save</span>
+    </div>
+  `;
   }
-
   function getFieldKey(field) {
     return field.label || field.name || "Option";
   }
