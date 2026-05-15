@@ -17,7 +17,7 @@
   let selectedQuantityDiscount = 0;
   function money(amount) {
     return (
-      "Rs. " +
+      "₹ " +
       Number(amount).toLocaleString("en-IN", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
