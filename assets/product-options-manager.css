@@ -113,7 +113,6 @@
   background: var(--pom-swatch--background, #4a5b48);
   color: #fff;
   border-color: var(--pom-swatch--background, #4a5b48);
-  font-weight: 700;
 }
 
 .pom-select,
