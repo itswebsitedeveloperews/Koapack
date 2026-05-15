@@ -667,7 +667,17 @@
   }
 
   function renderChoice(field) {
+    const advancedHelp = field?.config?.advanced?.help || field?.advanced?.help;
+    const advancedHelpText =
+      typeof advancedHelp === "string" ? advancedHelp : "";
+
     const type = normalizeType(field.type);
+    if (advancedHelpText) {
+      const helpEl = document.createElement("div");
+      helpEl.className = "pom-advanced-help";
+      helpEl.innerHTML = advancedHelpText;
+      wrap.appendChild(helpEl);
+    }
     const values = getValues(field);
 
     const wrap = document.createElement("div");
@@ -1053,6 +1063,7 @@
   function renderInput(field, inputType) {
     const wrap = document.createElement("div");
     wrap.className = "pom-field";
+
     wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");

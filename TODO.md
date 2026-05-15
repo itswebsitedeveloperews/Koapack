@@ -1,0 +1,5 @@
+- [ ] Inspect current implementation for pom-buttons/pom-input rendering.
+- [ ] Make UI show advanced-help tooltip text (HTML supported) below each option field in storefront configurator.
+- [ ] Ensure the help is rendered for both button-based choices and input-based fields.
+- [ ] Add minimal CSS for .pom-advanced-help.
+- [ ] Verify no broken JS syntax and run any available build/lint.
