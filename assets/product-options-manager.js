@@ -715,9 +715,8 @@
     const values = getValues(field);
 
     const wrap = document.createElement("div");
-    wrap.className = `pom-field${isPincodeField ? " pincode-pom-field" : ""}`;
-
-    wrap.dataset.pomRequired;
+    wrap.className = "pom-field";
+    wrap.dataset.pomRequired = String(Boolean(field.required));
 
     const label = document.createElement("label");
     label.className = "pom-label";
@@ -1134,12 +1133,6 @@
 
   function renderField(field) {
     const type = normalizeType(field.type);
-    const isPincodeField =
-      String(field?.name || field?.label || "").toLowerCase() === "pincode" ||
-      (type === "number" &&
-        String(field?.label || "")
-          .toLowerCase()
-          .includes("pincode"));
 
     const addToCartButton = document.querySelector("[data-add-to-cart-button]");
 
