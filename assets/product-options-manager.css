@@ -6,6 +6,15 @@
   display: flex;
   flex-direction: column;
 }
+.pom-group > .pom-field:last-of-type {
+  padding: 68px !important;
+  display: block !important;
+}
+
+.pom-group > div.pom-field:last-of-type {
+  padding: 68px !important;
+  display: block !important;
+}
 
 .pom-field {
   display: flex;
