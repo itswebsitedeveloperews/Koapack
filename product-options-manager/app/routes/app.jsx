@@ -90,6 +90,41 @@ function WebComponentFallbacks() {
 
   return (
     <style>{`
+      :root {
+        color-scheme: light;
+      }
+
+      html,
+      body {
+        background: #f6f6f7;
+        color: #202223;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      a {
+        color: #005bd3;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font-family: inherit;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus,
+      button:focus-visible,
+      s-button:focus-visible {
+        outline: 2px solid #005bd3;
+        outline-offset: 2px;
+      }
+
       s-page,
       s-section,
       s-stack,
@@ -102,35 +137,48 @@ function WebComponentFallbacks() {
       }
 
       s-page {
-        display: block;
-        max-width: 1040px;
-        padding: 24px;
+      display: grid;
+    grid-template-columns: minmax(0, 1060px) minmax(270px, 0);
+    gap: 20px 24px;
+    max-width: 1273px;
+    padding: 28px 32px 40px;
       }
 
-      s-page::before {
+      s-page:not(:defined)::before {
         content: attr(heading);
         display: block;
-        margin: 0 0 18px;
+        grid-column: 1 / -1;
+        margin: 0 0 2px;
         font-size: 24px;
-        font-weight: 650;
+        font-weight: 700;
         line-height: 1.25;
+        color: #202223;
       }
 
       s-section {
         display: block;
-        margin: 0 0 20px;
-        padding: 18px;
-        border: 1px solid #dfe3e8;
-        border-radius: 8px;
-        background: #fff;
+        grid-column: 1;
+        margin: 0;
       }
 
-      s-section::before {
+      s-section:not(:defined)::before {
         content: attr(heading);
         display: block;
-        margin: 0 0 10px;
+        margin: 0 0 14px;
         font-size: 16px;
-        font-weight: 650;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+
+      s-section[slot="aside"] {
+        grid-column: 2;
+        align-self: start;
+      }
+
+      s-page > form {
+        display: grid;
+        grid-column: 1;
+        gap: 20px;
       }
 
       s-paragraph {
@@ -146,32 +194,60 @@ function WebComponentFallbacks() {
         gap: 10px;
       }
 
+      s-stack[direction="block"] {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+      }
+
+      s-stack[direction="inline"] {
+        display: flex;
+        align-items: center;
+      }
+
+      s-stack[justifycontent="end"],
+      s-stack[justifyContent="end"] {
+        justify-content: flex-end;
+      }
+
       s-link {
         display: inline-block;
         color: #005bd3;
         cursor: pointer;
         text-decoration: none;
+        font-weight: 600;
       }
 
       s-button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        min-height: 34px;
-        padding: 7px 12px;
-        border: 1px solid #8c9196;
+        min-height: 36px;
+
+     
         border-radius: 6px;
         background: #fff;
         color: #202223;
         cursor: pointer;
         font: inherit;
         font-weight: 600;
+        line-height: 1.2;
       }
 
-      s-button[variant="primary"] {
-        border-color: #202223;
-        background: #202223;
-        color: #fff;
+      s-page > s-button[slot="primary-action"],
+      s-page > s-button[slot="secondary-actions"] {
+        grid-row: 1;
+        justify-self: end;
+        align-self: start;
+      }
+
+      s-page > s-button[slot="primary-action"] {
+        grid-column: 2;
+      }
+
+      s-page > s-button[slot="secondary-actions"] {
+        grid-column: 2;
+        margin-right: 112px;
       }
 
       s-unordered-list {
@@ -185,6 +261,40 @@ function WebComponentFallbacks() {
         margin: 6px 0;
         list-style: disc;
       }
+
+      s-link[slot="breadcrumb"] {
+        grid-column: 1 / -1;
+        width: fit-content;
+        margin: -8px 0 -8px;
+        font-size: 13px;
+      }
+
+      table {
+        background: #fff;
+      }
+
+      @media (max-width: 900px) {
+        s-page {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 20px 16px 32px;
+        }
+
+        s-section,
+        s-section[slot="aside"],
+        s-page:not(:defined)::before,
+        s-link[slot="breadcrumb"],
+        s-page > s-button[slot="primary-action"],
+        s-page > s-button[slot="secondary-actions"] {
+          grid-column: 1;
+        }
+
+        s-page > s-button[slot="primary-action"],
+        s-page > s-button[slot="secondary-actions"] {
+          grid-row: auto;
+          justify-self: start;
+          margin-right: 0;
+        }
+      }
     `}</style>
   );
 }
@@ -192,12 +302,21 @@ function WebComponentFallbacks() {
 const navStyle = {
   display: "flex",
   flexWrap: "wrap",
-  gap: "8px",
-  padding: "16px 24px 0",
+  gap: "6px",
+  padding: "16px 32px 0",
+  background: "#f6f6f7",
 };
 
 const navLinkStyle = {
-  color: "#005bd3",
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: "32px",
+  padding: "0 12px",
+  borderRadius: "6px",
+  border: "1px solid #dfe3e8",
+  background: "#ffffff",
+  color: "#202223",
   textDecoration: "none",
   fontWeight: 600,
+  fontSize: "13px",
 };

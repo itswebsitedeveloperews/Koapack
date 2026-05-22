@@ -54,7 +54,11 @@ export default function AssetsPage() {
               style={inputStyle}
               required
             />
-            <button style={primarySubmitStyle} type="submit" disabled={isUploading}>
+            <button
+              style={primarySubmitStyle}
+              type="submit"
+              disabled={isUploading}
+            >
               {isUploading ? "Uploading..." : "Upload"}
             </button>
           </div>
@@ -170,7 +174,8 @@ async function uploadImageToShopifyFiles(admin, file) {
   );
 
   const stagedPayload = await stagedResult.json();
-  const stagedErrors = stagedPayload?.data?.stagedUploadsCreate?.userErrors || [];
+  const stagedErrors =
+    stagedPayload?.data?.stagedUploadsCreate?.userErrors || [];
   if (stagedErrors.length) {
     throw new Response(stagedErrors.map((error) => error.message).join("; "), {
       status: 400,
@@ -255,11 +260,13 @@ function isShopifyFileScopeError(error) {
 
 const inputStyle = {
   width: "100%",
-  padding: "10px 12px",
-  border: "1px solid #8c9196",
+  minHeight: "40px",
+  padding: "9px 12px",
+  border: "1px solid #c9cccf",
   borderRadius: "6px",
   boxSizing: "border-box",
   font: "inherit",
+  background: "#ffffff",
 };
 
 const uploadRowStyle = {
@@ -271,8 +278,9 @@ const uploadRowStyle = {
 
 const primarySubmitStyle = {
   border: 0,
-  borderRadius: "8px",
-  padding: "10px 16px",
+  borderRadius: "6px",
+  minHeight: "40px",
+  padding: "9px 16px",
   background: "#202223",
   color: "white",
   cursor: "pointer",
@@ -291,6 +299,7 @@ const assetCardStyle = {
   borderRadius: "8px",
   overflow: "hidden",
   background: "#ffffff",
+  boxShadow: "0 1px 0 rgba(0, 0, 0, 0.04)",
 };
 
 const assetImageStyle = {

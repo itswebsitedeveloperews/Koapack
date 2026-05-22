@@ -215,6 +215,9 @@ function capitalize(value) {
 
 const tableWrapStyle = {
   overflowX: "auto",
+  border: "1px solid #dfe3e8",
+  borderRadius: "8px",
+  background: "#ffffff",
 };
 
 const tableStyle = {
@@ -224,13 +227,17 @@ const tableStyle = {
 };
 
 const headerCellStyle = {
-  padding: "12px",
+  padding: "12px 14px",
   borderBottom: "1px solid #dfe3e8",
+  background: "#f7f7f8",
+  color: "#303030",
+  fontSize: "13px",
+  fontWeight: 700,
   textAlign: "left",
 };
 
 const bodyCellStyle = {
-  padding: "12px",
+  padding: "14px",
   borderBottom: "1px solid #eef0f2",
   verticalAlign: "middle",
 };
@@ -242,18 +249,19 @@ const mutedStyle = {
 
 const statusBadgeStyle = (status) => ({
   display: "inline-block",
-  padding: "2px 8px",
+  padding: "3px 9px",
   borderRadius: "999px",
-  background: status === "active" ? "#aee9d1" : "#e4e5e7",
-  color: "#202223",
+  background: status === "active" ? "#d1fadf" : "#e4e5e7",
+  color: status === "active" ? "#0c5132" : "#303030",
   fontSize: "12px",
   fontWeight: 600,
 });
 
 const deleteButtonStyle = {
   border: "1px solid #d72c0d",
-  borderRadius: "8px",
-  padding: "6px 12px",
+  borderRadius: "6px",
+  minHeight: "36px",
+  padding: "7px 12px",
   background: "#ffffff",
   color: "#d72c0d",
   cursor: "pointer",

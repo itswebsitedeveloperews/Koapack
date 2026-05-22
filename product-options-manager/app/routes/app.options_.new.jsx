@@ -91,9 +91,7 @@ export default function NewOptionGroupPage() {
   const [status, setStatus] = useState("active");
   const [manualProduct, setManualProduct] = useState("");
   const [targets, setTargets] = useState([]);
-  const [fields, setFields] = useState(() =>
-    ["quantity", "radio", "upload", "price", "pincode"].map(createField),
-  );
+  const [fields, setFields] = useState([]);
 
   return (
     <ProductOptionGroupForm
@@ -842,6 +840,20 @@ function ProductOptionGroupForm({
           </s-stack>
         </s-stack>
       </Form>
+
+      <s-section slot="aside" heading="Group summary">
+        <s-unordered-list>
+          <s-list-item>{fields.length} option fields</s-list-item>
+            <s-list-item>
+              {targets.length
+                ? `${targets.length} targeted products`
+                : "No specific targets selected"}
+            </s-list-item>
+          <s-list-item>
+            {status === "active" ? "Active on storefront" : "Draft"}
+          </s-list-item>
+        </s-unordered-list>
+      </s-section>
     </s-page>
   );
 }
@@ -3739,16 +3751,19 @@ function getOptionIcon(type) {
 
 const gridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-  gap: "16px",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: "18px",
 };
-const fieldGroupStyle = { display: "grid", gap: "6px", marginBottom: "16px" };
-const labelStyle = { fontWeight: 600 };
+const fieldGroupStyle = { display: "grid", gap: "8px", marginBottom: "16px" };
+const labelStyle = { color: "#303030", fontSize: "13px", fontWeight: 650 };
 const inputStyle = {
   width: "100%",
-  padding: "8px 12px",
-  border: "1px solid #8c9196",
+  minHeight: "40px",
+  padding: "9px 12px",
+  border: "1px solid #c9cccf",
   borderRadius: "6px",
+  background: "#ffffff",
+  color: "#202223",
   font: "inherit",
   boxSizing: "border-box",
 };
@@ -3763,8 +3778,8 @@ const fieldListStyle = { display: "grid", gap: "16px" };
 const editorStyle = {
   border: "1px solid #dfe3e8",
   borderRadius: "8px",
-  padding: "10px",
-  background: "#ffffff",
+  padding: "8px",
+  background: "#fbfbfc",
   transition: "box-shadow 0.15s ease, border-color 0.15s ease",
 };
 const dragOverEditorStyle = {
@@ -3776,8 +3791,10 @@ const toggleHeaderStyle = {
   gridTemplateColumns: "1fr auto",
   alignItems: "center",
   gap: "12px",
-  padding: "10px 12px",
-  background: "#eaf4ff",
+  minHeight: "48px",
+  padding: "8px 10px",
+  border: "1px solid #dde8f5",
+  background: "#eef6ff",
   borderRadius: "8px",
 };
 const toggleTitleStyle = {
@@ -3794,19 +3811,19 @@ const optionIconStyle = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  minWidth: "48px",
-  height: "24px",
-  border: "1px solid #8c9196",
+  minWidth: "52px",
+  height: "28px",
+  border: "1px solid #c9cccf",
   borderRadius: "4px",
   background: "#ffffff",
   color: "#202223",
-  fontSize: "13px",
+  fontSize: "12px",
   fontWeight: 600,
 };
 const headerActionsStyle = {
   display: "inline-flex",
   alignItems: "center",
-  gap: "16px",
+  gap: "10px",
 };
 const iconButtonStyle = {
   border: 0,
@@ -3834,7 +3851,13 @@ const deleteHeaderButtonStyle = {
   fontSize: "20px",
   lineHeight: "1",
 };
-const editorBodyStyle = { paddingTop: "16px" };
+const editorBodyStyle = {
+  marginTop: "8px",
+  padding: "18px",
+  border: "1px solid #e4e5e7",
+  borderRadius: "8px",
+  background: "#ffffff",
+};
 const checkboxLabelStyle = {
   display: "flex",
   alignItems: "center",
@@ -3851,9 +3874,10 @@ const pillStyle = {
   display: "inline-flex",
   alignItems: "center",
   gap: "8px",
-  padding: "6px 10px",
+  padding: "7px 10px",
   borderRadius: "999px",
-  background: "#f1f2f3",
+  background: "#edf4ff",
+  color: "#202223",
 };
 const plainButtonStyle = {
   border: 0,
@@ -3867,7 +3891,8 @@ const mutedStyle = { color: "#6d7175" };
 const primarySubmitStyle = {
   border: 0,
   borderRadius: "6px",
-  padding: "8px 14px",
+  minHeight: "40px",
+  padding: "9px 16px",
   background: "#008060",
   color: "white",
   cursor: "pointer",
@@ -3878,7 +3903,7 @@ const tabsStyle = {
   display: "flex",
   gap: "16px",
   borderBottom: "1px solid #dfe3e8",
-  marginBottom: "16px",
+  margin: "18px 0 16px",
 };
 const activeTabStyle = {
   border: 0,
@@ -4104,7 +4129,7 @@ const addDiscountButtonStyle = {
   width: "100%",
   marginTop: "12px",
   border: 0,
-  borderRadius: "8px",
+  borderRadius: "6px",
   padding: "10px 12px",
   background: "#e4e5e7",
   color: "#202223",
@@ -4115,15 +4140,15 @@ const addDiscountButtonStyle = {
 const addOptionBoxStyle = {
   display: "grid",
   gridTemplateColumns: "220px 1fr",
-  gap: "8px",
-  marginTop: "16px",
+  gap: "10px",
+  marginTop: "18px",
 };
 const addOptionSelectStyle = { ...inputStyle };
 const darkFullAddButtonStyle = {
   width: "100%",
   border: 0,
-  borderRadius: "8px",
-  padding: "10px 12px",
+  borderRadius: "6px",
+  padding: "10px 14px",
   background: "#202223",
   color: "white",
   cursor: "pointer",
@@ -4136,8 +4161,8 @@ const priceOptionHeaderStyle = {
   gridTemplateColumns: "1fr auto",
   gap: "12px",
   alignItems: "center",
-  padding: "8px 10px",
-  background: "#eaf4ff",
+  padding: "10px",
+  background: "#eef6ff",
 };
 const priceOptionTitleStyle = {
   display: "inline-flex",
@@ -4155,7 +4180,7 @@ const priceOptionActionsStyle = {
   gap: "14px",
 };
 const priceOptionBodyStyle = {
-  padding: "14px 10px 16px",
+  padding: "16px 12px 18px",
   background: "#ffffff",
 };
 const radioIconStyle = { fontSize: "16px" };
