@@ -1,8 +1,9 @@
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
+import { authenticateAdminOrRedirect } from "../auth-recovery.server";
 
 export const loader = async ({ request }) => {
-  await authenticate.admin(request);
+  await authenticateAdminOrRedirect(authenticate, request);
   return null;
 };
 

@@ -1,8 +1,9 @@
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import { authenticate } from "../shopify.server";
+import { authenticateAdminOrRedirect } from "../auth-recovery.server";
 
 export const loader = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin } = await authenticateAdminOrRedirect(authenticate, request);
 
   return {
     images: await loadShopifyMediaImages(admin),
@@ -10,7 +11,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin } = await authenticateAdminOrRedirect(authenticate, request);
   const formData = await request.formData();
   const file = formData.get("file");
 

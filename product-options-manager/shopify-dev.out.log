@@ -62,3 +62,15 @@ No pending migrations to apply.
 [2m2:09:34 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
 [2m2:09:41 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/auth.$.jsx[22m
 [2m2:10:11 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/auth.$.jsx[22m
+[shopify-app/INFO] Redirecting login request to https://admin.shopify.com/store/roduct-option/oauth/install?client_id=37430c92bc6b67b51f11562f7426f2ec | {shop: roduct-option.myshopify.com}
+[2m2:16:02 PM[22m [36m[1m[react-router][22m[39m [32mConfig saved[39m
+[2m2:16:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:16:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:16:17 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:16:17 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:16:26 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app._index.jsx[22m
+[2m2:16:26 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app._index.jsx[22m
+[2m2:16:26 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app._index.jsx[22m
+[2m2:16:26 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app._index.jsx[22m
+[2m2:16:42 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.options.jsx[22m
+[2m2:16:51 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.options_.assets.jsx[22m
