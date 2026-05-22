@@ -2,12 +2,12 @@
 > dev
 > shopify app dev
 
-Preparing dev preview on roduct-option.myshopify.comProxy server started on port 55733 GraphiQL server started on port 3457Prisma schema loaded from prisma\schema.prisma
+Preparing dev preview on roduct-option.myshopify.comProxy server started on port 50367 GraphiQL server started on port 3457Prisma schema loaded from prisma\schema.prisma
 Datasource "db": SQLite database "dev.sqlite" at "file:dev.sqlite"
 
 3 migrations found in prisma/migrations
 
 
 No pending migrations to apply.
-✅ Ready, watching for changes in your app │ Access scopes auto-granted: read_files, write_files, write_metaobject_definitions, write_metaobjects, write_products│ Using URL: https://burn-administrator-decor-stainless.trycloudflare.com/apps/product-options│ Any changes to prefix and subpath will only apply to new installs└ Using URL: https://burn-administrator-decor-stainless.trycloudflare.com  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m55736[22m/[39m
+✅ Ready, watching for changes in your app │ Access scopes auto-granted: read_files, write_files, write_metaobject_definitions, write_metaobjects, write_products│ Using URL: https://mesh-acoustic-each-dicke.trycloudflare.com/apps/product-options│ Any changes to prefix and subpath will only apply to new installs└ Using URL: https://mesh-acoustic-each-dicke.trycloudflare.com  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m54278[22m/[39m
 [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
