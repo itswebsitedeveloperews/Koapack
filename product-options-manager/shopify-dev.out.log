@@ -2,14 +2,14 @@
 > dev
 > shopify app dev
 
-Running pre-dev command: "npm exec prisma generate"Preparing dev preview on roduct-option.myshopify.comProxy server started on port 54756 GraphiQL server started on port 3457✅ Ready, watching for changes in your app │ Access scopes auto-granted: read_files, write_files, write_metaobject_definitions, write_metaobjects, write_products│ Using URL: https://shark-sitemap-arranged-hardware.trycloudflare.com/apps/product-options│ Any changes to prefix and subpath will only apply to new installs└ Using URL: https://shark-sitemap-arranged-hardware.trycloudflare.comPrisma schema loaded from prisma\schema.prisma
+Preparing dev preview on roduct-option.myshopify.comProxy server started on port 64173 GraphiQL server started on port 3457Prisma schema loaded from prisma\schema.prisma
 Datasource "db": SQLite database "dev.sqlite" at "file:dev.sqlite"
 
 3 migrations found in prisma/migrations
 
 
 No pending migrations to apply.
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m54759[22m/[39m
+✅ Ready, watching for changes in your app │ Access scopes auto-granted: read_files, write_files, write_metaobject_definitions, write_metaobjects, write_products│ Using URL: https://diane-decisions-forms-relief.trycloudflare.com/apps/product-options│ Any changes to prefix and subpath will only apply to new installs└ Using URL: https://diane-decisions-forms-relief.trycloudflare.com  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m64176[22m/[39m
 [2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
 [shopify-api/INFO] version 13.0.0, environment React Router
 [shopify-app/INFO] Redirecting login request to https://admin.shopify.com/store/roduct-option/oauth/install?client_id=37430c92bc6b67b51f11562f7426f2ec | {shop: roduct-option.myshopify.com}
@@ -25,7 +25,40 @@ No pending migrations to apply.
 [shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
 [shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
 [shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
-[2m1:48:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
-[2m1:48:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
-[2m1:48:27 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
-[2m1:48:27 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m1:56:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m1:56:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m1:56:57 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m1:56:57 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[shopify-app/INFO] Authenticating admin request | {shop: roduct-option.myshopify.com}
+[2m2:04:41 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:04:41 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:04:41 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:04:41 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:06:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:06:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:06:11 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:06:11 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:08:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:08:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:08:22 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:08:22 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:09:04 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:04 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:04 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:04 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:09:09 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/auth.$.jsx[22m
+[2m2:09:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:34 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/app/routes/app.jsx[22m
+[2m2:09:34 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/app.jsx[22m
+[2m2:09:41 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/auth.$.jsx[22m
+[2m2:10:11 PM[22m [36m[1m[vite][22m[39m [34m[2m(ssr)[22m[39m [32mpage reload [39m[2mapp/routes/auth.$.jsx[22m
