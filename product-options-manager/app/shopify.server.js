@@ -24,11 +24,45 @@ const shopify = shopifyApp({
     : {}),
 });
 
+const pendingAdminAuth = new Map();
+
 export default shopify;
 export const apiVersion = ApiVersion.April26;
 export const addDocumentResponseHeaders = shopify.addDocumentResponseHeaders;
-export const authenticate = shopify.authenticate;
+export const authenticate = {
+  ...shopify.authenticate,
+  admin: async (request) => {
+    const authKey = getAdminAuthKey(request);
+
+    if (authKey && pendingAdminAuth.has(authKey)) {
+      return pendingAdminAuth.get(authKey);
+    }
+
+    const authPromise = shopify.authenticate.admin(request);
+
+    if (!authKey) {
+      return authPromise;
+    }
+
+    pendingAdminAuth.set(authKey, authPromise);
+
+    try {
+      return await authPromise;
+    } finally {
+      pendingAdminAuth.delete(authKey);
+    }
+  },
+};
 export const unauthenticated = shopify.unauthenticated;
 export const login = shopify.login;
 export const registerWebhooks = shopify.registerWebhooks;
 export const sessionStorage = shopify.sessionStorage;
+
+function getAdminAuthKey(request) {
+  const url = new URL(request.url);
+  const authHeader = request.headers.get("authorization") || "";
+
+  return (
+    authHeader.match(/^Bearer (.+)$/i)?.[1] || url.searchParams.get("id_token")
+  );
+}
