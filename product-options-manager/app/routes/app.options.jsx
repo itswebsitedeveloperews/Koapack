@@ -1,11 +1,10 @@
 /* eslint-disable react/prop-types */
 import { Form, redirect, useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
-import { authenticateAdminOrRedirect } from "../auth-recovery.server";
 import db from "../db.server";
 
 export const loader = async ({ request }) => {
-  await authenticateAdminOrRedirect(authenticate, request);
+  await authenticate.admin(request);
 
   const groups = await db.optionGroup.findMany({
     include: {
@@ -39,7 +38,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  await authenticateAdminOrRedirect(authenticate, request);
+  await authenticate.admin(request);
   const formData = await request.formData();
 
   const intent = String(formData.get("intent") || "");

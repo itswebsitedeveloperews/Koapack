@@ -1,17 +1,11 @@
 import { useEffect } from "react";
-import {
-  isRouteErrorResponse,
-  Outlet,
-  useLoaderData,
-  useRouteError,
-} from "react-router";
+import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
-import { authenticateAdminOrRedirect } from "../auth-recovery.server";
 
 export const loader = async ({ request }) => {
-  await authenticateAdminOrRedirect(authenticate, request);
+  await authenticate.admin(request);
 
   // eslint-disable-next-line no-undef
   return { apiKey: process.env.SHOPIFY_API_KEY || "" };
@@ -22,12 +16,21 @@ export default function App() {
 
   return (
     <AppProvider embedded apiKey={apiKey}>
-      <s-app-nav>
-        <s-link href="/app">Home</s-link>
-        <s-link href="/app/options">Product Options</s-link>
-        <s-link href="/app/options/assets">Assets</s-link>
-        <s-link href="/app/additional">Additional page</s-link>
-      </s-app-nav>
+      <WebComponentFallbacks />
+      <nav style={navStyle}>
+        <a style={navLinkStyle} href="/app">
+          Home
+        </a>
+        <a style={navLinkStyle} href="/app/options">
+          Product Options
+        </a>
+        <a style={navLinkStyle} href="/app/options/assets">
+          Assets
+        </a>
+        <a style={navLinkStyle} href="/app/additional">
+          Additional page
+        </a>
+      </nav>
       <Outlet />
     </AppProvider>
   );
@@ -35,59 +38,145 @@ export default function App() {
 
 // Shopify needs React Router to catch some thrown responses, so that their headers are included in the response.
 export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (isRouteErrorResponse(error) && error.status === 401) {
-    return <EmbeddedAuthRedirect />;
-  }
-
-  return boundary.error(error);
+  return boundary.error(useRouteError());
 }
 
 export const headers = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
 
-function EmbeddedAuthRedirect() {
+function WebComponentFallbacks() {
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    let shop = params.get("shop");
+    const handleClick = (event) => {
+      const clickable = event.target.closest("s-link[href], s-button[href]");
 
-    if (!shop && params.get("host")) {
-      try {
-        const decodedHost = atob(params.get("host"));
-        shop = decodedHost.split("/")[0];
-      } catch {
-        shop = "";
-      }
-    }
+      if (!clickable) return;
 
-    if (!shop && document.referrer) {
-      try {
-        const referrer = new URL(document.referrer);
-        const storeHandle = referrer.pathname.match(/\/store\/([^/]+)/)?.[1];
+      const href = clickable.getAttribute("href");
 
-        if (storeHandle) {
-          shop = `${storeHandle}.myshopify.com`;
-        }
-      } catch {
-        shop = "";
-      }
-    }
+      if (!href) return;
 
-    if (!shop) {
-      window.open("/auth/login", "_top");
-      return;
-    }
+      event.preventDefault();
+      window.location.href = href;
+    };
 
-    const target = new URL("/auth/login", window.location.origin);
-    target.searchParams.set("shop", shop);
-    window.open(target.toString(), "_top");
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
   }, []);
 
   return (
-    <AppProvider embedded={false}>
-      <p>Redirecting to Shopify authorization...</p>
-    </AppProvider>
+    <style>{`
+      s-page,
+      s-section,
+      s-stack,
+      s-unordered-list,
+      s-list-item,
+      s-paragraph,
+      s-link,
+      s-button {
+        box-sizing: border-box;
+      }
+
+      s-page {
+        display: block;
+        max-width: 1040px;
+        padding: 24px;
+      }
+
+      s-page::before {
+        content: attr(heading);
+        display: block;
+        margin: 0 0 18px;
+        font-size: 24px;
+        font-weight: 650;
+        line-height: 1.25;
+      }
+
+      s-section {
+        display: block;
+        margin: 0 0 20px;
+        padding: 18px;
+        border: 1px solid #dfe3e8;
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      s-section::before {
+        content: attr(heading);
+        display: block;
+        margin: 0 0 10px;
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      s-paragraph {
+        display: block;
+        margin: 0 0 14px;
+        color: #4a4f55;
+        line-height: 1.45;
+      }
+
+      s-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      s-link {
+        display: inline-block;
+        color: #005bd3;
+        cursor: pointer;
+        text-decoration: none;
+      }
+
+      s-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 7px 12px;
+        border: 1px solid #8c9196;
+        border-radius: 6px;
+        background: #fff;
+        color: #202223;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 600;
+      }
+
+      s-button[variant="primary"] {
+        border-color: #202223;
+        background: #202223;
+        color: #fff;
+      }
+
+      s-unordered-list {
+        display: block;
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      s-list-item {
+        display: list-item;
+        margin: 6px 0;
+        list-style: disc;
+      }
+    `}</style>
   );
 }
+
+const navStyle = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: "8px",
+  padding: "16px 24px 0",
+};
+
+const navLinkStyle = {
+  color: "#005bd3",
+  textDecoration: "none",
+  fontWeight: 600,
+};
