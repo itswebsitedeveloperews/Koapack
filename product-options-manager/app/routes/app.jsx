@@ -1,5 +1,11 @@
 import { useEffect } from "react";
-import { Outlet, useLoaderData, useRouteError } from "react-router";
+import {
+  Link,
+  Outlet,
+  useLoaderData,
+  useNavigate,
+  useRouteError,
+} from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
@@ -18,18 +24,18 @@ export default function App() {
     <AppProvider embedded apiKey={apiKey}>
       <WebComponentFallbacks />
       <nav style={navStyle}>
-        <a style={navLinkStyle} href="/app">
+        <Link style={navLinkStyle} to="/app">
           Home
-        </a>
-        <a style={navLinkStyle} href="/app/options">
+        </Link>
+        <Link style={navLinkStyle} to="/app/options">
           Product Options
-        </a>
-        <a style={navLinkStyle} href="/app/options/assets">
+        </Link>
+        <Link style={navLinkStyle} to="/app/options/assets">
           Assets
-        </a>
-        <a style={navLinkStyle} href="/app/additional">
+        </Link>
+        <Link style={navLinkStyle} to="/app/additional">
           Additional page
-        </a>
+        </Link>
       </nav>
       <Outlet />
     </AppProvider>
@@ -46,9 +52,18 @@ export const headers = (headersArgs) => {
 };
 
 function WebComponentFallbacks() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     const handleClick = (event) => {
-      const clickable = event.target.closest("s-link[href], s-button[href]");
+      const path = event.composedPath?.() || [];
+      const clickable =
+        path.find(
+          (element) =>
+            element?.getAttribute &&
+            ["S-LINK", "S-BUTTON"].includes(element.tagName) &&
+            element.getAttribute("href"),
+        ) || event.target.closest?.("s-link[href], s-button[href]");
 
       if (!clickable) return;
 
@@ -57,15 +72,21 @@ function WebComponentFallbacks() {
       if (!href) return;
 
       event.preventDefault();
-      window.location.href = href;
+
+      if (href.startsWith("/")) {
+        navigate(href);
+        return;
+      }
+
+      window.location.assign(href);
     };
 
-    document.addEventListener("click", handleClick);
+    document.addEventListener("click", handleClick, true);
 
     return () => {
-      document.removeEventListener("click", handleClick);
+      document.removeEventListener("click", handleClick, true);
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <style>{`
