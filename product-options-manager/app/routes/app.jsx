@@ -1,9 +1,4 @@
-import {
-  isRouteErrorResponse,
-  Outlet,
-  useLoaderData,
-  useRouteError,
-} from "react-router";
+import { Outlet, useLoaderData, useRouteError } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
@@ -33,39 +28,9 @@ export default function App() {
 
 // Shopify needs React Router to catch some thrown responses, so that their headers are included in the response.
 export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (isRouteErrorResponse(error) && error.status === 401) {
-    return <EmbeddedAuthRedirect />;
-  }
-
-  return boundary.error(error);
+  return boundary.error(useRouteError());
 }
 
 export const headers = (headersArgs) => {
   return boundary.headers(headersArgs);
 };
-
-function EmbeddedAuthRedirect() {
-  return (
-    <>
-      <p>Redirecting to Shopify authorization...</p>
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (() => {
-              const params = new URLSearchParams(window.location.search);
-              const shop = params.get("shop");
-
-              if (!shop) return;
-
-              const target = new URL("/auth/login", window.location.origin);
-              target.searchParams.set("shop", shop);
-              window.open(target.toString(), "_top");
-            })();
-          `,
-        }}
-      />
-    </>
-  );
-}
