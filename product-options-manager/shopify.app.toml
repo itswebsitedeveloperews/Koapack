@@ -2,23 +2,27 @@
 
 client_id = "37430c92bc6b67b51f11562f7426f2ec"
 name = "product-options-manager"
-application_url = "https://example.com"
+application_url = "https://shark-sitemap-arranged-hardware.trycloudflare.com"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
 
 [webhooks]
-api_version = "2026-07"
+api_version = "2026-04"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_metaobjects,write_metaobject_definitions"
+scopes = "write_metaobject_definitions,write_metaobjects,write_products,read_files,write_files"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [
+  "https://shark-sitemap-arranged-hardware.trycloudflare.com/auth/callback",
+  "https://shark-sitemap-arranged-hardware.trycloudflare.com/auth/shopify/callback",
+  "https://shark-sitemap-arranged-hardware.trycloudflare.com/api/auth/callback"
+]
 
 [app_proxy]
-url = "/apps/product-options"
+url = "https://shark-sitemap-arranged-hardware.trycloudflare.com/apps/product-options"
 subpath = "product-options"
 prefix = "apps"
