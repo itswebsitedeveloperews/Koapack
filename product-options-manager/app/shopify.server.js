@@ -38,7 +38,9 @@ export const authenticate = {
       return pendingAdminAuth.get(authKey);
     }
 
-    const authPromise = shopify.authenticate.admin(request);
+    const authPromise = waitForSessionTokenClockSkew(request).then(() =>
+      shopify.authenticate.admin(request),
+    );
 
     if (!authKey) {
       return authPromise;
@@ -65,4 +67,33 @@ function getAdminAuthKey(request) {
   return (
     authHeader.match(/^Bearer (.+)$/i)?.[1] || url.searchParams.get("id_token")
   );
+}
+
+async function waitForSessionTokenClockSkew(request) {
+  const token = getAdminAuthKey(request);
+  const payload = decodeJwtPayload(token);
+  const nbf = payload?.nbf;
+
+  if (!nbf) return;
+
+  const shopifyClockToleranceMs = 10_000;
+  const nowMs = Date.now();
+  const validAtMs = nbf * 1000 - shopifyClockToleranceMs;
+  const waitMs = validAtMs - nowMs;
+
+  if (waitMs <= 0) return;
+
+  await new Promise((resolve) => setTimeout(resolve, Math.min(waitMs, 15_000)));
+}
+
+function decodeJwtPayload(token) {
+  if (!token) return null;
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    return JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
 }
