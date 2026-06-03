@@ -803,17 +803,17 @@ function ProductOptionGroupForm({
   };
 
   return (
-    <s-page heading={heading}>
+    <s-page heading={heading} style={optionGroupPageStyle}>
       <s-link slot="breadcrumb" href="/app/options">
         Product Options
       </s-link>
 
-      <Form method="post">
+      <Form method="post" style={optionGroupFormStyle}>
         <input type="hidden" name="fields" value={fieldsJson} />
         <input type="hidden" name="targets" value={targetsJson} />
 
-        <s-stack direction="block" gap="base">
-          <s-section heading="Group details">
+        <s-stack direction="block" gap="base" style={optionGroupStackStyle}>
+          <s-section heading="Group details" style={wideSectionStyle}>
             <div style={gridStyle}>
               <Field label="Group name" htmlFor="group-name">
                 <input
@@ -842,7 +842,7 @@ function ProductOptionGroupForm({
             </div>
           </s-section>
 
-          <s-section heading="Option fields">
+          <s-section heading="Option fields" style={wideSectionStyle}>
             <div style={fieldListStyle}>
               {fields.map((field, index) => (
                 <OptionFieldEditor
@@ -871,7 +871,7 @@ function ProductOptionGroupForm({
             />
           </s-section>
 
-          <s-section heading="Product targeting">
+          <s-section heading="Product targeting" style={wideSectionStyle}>
             <div style={gridStyle}>
               <Field label="Manual product handle or GID" htmlFor="target">
                 <div style={inlineControlStyle}>
@@ -4230,6 +4230,22 @@ const gridStyle = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
   gap: "18px",
+};
+const optionGroupPageStyle = {
+  width: "100%",
+  maxWidth: "1500px",
+  gridTemplateColumns: "minmax(0, 920px) minmax(280px, 320px)",
+};
+const optionGroupFormStyle = {
+  width: "min(100%, 920px)",
+  maxWidth: "920px",
+};
+const optionGroupStackStyle = {
+  width: "100%",
+};
+const wideSectionStyle = {
+  width: "100%",
+  maxWidth: "920px",
 };
 const fieldGroupStyle = { display: "grid", gap: "8px", marginBottom: "16px" };
 const labelStyle = { color: "#303030", fontSize: "13px", fontWeight: 650 };
