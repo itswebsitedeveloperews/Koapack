@@ -143,7 +143,7 @@ function WebComponentFallbacks() {
       display: grid;
     grid-template-columns: minmax(0, 1060px) minmax(270px, 0);
     gap: 20px 24px;
-    max-width: 1273px;
+    max-width: 1353px;
     padding: 28px 32px 40px;
       }
 

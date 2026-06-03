@@ -4753,9 +4753,10 @@ const variationSelectionCellStyle = {
   color: "#202223",
   boxSizing: "border-box",
 };
-const exactPriceInputWrapStyle = { position: "relative" };
+const exactPriceInputWrapStyle = { position: "relative", width: "70%" };
 const exactPriceInputStyle = {
   ...inputStyle,
+  width: "100%",
   paddingRight: "34px",
   textAlign: "right",
 };
