@@ -1,1 +1,24 @@
-{{ 'sections.cart.new_estimated_total' | t }}: {{ cart.total_price | money_with_currency }}
+{%- liquid
+  assign pom_cart_total = 0
+  assign has_pom_cart_price = false
+
+  for item in cart.items
+    assign pom_line_price = item.final_line_price
+
+    for property in item.properties
+      if property.first == '_pom_final_price' and property.last != blank
+        assign pom_line_price = property.last | times: 100 | round
+        assign has_pom_cart_price = true
+      endif
+    endfor
+
+    assign pom_cart_total = pom_cart_total | plus: pom_line_price
+  endfor
+-%}
+
+{{ 'sections.cart.new_estimated_total' | t }}:
+{%- if has_pom_cart_price -%}
+  {{ pom_cart_total | money_with_currency }}
+{%- else -%}
+  {{ cart.total_price | money_with_currency }}
+{%- endif -%}

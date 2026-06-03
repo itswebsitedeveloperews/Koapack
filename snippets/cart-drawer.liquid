@@ -118,6 +118,20 @@
 
                   <tbody role="rowgroup">
                     {%- for item in cart.items -%}
+                      {%- liquid
+                        assign pom_final_line_price = blank
+                        assign pom_unit_price = blank
+
+                        for property in item.properties
+                          if property.first == '_pom_final_price' and property.last != blank
+                            assign pom_final_line_price = property.last | times: 100 | round
+                          endif
+
+                          if property.first == '_pom_unit_price' and property.last != blank
+                            assign pom_unit_price = property.last | times: 100 | round
+                          endif
+                        endfor
+                      -%}
                       <tr id="CartDrawer-Item-{{ item.index | plus: 1 }}" class="cart-item" role="row">
                         <td class="cart-item__media" role="cell" headers="CartDrawer-ColumnProductImage">
                           {% if item.image %}
@@ -143,7 +157,11 @@
                             {{- item.product.title | escape -}}
                           </a>
 
-                          {%- if item.original_price != item.final_price -%}
+                          {%- if pom_unit_price != blank -%}
+                            <div class="product-option">
+                              {{ pom_unit_price | money }}
+                            </div>
+                          {%- elsif item.original_price != item.final_price -%}
                             <div class="cart-item__discounted-prices">
                               <span class="visually-hidden">
                                 {{ 'products.product.price.regular_price' | t }}
@@ -225,7 +243,11 @@
                         <td class="cart-item__totals right" role="cell" headers="CartDrawer-ColumnTotal">
                           {%- render 'loading-spinner' -%}
                           <div class="cart-item__price-wrapper">
-                            {%- if item.original_line_price != item.final_line_price -%}
+                            {%- if pom_final_line_price != blank -%}
+                              <span class="price price--end">
+                                {{ pom_final_line_price | money }}
+                              </span>
+                            {%- elsif item.original_line_price != item.final_line_price -%}
                               <div class="cart-item__discounted-prices">
                                 <span class="visually-hidden">
                                   {{ 'products.product.price.regular_price' | t }}
@@ -493,9 +515,33 @@
             {%- endif -%}
           </div>
 
+          {%- liquid
+            assign pom_cart_total = 0
+            assign has_pom_cart_price = false
+
+            for item in cart.items
+              assign pom_line_price = item.final_line_price
+
+              for property in item.properties
+                if property.first == '_pom_final_price' and property.last != blank
+                  assign pom_line_price = property.last | times: 100 | round
+                  assign has_pom_cart_price = true
+                endif
+              endfor
+
+              assign pom_cart_total = pom_cart_total | plus: pom_line_price
+            endfor
+          -%}
+
           <div class="totals" role="status">
             <h2 class="totals__total">{{ 'sections.cart.estimated_total' | t }}</h2>
-            <p class="totals__total-value">{{ cart.total_price | money_with_currency }}</p>
+            <p class="totals__total-value">
+              {%- if has_pom_cart_price -%}
+                {{ pom_cart_total | money_with_currency }}
+              {%- else -%}
+                {{ cart.total_price | money_with_currency }}
+              {%- endif -%}
+            </p>
           </div>
 
           <small class="tax-note caption-large rte">

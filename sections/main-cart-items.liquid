@@ -79,6 +79,20 @@
 
               <tbody>
                 {%- for item in cart.items -%}
+                  {%- liquid
+                    assign pom_final_line_price = blank
+                    assign pom_unit_price = blank
+
+                    for property in item.properties
+                      if property.first == '_pom_final_price' and property.last != blank
+                        assign pom_final_line_price = property.last | times: 100 | round
+                      endif
+
+                      if property.first == '_pom_unit_price' and property.last != blank
+                        assign pom_unit_price = property.last | times: 100 | round
+                      endif
+                    endfor
+                  -%}
                   <tr class="cart-item" id="CartItem-{{ item.index | plus: 1 }}">
                     <td class="cart-item__media">
                       {% if item.image %}
@@ -104,7 +118,11 @@
 
                       <a href="{{ item.url }}" class="cart-item__name h4 break">{{ item.product.title | escape }}</a>
 
-                      {%- if item.original_price != item.final_price -%}
+                      {%- if pom_unit_price != blank -%}
+                        <div class="product-option">
+                          {{ pom_unit_price | money }}
+                        </div>
+                      {%- elsif item.original_price != item.final_price -%}
                         <div class="cart-item__discounted-prices">
                           <span class="visually-hidden">
                             {{ 'products.product.price.regular_price' | t }}
@@ -174,7 +192,11 @@
                     <td class="cart-item__totals right medium-hide large-up-hide">
                       {%- render 'loading-spinner' -%}
                       <div class="cart-item__price-wrapper">
-                        {%- if item.original_line_price != item.final_line_price -%}
+                        {%- if pom_final_line_price != blank -%}
+                          <span class="price price--end">
+                            {{ pom_final_line_price | money }}
+                          </span>
+                        {%- elsif item.original_line_price != item.final_line_price -%}
                           <dl class="cart-item__discounted-prices">
                             <dt class="visually-hidden">
                               {{ 'products.product.price.regular_price' | t }}
@@ -390,7 +412,11 @@
                     <td class="cart-item__totals right small-hide">
                       {%- render 'loading-spinner' -%}
                       <div class="cart-item__price-wrapper">
-                        {%- if item.original_line_price != item.final_line_price -%}
+                        {%- if pom_final_line_price != blank -%}
+                          <span class="price price--end">
+                            {{ pom_final_line_price | money }}
+                          </span>
+                        {%- elsif item.original_line_price != item.final_line_price -%}
                           <dl class="cart-item__discounted-prices">
                             <dt class="visually-hidden">
                               {{ 'products.product.price.regular_price' | t }}
