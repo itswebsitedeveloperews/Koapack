@@ -271,10 +271,20 @@
   }
 
   function isVariationPriceStorageField(field) {
+    const normalizedType = normalizeType(field?.type);
+    const normalizedName = normalizeType(field?.name);
+    const normalizedLabel = normalizeType(field?.label);
+
     return (
-      normalizeType(field?.type) === VARIATION_PRICE_FIELD_TYPE ||
-      normalizeType(field?.name) === VARIATION_PRICE_FIELD_TYPE ||
-      normalizeType(field?.config?.storageType) === VARIATION_PRICE_FIELD_TYPE
+      normalizedType === VARIATION_PRICE_FIELD_TYPE ||
+      normalizedName === VARIATION_PRICE_FIELD_TYPE ||
+      normalizedLabel === VARIATION_PRICE_FIELD_TYPE ||
+      normalizeType(field?.config?.storageType) ===
+        VARIATION_PRICE_FIELD_TYPE ||
+      (normalizedName === "variation_prices" &&
+        Array.isArray(field?.config?.prices)) ||
+      (normalizedLabel === "variation_prices" &&
+        Array.isArray(field?.config?.prices))
     );
   }
 

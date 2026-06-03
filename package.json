@@ -9,6 +9,8 @@
     "@shopify/polaris": "^13.9.5"
   },
   "devDependencies": {
-    "eslint": "^10.3.0"
+    "@prisma/client": "^6.19.3",
+    "eslint": "^10.3.0",
+    "prisma": "^6.19.3"
   }
 }
