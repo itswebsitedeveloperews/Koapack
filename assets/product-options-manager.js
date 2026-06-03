@@ -103,12 +103,8 @@
     ).trim();
   }
 
-  function getOptionPrice(field, value) {
-    const item = getValues(field).find(
-      (x, index) => String(getChoiceValue(x, index)) === String(value),
-    );
-
-    return item ? Number(item.price || 0) : 0;
+  function getOptionPrice() {
+    return 0;
   }
 
   function getAdvancedHelp(field) {
@@ -214,20 +210,18 @@
       0,
     );
 
+    const qty = Math.max(1, Number(selectedQuantity || 1));
     const matchedVariationPrice = findMatchingVariationPrice();
     const hasExactVariationPrice = matchedVariationPrice !== null;
-    const unitPrice = hasExactVariationPrice
-      ? matchedVariationPrice
-      : basePrice + addonTotal;
+    let total = matchedVariationPrice;
 
-    const qty = Math.max(1, Number(selectedQuantity || 1));
-
-    const subtotal = unitPrice * qty;
-    const discountPercent = hasExactVariationPrice
-      ? 0
-      : Number(selectedQuantityDiscount || 0);
-    const discountAmount = subtotal * (discountPercent / 100);
-    const total = subtotal - discountAmount;
+    if (!hasExactVariationPrice) {
+      const unitPrice = basePrice + addonTotal;
+      const subtotal = unitPrice * qty;
+      const discountAmount =
+        subtotal * (Number(selectedQuantityDiscount || 0) / 100);
+      total = subtotal - discountAmount;
+    }
 
     document
       .querySelectorAll(
@@ -908,10 +902,7 @@
         const option = document.createElement("option");
 
         option.value = optionValue;
-        option.textContent =
-          Number(item.price || 0) > 0
-            ? `${optionLabel} (+${money(item.price)})`
-            : optionLabel || "Option";
+        option.textContent = optionLabel || "Option";
 
         select.appendChild(option);
       });
@@ -1008,10 +999,7 @@
         button.classList.add("color-swatche");
       }
 
-      const labelText =
-        Number(item.price || 0) > 0
-          ? `${optionLabel} (+${money(item.price)})`
-          : optionLabel || "Option";
+      const labelText = optionLabel || "Option";
 
       if (swatchBg) {
         const swatch = document.createElement("span");

@@ -1271,8 +1271,7 @@ function VariationPriceMatrix({ attributes = [], rows = [], onChange }) {
         <div>
           <h3 style={variationMatrixHeadingStyle}>Variation prices</h3>
           <p style={helpTextStyle}>
-            Enter the exact unit price for each generated option-value
-            combination.
+            Enter the exact price for each generated option-value combination.
           </p>
         </div>
         {attributeCount > 0 ? (
@@ -1838,7 +1837,6 @@ function ChoiceOptionEditor({
         {
           value: "",
           text: "",
-          price: 0,
           ...(mode.includes("image") ? { image: "" } : {}),
           ...(mode.includes("color") ? { color: "#000000" } : {}),
         },
@@ -1955,7 +1953,6 @@ function ChoiceOptionEditor({
         {mode.includes("color") ? <div>Color</div> : null}
         <div>Value</div>
         <div>Text</div>
-        <div>Price</div>
         <div />
       </div>
 
@@ -2025,19 +2022,6 @@ function ChoiceOptionEditor({
             value={item.text || ""}
             onChange={(event) => updateValue(index, "text", event.target.value)}
           />
-
-          <div style={priceInputWrapStyle}>
-            <span style={plusStyle}>+</span>
-            <input
-              type="number"
-              style={priceInputStyle}
-              value={item.price || 0}
-              onChange={(event) =>
-                updateValue(index, "price", Number(event.target.value))
-              }
-            />
-            <span style={currencyStyle}>Rs.</span>
-          </div>
 
           <button
             type="button"
@@ -2109,8 +2093,8 @@ function getMediaImageLabel(image, index) {
 
 function PersonalizeOptionEditor({ field, onChange, updateConfig }) {
   const values = field.config?.values || [
-    { value: "yes", text: "Add Personalization", price: 0 },
-    { value: "no", text: "Remove Personalization", price: 0 },
+    { value: "yes", text: "Add Personalization" },
+    { value: "no", text: "Remove Personalization" },
   ];
 
   const updateValue = (index, key, value) => {
@@ -2181,7 +2165,6 @@ function PersonalizeOptionEditor({ field, onChange, updateConfig }) {
       <div style={choiceHeaderStyle("basic")}>
         <div>Value</div>
         <div>Text</div>
-        <div>Price</div>
         <div />
       </div>
 
@@ -2199,18 +2182,6 @@ function PersonalizeOptionEditor({ field, onChange, updateConfig }) {
             value={item.text || ""}
             onChange={(event) => updateValue(index, "text", event.target.value)}
           />
-          <div style={priceInputWrapStyle}>
-            <span style={plusStyle}>+</span>
-            <input
-              type="number"
-              style={priceInputStyle}
-              value={item.price || 0}
-              onChange={(event) =>
-                updateValue(index, "price", Number(event.target.value))
-              }
-            />
-            <span style={currencyStyle}>Rs.</span>
-          </div>
           <button type="button" style={deleteButtonStyle} disabled>
             ×
           </button>
@@ -4055,7 +4026,7 @@ function createField(type, index = 0) {
 }
 
 function serializeFieldForDb(field, index) {
-  const config = cloneConfig(field.config || {});
+  const config = stripFieldValuePrices(field.config || {});
   delete config.conditions;
 
   return {
@@ -4093,6 +4064,26 @@ function parseSavedValues(value) {
 
 function cloneConfig(config) {
   return JSON.parse(JSON.stringify(config || {}));
+}
+
+function stripFieldValuePrices(config) {
+  const nextConfig = cloneConfig(config || {});
+
+  ["values", "categories", "options"].forEach((key) => {
+    if (!Array.isArray(nextConfig[key])) return;
+
+    nextConfig[key] = nextConfig[key].map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return item;
+      }
+
+      const nextItem = { ...item };
+      delete nextItem.price;
+      return nextItem;
+    });
+  });
+
+  return nextConfig;
 }
 
 function Field({ label, htmlFor, children }) {
@@ -4319,19 +4310,6 @@ const sectionLabelStyle = {
   margin: "16px 0 8px",
   fontWeight: 600,
   color: "#6d7175",
-};
-const priceInputWrapStyle = { position: "relative" };
-const plusStyle = {
-  position: "absolute",
-  left: "10px",
-  top: "50%",
-  transform: "translateY(-50%)",
-};
-const priceInputStyle = {
-  ...inputStyle,
-  paddingLeft: "28px",
-  paddingRight: "34px",
-  textAlign: "right",
 };
 const currencyStyle = {
   position: "absolute",
@@ -4585,7 +4563,6 @@ function choiceHeaderStyle(mode) {
     mode.includes("color") ? "160px" : null,
     "1fr",
     "1fr",
-    "160px",
     "40px",
   ]
     .filter(Boolean)
@@ -4609,7 +4586,6 @@ function choiceRowStyle(mode) {
     mode.includes("color") ? "160px" : null,
     "1fr",
     "1fr",
-    "160px",
     "40px",
   ]
     .filter(Boolean)
