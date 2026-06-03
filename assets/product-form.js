@@ -31,6 +31,10 @@ if (!customElements.get('product-form')) {
         config.headers['X-Requested-With'] = 'XMLHttpRequest';
         delete config.headers['Content-Type'];
 
+        if (typeof window.ProductOptionsManagerSyncCartForm === 'function') {
+          window.ProductOptionsManagerSyncCartForm(this.form);
+        }
+
         const formData = new FormData(this.form);
         if (this.cart) {
           formData.append(

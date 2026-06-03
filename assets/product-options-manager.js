@@ -17,7 +17,6 @@
   const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
 
   let selectedQuantity = 1;
-  let selectedQuantityDiscount = 0;
   let currentPricing = {
     hasExactVariationPrice: false,
     finalPrice: null,
@@ -222,10 +221,7 @@
 
     if (!hasExactVariationPrice) {
       const unitPrice = basePrice + addonTotal;
-      const subtotal = unitPrice * qty;
-      const discountAmount =
-        subtotal * (Number(selectedQuantityDiscount || 0) / 100);
-      total = subtotal - discountAmount;
+      total = unitPrice * qty;
     }
 
     currentPricing = {
@@ -233,6 +229,7 @@
       finalPrice: Number(Number(total || 0).toFixed(2)),
       unitPrice: Number(Number(total / qty || 0).toFixed(2)),
     };
+    syncAllCartFormsQuantity();
     syncAllCartFormsVariationPriceProperties();
 
     document
@@ -1112,7 +1109,6 @@
 
     rows.forEach((row) => {
       const qty = Number(row.quantity || row.qty || 0);
-      const discount = Number(row.discount || row.discountPercent || 0);
 
       if (!qty) return;
 
@@ -1130,7 +1126,6 @@
         button.classList.add("is-active");
 
         selectedQuantity = qty;
-        selectedQuantityDiscount = discount;
 
         const qtyInput =
           document.querySelector("input[name='quantity']") ||
@@ -1144,12 +1139,6 @@
 
         selectedOptions[field.label || field.name || "Quantity"] = `${qty}+`;
         selectedInput.value = `${qty}+`;
-
-        if (discount > 0) {
-          selectedOptions["Quantity discount"] = `${discount}%`;
-        } else {
-          delete selectedOptions["Quantity discount"];
-        }
 
         updatePrice();
         validateRequiredFields();
@@ -1427,6 +1416,8 @@
         });
 
         syncVariationPriceProperties(form);
+        syncCartFormQuantity(form);
+        setCartProperty(form, "_pom_line_key", createPomLineKey());
 
         if (overlay) {
           event.preventDefault();
@@ -1480,6 +1471,7 @@
       "_pom_final_price",
       "_pom_unit_price",
       "_pom_selected_quantity",
+      "_pom_line_key",
     ];
 
     if (
@@ -1495,6 +1487,42 @@
     setCartProperty(form, "_pom_final_price", currentPricing.finalPrice);
     setCartProperty(form, "_pom_unit_price", currentPricing.unitPrice);
     setCartProperty(form, "_pom_selected_quantity", selectedQuantity);
+  }
+
+  function syncCartFormQuantity(form) {
+    let input = form.querySelector("[name='quantity']");
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "quantity";
+      form.appendChild(input);
+    }
+
+    input.value = String(Math.max(1, Number(selectedQuantity || 1)));
+  }
+
+  function syncAllCartFormsQuantity() {
+    document.querySelectorAll("form[action*='/cart/add']").forEach((form) => {
+      syncCartFormQuantity(form);
+    });
+  }
+
+  window.ProductOptionsManagerSyncCartForm = function (form) {
+    if (!form) return;
+
+    syncVariationPriceProperties(form);
+    syncCartFormQuantity(form);
+    setCartProperty(form, "_pom_line_key", createPomLineKey());
+  };
+
+  function createPomLineKey() {
+    const randomPart =
+      window.crypto && typeof window.crypto.randomUUID === "function"
+        ? window.crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    return `${selectedQuantity}-${currentPricing.finalPrice || 0}-${randomPart}`;
   }
 
   function syncAllCartFormsVariationPriceProperties() {

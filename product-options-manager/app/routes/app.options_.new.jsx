@@ -452,8 +452,7 @@ const FIELD_TEMPLATES = {
     open: true,
     activeTab: "config",
     config: {
-      rows: [{ quantity: 10, discount: 0 }],
-      discountGroup: "",
+      rows: [{ quantity: 10 }],
       advanced: {},
     },
   },
@@ -525,8 +524,7 @@ const FIELD_TEMPLATES = {
           type: "quantity_discount",
           visible: true,
           open: true,
-          discountGroup: "price",
-          rows: [{ quantity: 10, discount: 0 }],
+          rows: [{ quantity: 10 }],
           conditionsOpen: false,
         },
         {
@@ -535,8 +533,7 @@ const FIELD_TEMPLATES = {
           type: "quantity_discount",
           visible: false,
           open: false,
-          discountGroup: "price",
-          rows: [{ quantity: 10, discount: 0 }],
+          rows: [{ quantity: 10 }],
           conditionsOpen: false,
         },
       ],
@@ -1555,14 +1552,58 @@ function variationPriceRowsEqual(first, second) {
 }
 
 function createSerializableFields(fields, variationPriceRows) {
-  const visibleFields = fields.filter(
-    (field) => !isHiddenVariationPriceField(field),
-  );
+  const visibleFields = fields
+    .filter((field) => !isHiddenVariationPriceField(field))
+    .map(sanitizeQuantityDiscountField);
   const rows = normalizeVariationPriceRows(variationPriceRows);
 
   if (rows.length === 0) return visibleFields;
 
   return [...visibleFields, createVariationPriceStorageField(rows)];
+}
+
+function sanitizeQuantityDiscountField(field) {
+  if (normalizeType(field?.type) !== "quantity_discount") return field;
+
+  const config = field.config || {};
+  const rows = (config.rows || config.discounts || [])
+    .map((row) => {
+      const quantity = Number(row.quantity || row.qty || 0);
+
+      return quantity ? { quantity } : null;
+    })
+    .filter(Boolean);
+
+  return {
+    ...field,
+    config: {
+      ...config,
+      options: Array.isArray(config.options)
+        ? config.options.map(sanitizeQuantityDiscountPriceOption)
+        : config.options,
+      rows,
+      discounts: undefined,
+      discountGroup: undefined,
+    },
+  };
+}
+
+function sanitizeQuantityDiscountPriceOption(option) {
+  if (normalizeType(option?.type) !== "quantity_discount") return option;
+
+  const rows = (option.rows || option.discounts || [])
+    .map((row) => {
+      const quantity = Number(row.quantity || row.qty || 0);
+
+      return quantity ? { quantity } : null;
+    })
+    .filter(Boolean);
+
+  const rest = { ...option };
+  delete rest.discountGroup;
+  delete rest.discounts;
+
+  return { ...rest, rows };
 }
 
 function createVariationPriceStorageField(rows) {
@@ -2291,7 +2332,7 @@ function QuantityDiscountOptionEditor({ field, onChange, updateConfig }) {
       />
 
       <div style={valuesToolbarStyle}>
-        <p style={sectionLabelStyle}>Discounts</p>
+        <p style={sectionLabelStyle}>Quantities</p>
         <div style={valuesToolbarRightStyle}>
           <span>Sort ↕</span>
         </div>
@@ -2301,22 +2342,6 @@ function QuantityDiscountOptionEditor({ field, onChange, updateConfig }) {
         rows={field.config?.rows || []}
         onUpdate={(rows) => updateConfig({ rows })}
       />
-
-      <Field label="Discount group" htmlFor={`${field.id}-discount-group`}>
-        <input
-          id={`${field.id}-discount-group`}
-          style={inputStyle}
-          value={field.config?.discountGroup || ""}
-          onChange={(event) =>
-            updateConfig({ discountGroup: event.target.value })
-          }
-          placeholder="Config name"
-        />
-        <p style={helpTextStyle}>
-          Name that is used to calculate the total discount quantity for all
-          products in the cart with the same group (optional)
-        </p>
-      </Field>
     </>
   );
 }
@@ -2784,8 +2809,7 @@ function PriceGroupEditor({ field, onChange, updateConfig }) {
           type: "quantity_discount",
           visible: true,
           open: true,
-          discountGroup: "price",
-          rows: [{ quantity: 10, discount: 0 }],
+          rows: [{ quantity: 10 }],
           conditionsOpen: false,
         },
       ],
@@ -2932,20 +2956,11 @@ function PriceQuantityDiscountOption({ option, onChange }) {
         </Field>
       </div>
 
-      <p style={sectionLabelStyle}>Discounts</p>
+      <p style={sectionLabelStyle}>Quantities</p>
       <QuantityDiscountEditor
         rows={option.rows || []}
         onUpdate={(rows) => onChange({ rows })}
       />
-
-      <Field label="Discount group" htmlFor={`${option.name}-discount-group`}>
-        <input
-          id={`${option.name}-discount-group`}
-          style={inputStyle}
-          value={option.discountGroup || "price"}
-          onChange={(event) => onChange({ discountGroup: event.target.value })}
-        />
-      </Field>
     </div>
   );
 }
@@ -2987,7 +3002,6 @@ function QuantityDiscountEditor({ rows, onUpdate }) {
     <div style={quantityBoxStyle}>
       <div style={quantityHeaderStyle}>
         <div>Quantity</div>
-        <div>Discount</div>
         <div />
       </div>
 
@@ -3003,19 +3017,6 @@ function QuantityDiscountEditor({ rows, onUpdate }) {
                 updateRow(index, "quantity", Number(event.target.value))
               }
             />
-            <div style={discountInputWrapStyle}>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                style={discountInputStyle}
-                value={row.discount}
-                onChange={(event) =>
-                  updateRow(index, "discount", Number(event.target.value))
-                }
-              />
-              <span style={percentStyle}>%</span>
-            </div>
             <button
               type="button"
               style={deleteButtonStyle}
@@ -3032,9 +3033,9 @@ function QuantityDiscountEditor({ rows, onUpdate }) {
       <button
         type="button"
         style={addDiscountButtonStyle}
-        onClick={() => onUpdate([...rows, { quantity: 10, discount: 0 }])}
+        onClick={() => onUpdate([...rows, { quantity: 10 }])}
       >
-        + Add discount
+        + Add quantity
       </button>
     </div>
   );
@@ -4122,7 +4123,7 @@ function getOptionIcon(type) {
     personalize: "Personalize",
     tabs: "▭",
     quantity: "Qty",
-    quantity_discount: "%",
+    quantity_discount: "Qty",
     bundle: "⊕",
     ai: "AI",
     price_summary: "₹",
@@ -4457,7 +4458,7 @@ const quantityBoxStyle = {
 };
 const quantityHeaderStyle = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr 40px",
+  gridTemplateColumns: "1fr 40px",
   gap: "16px",
   paddingBottom: "8px",
   borderBottom: "1px solid #dfe3e8",
@@ -4467,24 +4468,11 @@ const quantityHeaderStyle = {
 const quantityRowsStyle = { display: "grid", gap: "8px", marginTop: "8px" };
 const quantityRowStyle = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr 40px",
+  gridTemplateColumns: "1fr 40px",
   gap: "16px",
   alignItems: "center",
 };
 const quantityInputStyle = { ...inputStyle, textAlign: "center" };
-const discountInputWrapStyle = { position: "relative" };
-const discountInputStyle = {
-  ...inputStyle,
-  paddingRight: "34px",
-  textAlign: "right",
-};
-const percentStyle = {
-  position: "absolute",
-  right: "12px",
-  top: "50%",
-  transform: "translateY(-50%)",
-  color: "#6d7175",
-};
 const deleteButtonStyle = {
   width: "36px",
   height: "36px",
