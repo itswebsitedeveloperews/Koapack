@@ -12,6 +12,9 @@
 
   const selectedOptions = {};
   const selectedPrices = {};
+  const variationPriceRows = [];
+  const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
+  const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
 
   let selectedQuantity = 1;
   let selectedQuantityDiscount = 0;
@@ -38,9 +41,71 @@
     return field.config?.values || field.config?.options || [];
   }
 
+  function getChoiceValue(item, index = 0) {
+    if (!item || typeof item !== "object") {
+      return String(item ?? "").trim();
+    }
+
+    const value = firstNonBlank(
+      item.value,
+      item.text,
+      item.label,
+      item.name,
+      item.title,
+      item.color,
+      item.hex,
+      item.swatch,
+      item.image,
+      item.src,
+      item.url,
+      item.thumbnail,
+      item.preview,
+    );
+
+    if (value) return value;
+
+    const hasConfiguredValue = [
+      item.color,
+      item.hex,
+      item.swatch,
+      item.image,
+      item.src,
+      item.url,
+      item.thumbnail,
+      item.preview,
+    ].some((candidate) => String(candidate ?? "").trim());
+
+    return hasConfiguredValue ? `option-${index + 1}` : "";
+  }
+
+  function firstNonBlank(...values) {
+    return (
+      values
+        .map((value) => String(value ?? "").trim())
+        .find((value) => value.length > 0) || ""
+    );
+  }
+
+  function getChoiceLabel(item, value) {
+    if (!item || typeof item !== "object") return String(value || "").trim();
+
+    return String(
+      item.text ||
+        item.label ||
+        item.name ||
+        item.title ||
+        item.value ||
+        item.color ||
+        item.hex ||
+        item.swatch ||
+        value ||
+        "Option",
+    ).trim();
+  }
+
   function getOptionPrice(field, value) {
     const item = getValues(field).find(
-      (x) => String(x.value) === String(value),
+      (x, index) => String(getChoiceValue(x, index)) === String(value),
     );
 
     return item ? Number(item.price || 0) : 0;
@@ -149,12 +214,19 @@
       0,
     );
 
-    const unitPrice = basePrice + addonTotal;
+    const matchedVariationPrice = findMatchingVariationPrice();
+    const hasExactVariationPrice = matchedVariationPrice !== null;
+    const unitPrice = hasExactVariationPrice
+      ? matchedVariationPrice
+      : basePrice + addonTotal;
+
     const qty = Math.max(1, Number(selectedQuantity || 1));
 
     const subtotal = unitPrice * qty;
-    const discountAmount =
-      subtotal * (Number(selectedQuantityDiscount || 0) / 100);
+    const discountPercent = hasExactVariationPrice
+      ? 0
+      : Number(selectedQuantityDiscount || 0);
+    const discountAmount = subtotal * (discountPercent / 100);
     const total = subtotal - discountAmount;
 
     document
@@ -196,6 +268,75 @@
   }
   function getFieldKey(field) {
     return field.label || field.name || "Option";
+  }
+
+  function isVariationPriceStorageField(field) {
+    return (
+      normalizeType(field?.type) === VARIATION_PRICE_FIELD_TYPE ||
+      normalizeType(field?.name) === VARIATION_PRICE_FIELD_TYPE ||
+      normalizeType(field?.config?.storageType) === VARIATION_PRICE_FIELD_TYPE
+    );
+  }
+
+  function normalizeVariationPriceRows(value) {
+    const rows = Array.isArray(value) ? value : [];
+
+    return rows.map(normalizeVariationPriceRow).filter((row) => row.key);
+  }
+
+  function normalizeVariationPriceRow(row = {}) {
+    const selections = Array.isArray(row.selections)
+      ? row.selections
+          .map((selection) => ({
+            field: String(selection.field || selection.name || "").trim(),
+            value: String(selection.value ?? "").trim(),
+          }))
+          .filter((selection) => selection.field && selection.value)
+      : [];
+    const key =
+      String(row.key || "") ||
+      selections
+        .map(
+          (selection) =>
+            `${encodeURIComponent(selection.field)}=${encodeURIComponent(
+              selection.value,
+            )}`,
+        )
+        .join("&");
+
+    return {
+      key,
+      selections,
+      price: row.price === undefined || row.price === null ? "" : row.price,
+    };
+  }
+
+  function normalizeVariationValue(value) {
+    return String(value ?? "")
+      .trim()
+      .toLowerCase();
+  }
+
+  function variationPriceRowMatches(row) {
+    return (
+      row.selections.length > 0 &&
+      row.selections.every(
+        (selection) =>
+          normalizeVariationValue(selectedOptions[selection.field]) ===
+          normalizeVariationValue(selection.value),
+      )
+    );
+  }
+
+  function findMatchingVariationPrice() {
+    const matchedRow = variationPriceRows.find(variationPriceRowMatches);
+    const priceValue = String(matchedRow?.price ?? "").trim();
+
+    if (!priceValue) return null;
+
+    const price = Number(priceValue);
+
+    return Number.isFinite(price) ? price : null;
   }
 
   function findAddToCartButtons() {
@@ -274,9 +415,15 @@
 
   function saveSelection(field, value) {
     const key = getFieldKey(field);
+    const cleanValue = String(value ?? "");
 
-    selectedOptions[key] = value;
-    selectedPrices[key] = getOptionPrice(field, value);
+    if (cleanValue) {
+      selectedOptions[key] = cleanValue;
+      selectedPrices[key] = getOptionPrice(field, cleanValue);
+    } else {
+      delete selectedOptions[key];
+      delete selectedPrices[key];
+    }
 
     updatePrice();
     validateRequiredFields();
@@ -693,6 +840,7 @@
 
         if (fileInput) {
           fileInput.value = "";
+          fileInput.dispatchEvent(new Event("change", { bubbles: true }));
         }
 
         const fileNameEl = document.querySelector(".pom-upload-file-name");
@@ -741,14 +889,19 @@
 
       select.appendChild(empty);
 
-      values.forEach((item) => {
+      values.forEach((item, index) => {
+        const optionValue = getChoiceValue(item, index);
+        const optionLabel = getChoiceLabel(item, optionValue);
+
+        if (!optionValue) return;
+
         const option = document.createElement("option");
 
-        option.value = item.value || "";
+        option.value = optionValue;
         option.textContent =
           Number(item.price || 0) > 0
-            ? `${item.value} (+${money(item.price)})`
-            : item.value || item.text || "Option";
+            ? `${optionLabel} (+${money(item.price)})`
+            : optionLabel || "Option";
 
         select.appendChild(option);
       });
@@ -811,7 +964,12 @@
       return typeof url === "string" && url.startsWith("blob:");
     }
 
-    values.forEach((item) => {
+    values.forEach((item, index) => {
+      const optionValue = getChoiceValue(item, index);
+      const optionLabel = getChoiceLabel(item, optionValue);
+
+      if (!optionValue) return;
+
       const button = document.createElement("button");
 
       button.type = "button";
@@ -842,8 +1000,8 @@
 
       const labelText =
         Number(item.price || 0) > 0
-          ? `${item.text || item.value} (+${money(item.price)})`
-          : item.text || item.value || "Option";
+          ? `${optionLabel} (+${money(item.price)})`
+          : optionLabel || "Option";
 
       if (swatchBg) {
         const swatch = document.createElement("span");
@@ -902,9 +1060,9 @@
           restoreProductMediaImage();
         }
 
-        saveSelection(field, item.value || item.text);
+        saveSelection(field, optionValue);
 
-        selectedInput.value = item.value || item.text || "";
+        selectedInput.value = optionValue;
         validateRequiredFields();
       });
 
@@ -1056,7 +1214,7 @@
       removeButton.remove();
 
       removeProductDesignOverlay();
-      validateRequiredFields();
+      saveSelection(field, "");
     });
 
     input.addEventListener("change", () => {
@@ -1068,7 +1226,7 @@
         removeButton.remove();
 
         removeProductDesignOverlay();
-        validateRequiredFields();
+        saveSelection(field, "");
         return;
       }
 
@@ -1081,7 +1239,7 @@
         removeButton.remove();
 
         removeProductDesignOverlay();
-        validateRequiredFields();
+        saveSelection(field, "");
         return;
       }
 
@@ -1092,7 +1250,7 @@
       fileNameEl.appendChild(removeButton);
 
       showProductDesignOverlay(imageUrl, file.name);
-      validateRequiredFields();
+      saveSelection(field, file.name);
     });
 
     return wrap;
@@ -1119,8 +1277,8 @@
     input.placeholder = field.label || "";
     input.required = Boolean(field.required);
 
-    input.addEventListener("input", () => validateRequiredFields());
-    input.addEventListener("change", () => validateRequiredFields());
+    input.addEventListener("input", () => saveSelection(field, input.value));
+    input.addEventListener("change", () => saveSelection(field, input.value));
 
     inputWrap.appendChild(input);
 
@@ -1131,8 +1289,26 @@
     return wrap;
   }
 
+  function prepareRenderedField(field, fieldEl) {
+    if (!fieldEl) return fieldEl;
+
+    fieldEl.dataset.pomRequired = String(Boolean(field.required));
+    fieldEl.dataset.pomFieldKey = getFieldKey(field);
+    fieldEl.dataset.pomFieldName = field.name || "";
+    fieldEl.dataset.pomFieldLabel = field.label || "";
+
+    return fieldEl;
+  }
+
   function renderField(field) {
     const type = normalizeType(field.type);
+
+    if (
+      isVariationPriceStorageField(field) ||
+      type === LEGACY_VARIATION_PRICE_TYPE
+    ) {
+      return null;
+    }
 
     const fieldKey = String(getFieldKey(field) || "")
       .trim()
@@ -1177,26 +1353,38 @@
         "personalize",
       ].includes(type)
     ) {
-      return addPincodeClass(renderChoice(field));
+      return prepareRenderedField(field, addPincodeClass(renderChoice(field)));
     }
 
     if (type === "quantity" || type === "quantity_discount") {
-      return addPincodeClass(renderQuantityDiscount(field));
+      return prepareRenderedField(
+        field,
+        addPincodeClass(renderQuantityDiscount(field)),
+      );
     }
 
     if (type === "upload" || type === "upload_lift") {
-      return addPincodeClass(renderUpload(field));
+      return prepareRenderedField(field, addPincodeClass(renderUpload(field)));
     }
 
     if (type === "number") {
-      return addPincodeClass(renderInput(field, "number"));
+      return prepareRenderedField(
+        field,
+        addPincodeClass(renderInput(field, "number")),
+      );
     }
 
     if (type === "date") {
-      return addPincodeClass(renderInput(field, "date"));
+      return prepareRenderedField(
+        field,
+        addPincodeClass(renderInput(field, "date")),
+      );
     }
 
-    return addPincodeClass(renderInput(field, "text"));
+    return prepareRenderedField(
+      field,
+      addPincodeClass(renderInput(field, "text")),
+    );
   }
 
   function attachToCartForm() {
@@ -1215,6 +1403,8 @@
 
         Object.entries(selectedOptions).forEach(([key, value]) => {
           let input = form.querySelector(`[name="properties[${key}]"]`);
+
+          if (input?.type === "file") return;
 
           if (!input) {
             input = document.createElement("input");
@@ -1255,6 +1445,7 @@
     const data = await response.json();
 
     root.innerHTML = "";
+    variationPriceRows.length = 0;
 
     if (!data.groups || data.groups.length === 0) {
       root.style.display = "none";
@@ -1267,7 +1458,22 @@
       groupEl.className = "pom-group";
 
       group.fields.forEach((field) => {
-        groupEl.appendChild(renderField(field));
+        if (isVariationPriceStorageField(field)) {
+          variationPriceRows.push(
+            ...normalizeVariationPriceRows(field.config?.prices),
+          );
+          return;
+        }
+
+        if (normalizeType(field.type) === LEGACY_VARIATION_PRICE_TYPE) {
+          return;
+        }
+
+        const fieldEl = renderField(field);
+
+        if (!fieldEl) return;
+
+        groupEl.appendChild(fieldEl);
       });
 
       root.appendChild(groupEl);

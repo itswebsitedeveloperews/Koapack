@@ -10,8 +10,13 @@ export const loader = async ({ request }) => {
     include: {
       _count: {
         select: {
-          fields: true,
           targets: true,
+        },
+      },
+      fields: {
+        select: {
+          type: true,
+          valuesJson: true,
         },
       },
       targets: {
@@ -26,7 +31,9 @@ export const loader = async ({ request }) => {
       id: group.id,
       name: group.name,
       status: group.status,
-      fieldsCount: group._count.fields,
+      fieldsCount: group.fields.filter(
+        (field) => !isHiddenVariationField(field),
+      ).length,
       targetsCount: group._count.targets,
       targets: group.targets.map((target) => ({
         id: target.id,
@@ -36,6 +43,39 @@ export const loader = async ({ request }) => {
     })),
   };
 };
+
+const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
+const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
+
+function normalizeFieldType(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_");
+}
+
+function parseFieldValues(value) {
+  try {
+    const parsed = JSON.parse(String(value || "{}"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function isHiddenVariationField(field) {
+  const saved = parseFieldValues(field.valuesJson);
+
+  return (
+    normalizeFieldType(field.type) === VARIATION_PRICE_FIELD_TYPE ||
+    normalizeFieldType(field.type) === LEGACY_VARIATION_PRICE_TYPE ||
+    normalizeFieldType(saved.name) === VARIATION_PRICE_FIELD_TYPE ||
+    normalizeFieldType(saved.config?.storageType) === VARIATION_PRICE_FIELD_TYPE
+  );
+}
 
 export const action = async ({ request }) => {
   await authenticate.admin(request);

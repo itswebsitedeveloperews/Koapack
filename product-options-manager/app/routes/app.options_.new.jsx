@@ -92,6 +92,7 @@ export default function NewOptionGroupPage() {
   const [manualProduct, setManualProduct] = useState("");
   const [targets, setTargets] = useState([]);
   const [fields, setFields] = useState([]);
+  const [variationPrices, setVariationPrices] = useState([]);
 
   return (
     <ProductOptionGroupForm
@@ -110,6 +111,8 @@ export default function NewOptionGroupPage() {
       isSubmitting={navigation.state === "submitting"}
       shopify={shopify}
       shopifyMediaImages={shopifyMediaImages}
+      variationPrices={variationPrices}
+      setVariationPrices={setVariationPrices}
     />
   );
 }
@@ -586,6 +589,16 @@ const FIELD_TYPES = [
   ["price_group", "Price group"],
 ];
 
+const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
+const VARIATION_PRICE_FIELD_NAME = "__variation_prices";
+const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
+const NON_VARIATION_ATTRIBUTE_TYPES = new Set([
+  "html",
+  "price_group",
+  "price_summary",
+  "tabs",
+]);
+
 function ProductOptionGroupForm({
   heading,
   submitLabel,
@@ -602,11 +615,33 @@ function ProductOptionGroupForm({
   isSubmitting,
   shopify,
   shopifyMediaImages,
+  variationPrices,
+  setVariationPrices,
 }) {
-  const fieldsJson = useMemo(() => JSON.stringify(fields), [fields]);
+  const variationAttributes = useMemo(
+    () => getVariationAttributes(fields),
+    [fields],
+  );
+  const generatedVariationPrices = useMemo(
+    () => mergeVariationPriceRows(variationAttributes, variationPrices),
+    [variationAttributes, variationPrices],
+  );
+  const fieldsJson = useMemo(
+    () =>
+      JSON.stringify(
+        createSerializableFields(fields, generatedVariationPrices),
+      ),
+    [fields, generatedVariationPrices],
+  );
   const targetsJson = useMemo(() => JSON.stringify(targets), [targets]);
   const [draggedFieldId, setDraggedFieldId] = useState(null);
   const [dragOverFieldId, setDragOverFieldId] = useState(null);
+
+  useEffect(() => {
+    if (!variationPriceRowsEqual(variationPrices, generatedVariationPrices)) {
+      setVariationPrices(generatedVariationPrices);
+    }
+  }, [generatedVariationPrices, setVariationPrices, variationPrices]);
 
   const addField = (type) => {
     setFields((current) => [...current, createField(type, current.length)]);
@@ -773,6 +808,12 @@ function ProductOptionGroupForm({
             </div>
 
             <AddOptionControl onAdd={addField} />
+
+            <VariationPriceMatrix
+              attributes={variationAttributes}
+              rows={generatedVariationPrices}
+              onChange={setVariationPrices}
+            />
           </s-section>
 
           <s-section heading="Product targeting">
@@ -844,11 +885,11 @@ function ProductOptionGroupForm({
       <s-section slot="aside" heading="Group summary">
         <s-unordered-list>
           <s-list-item>{fields.length} option fields</s-list-item>
-            <s-list-item>
-              {targets.length
-                ? `${targets.length} targeted products`
-                : "No specific targets selected"}
-            </s-list-item>
+          <s-list-item>
+            {targets.length
+              ? `${targets.length} targeted products`
+              : "No specific targets selected"}
+          </s-list-item>
           <s-list-item>
             {status === "active" ? "Active on storefront" : "Draft"}
           </s-list-item>
@@ -941,6 +982,7 @@ function OptionFieldEditor({
       });
     }
   };
+  const activeTab = field.activeTab === "advanced" ? "advanced" : "config";
 
   return (
     <div
@@ -1011,21 +1053,21 @@ function OptionFieldEditor({
           <div style={tabsStyle}>
             <button
               type="button"
-              style={field.activeTab !== "advanced" ? activeTabStyle : tabStyle}
+              style={activeTab === "config" ? activeTabStyle : tabStyle}
               onClick={() => onChange({ activeTab: "config" })}
             >
               Config
             </button>
             <button
               type="button"
-              style={field.activeTab === "advanced" ? activeTabStyle : tabStyle}
+              style={activeTab === "advanced" ? activeTabStyle : tabStyle}
               onClick={() => onChange({ activeTab: "advanced" })}
             >
               Advanced
             </button>
           </div>
 
-          {field.activeTab === "advanced" ? (
+          {activeTab === "advanced" ? (
             <AdvancedOptionEditor field={field} updateConfig={updateConfig} />
           ) : (
             <ConfigEditor
@@ -1217,6 +1259,343 @@ function ConfigEditor({
       onChange={onChange}
       updateConfig={updateConfig}
     />
+  );
+}
+
+function VariationPriceMatrix({ attributes = [], rows = [], onChange }) {
+  const attributeCount = attributes.length;
+
+  return (
+    <div style={variationMatrixStyle}>
+      <div style={variationMatrixTitleStyle}>
+        <div>
+          <h3 style={variationMatrixHeadingStyle}>Variation prices</h3>
+          <p style={helpTextStyle}>
+            Enter the exact unit price for each generated option-value
+            combination.
+          </p>
+        </div>
+        {attributeCount > 0 ? (
+          <span style={variationMatrixCountStyle}>
+            {rows.length} combinations
+          </span>
+        ) : null}
+      </div>
+
+      {attributeCount === 0 ? (
+        <p style={mutedStyle}>
+          Add values to option fields like quantity, size, color, radio, select,
+          or swatches to generate combinations.
+        </p>
+      ) : rows.length === 0 ? (
+        <p style={mutedStyle}>
+          Add at least one value to every variation option to generate prices.
+        </p>
+      ) : (
+        <div style={variationMatrixScrollerStyle}>
+          <div style={variationMatrixHeaderStyle(attributeCount)}>
+            {attributes.map((attribute) => (
+              <div key={attribute.key}>{attribute.label}</div>
+            ))}
+            <div>Exact price</div>
+          </div>
+
+          {rows.map((row) => (
+            <div key={row.key} style={variationMatrixRowStyle(attributeCount)}>
+              {row.selections.map((selection) => (
+                <div
+                  key={`${row.key}-${selection.field}`}
+                  style={variationSelectionCellStyle}
+                >
+                  {selection.text || selection.value}
+                </div>
+              ))}
+
+              <div style={exactPriceInputWrapStyle}>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  style={exactPriceInputStyle}
+                  value={row.price}
+                  onChange={(event) =>
+                    onChange(
+                      rows.map((currentRow) =>
+                        currentRow.key === row.key
+                          ? normalizeVariationPriceRow({
+                              ...currentRow,
+                              price: event.target.value,
+                            })
+                          : currentRow,
+                      ),
+                    )
+                  }
+                  placeholder="0.00"
+                />
+                <span style={currencyStyle}>Rs.</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getVariationAttributes(fields = []) {
+  return fields
+    .filter((field) => !isHiddenVariationPriceField(field))
+    .map((field) => ({
+      key: getVariationAttributeKey(field),
+      label: getVariationAttributeLabel(field),
+      options: getVariationAttributeOptions(field),
+    }))
+    .filter((attribute) => attribute.key && attribute.options.length > 0);
+}
+
+function getVariationAttributeKey(field) {
+  return String(field?.label || field?.name || "").trim();
+}
+
+function getVariationAttributeLabel(field) {
+  return field?.label || field?.name || "Option";
+}
+
+function getVariationAttributeOptions(field) {
+  if (!field) return [];
+
+  const type = normalizeType(field.type);
+
+  if (NON_VARIATION_ATTRIBUTE_TYPES.has(type)) return [];
+
+  if (type === "quantity" || type === "quantity_discount") {
+    return uniqueVariationOptions(
+      (field.config?.rows || field.config?.discounts || []).map((row) => {
+        const quantity = Number(row.quantity || row.qty || 0);
+        const value = quantity ? `${quantity}+` : "";
+
+        return { value, text: value };
+      }),
+    );
+  }
+
+  return uniqueVariationOptions(
+    field.config?.values || field.config?.categories || field.config?.options,
+  );
+}
+
+function uniqueVariationOptions(values) {
+  if (!Array.isArray(values)) return [];
+
+  const seen = new Set();
+
+  return values
+    .map((item, index) => {
+      const value = getVariationOptionValue(item, index);
+      const text = getVariationOptionText(item, value);
+
+      return { value, text: text || value };
+    })
+    .filter((option) => {
+      const key = option.value.toLowerCase();
+
+      if (!option.value || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+function getVariationOptionValue(item, index = 0) {
+  if (!item || typeof item !== "object") {
+    return String(item ?? "").trim();
+  }
+
+  const value = firstNonBlank(
+    item.value,
+    item.text,
+    item.label,
+    item.name,
+    item.title,
+    item.color,
+    item.hex,
+    item.swatch,
+    item.image,
+    item.src,
+    item.url,
+    item.thumbnail,
+    item.preview,
+  );
+
+  if (value) return value;
+
+  const hasConfiguredValue = [
+    item.color,
+    item.hex,
+    item.swatch,
+    item.image,
+    item.src,
+    item.url,
+    item.thumbnail,
+    item.preview,
+  ].some((candidate) => String(candidate ?? "").trim());
+
+  return hasConfiguredValue ? `option-${index + 1}` : "";
+}
+
+function firstNonBlank(...values) {
+  return (
+    values
+      .map((value) => String(value ?? "").trim())
+      .find((value) => value.length > 0) || ""
+  );
+}
+
+function getVariationOptionText(item, value) {
+  if (!item || typeof item !== "object") return String(value || "").trim();
+
+  return String(
+    item.text ||
+      item.label ||
+      item.name ||
+      item.title ||
+      item.value ||
+      item.color ||
+      item.hex ||
+      item.swatch ||
+      value ||
+      "",
+  ).trim();
+}
+
+function mergeVariationPriceRows(attributes, currentRows) {
+  const savedRows = new Map(
+    normalizeVariationPriceRows(currentRows).map((row) => [row.key, row]),
+  );
+
+  return createVariationSelections(attributes).map((selections) => {
+    const key = getVariationCombinationKey(selections);
+    const savedRow = savedRows.get(key);
+
+    return {
+      key,
+      selections,
+      price: savedRow?.price ?? "",
+    };
+  });
+}
+
+function createVariationSelections(attributes = []) {
+  if (attributes.length === 0) return [];
+
+  return attributes.reduce(
+    (combinations, attribute) =>
+      combinations.flatMap((combination) =>
+        attribute.options.map((option) => [
+          ...combination,
+          {
+            field: attribute.key,
+            label: attribute.label,
+            value: option.value,
+            text: option.text,
+          },
+        ]),
+      ),
+    [[]],
+  );
+}
+
+function getVariationCombinationKey(selections = []) {
+  return selections
+    .map(
+      (selection) =>
+        `${encodeURIComponent(selection.field)}=${encodeURIComponent(
+          selection.value,
+        )}`,
+    )
+    .join("&");
+}
+
+function normalizeVariationPriceRows(value) {
+  const rows = Array.isArray(value) ? value : [];
+
+  return rows.map(normalizeVariationPriceRow).filter((row) => row.key);
+}
+
+function normalizeVariationPriceRow(row = {}) {
+  const selections = Array.isArray(row.selections)
+    ? row.selections.map(normalizeVariationSelection).filter((selection) => {
+        return selection.field && selection.value;
+      })
+    : [];
+  const key = String(row.key || getVariationCombinationKey(selections));
+
+  return {
+    key,
+    selections,
+    price:
+      row.price === undefined || row.price === null ? "" : String(row.price),
+  };
+}
+
+function normalizeVariationSelection(selection = {}) {
+  const value = String(selection.value ?? "").trim();
+
+  return {
+    field: String(selection.field || selection.name || "").trim(),
+    label: String(selection.label || selection.field || "").trim(),
+    value,
+    text: String(selection.text || value).trim(),
+  };
+}
+
+function variationPriceRowsEqual(first, second) {
+  return (
+    JSON.stringify(normalizeVariationPriceRows(first)) ===
+    JSON.stringify(normalizeVariationPriceRows(second))
+  );
+}
+
+function createSerializableFields(fields, variationPriceRows) {
+  const visibleFields = fields.filter(
+    (field) => !isHiddenVariationPriceField(field),
+  );
+  const rows = normalizeVariationPriceRows(variationPriceRows);
+
+  if (rows.length === 0) return visibleFields;
+
+  return [...visibleFields, createVariationPriceStorageField(rows)];
+}
+
+function createVariationPriceStorageField(rows) {
+  return {
+    id: VARIATION_PRICE_FIELD_TYPE,
+    type: VARIATION_PRICE_FIELD_TYPE,
+    name: VARIATION_PRICE_FIELD_NAME,
+    label: "Variation prices",
+    required: false,
+    config: {
+      storageType: VARIATION_PRICE_FIELD_TYPE,
+      prices: normalizeVariationPriceRows(rows),
+    },
+  };
+}
+
+function isHiddenVariationPriceField(field) {
+  return (
+    isVariationPriceStorageField(field) ||
+    normalizeType(field?.type) === LEGACY_VARIATION_PRICE_TYPE
+  );
+}
+
+function isVariationPriceStorageField(field) {
+  if (!field) return false;
+  if (normalizeType(field.type) === VARIATION_PRICE_FIELD_TYPE) return true;
+
+  const saved = field.valuesJson ? parseSavedValues(field.valuesJson) : field;
+
+  return (
+    normalizeType(saved.name) === VARIATION_PRICE_FIELD_TYPE ||
+    normalizeType(saved.config?.storageType) === VARIATION_PRICE_FIELD_TYPE
   );
 }
 
@@ -3676,6 +4055,9 @@ function createField(type, index = 0) {
 }
 
 function serializeFieldForDb(field, index) {
+  const config = cloneConfig(field.config || {});
+  delete config.conditions;
+
   return {
     label: field.label || "Option",
     type: field.type || "text",
@@ -3684,7 +4066,7 @@ function serializeFieldForDb(field, index) {
     valuesJson: JSON.stringify({
       name: field.name || "",
       label: field.label || "",
-      config: field.config || {},
+      config,
     }),
   };
 }
@@ -3695,6 +4077,17 @@ function parseJsonArray(value) {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+function parseSavedValues(value) {
+  try {
+    const parsed = JSON.parse(String(value || "{}"));
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? parsed
+      : {};
+  } catch {
+    return {};
   }
 }
 
@@ -4247,6 +4640,80 @@ const valuesToolbarRightStyle = {
   fontSize: "13px",
   fontWeight: 600,
 };
+
+const variationMatrixStyle = {
+  marginTop: "22px",
+  paddingTop: "18px",
+  borderTop: "1px solid #dfe3e8",
+};
+const variationMatrixTitleStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr auto",
+  alignItems: "start",
+  gap: "16px",
+  marginBottom: "14px",
+};
+const variationMatrixHeadingStyle = {
+  margin: 0,
+  fontSize: "15px",
+  fontWeight: 700,
+  color: "#202223",
+};
+const variationMatrixCountStyle = {
+  padding: "5px 8px",
+  borderRadius: "999px",
+  background: "#f1f2f4",
+  color: "#5c5f62",
+  fontSize: "12px",
+  fontWeight: 650,
+};
+const variationMatrixScrollerStyle = {
+  display: "grid",
+  gap: "8px",
+  overflowX: "auto",
+};
+const variationSelectionCellStyle = {
+  minHeight: "40px",
+  padding: "10px 12px",
+  border: "1px solid #dfe3e8",
+  borderRadius: "6px",
+  background: "#ffffff",
+  color: "#202223",
+  boxSizing: "border-box",
+};
+const exactPriceInputWrapStyle = { position: "relative" };
+const exactPriceInputStyle = {
+  ...inputStyle,
+  paddingRight: "34px",
+  textAlign: "right",
+};
+
+function variationMatrixGridStyle(attributeCount) {
+  return {
+    display: "grid",
+    gridTemplateColumns: `${Array.from(
+      { length: Math.max(attributeCount, 1) },
+      () => "minmax(140px, 1fr)",
+    ).join(" ")} minmax(170px, 190px)`,
+    gap: "10px",
+    alignItems: "center",
+    minWidth: `${Math.max(attributeCount, 1) * 150 + 190}px`,
+  };
+}
+
+function variationMatrixHeaderStyle(attributeCount) {
+  return {
+    ...variationMatrixGridStyle(attributeCount),
+    padding: "0 0 4px",
+    color: "#5c5f62",
+    fontSize: "12px",
+    fontWeight: 700,
+  };
+}
+
+function variationMatrixRowStyle(attributeCount) {
+  return variationMatrixGridStyle(attributeCount);
+}
 
 const unitInputWrapStyle = {
   display: "grid",
