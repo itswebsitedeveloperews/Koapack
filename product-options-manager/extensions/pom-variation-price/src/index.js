@@ -15,7 +15,7 @@ export function cartTransformRun(input) {
           price: {
             adjustment: {
               fixedPricePerUnit: {
-                amount,
+                amount: amount.toFixed(2),
               },
             },
           },

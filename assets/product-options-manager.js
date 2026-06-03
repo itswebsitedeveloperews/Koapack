@@ -233,6 +233,7 @@
       finalPrice: Number(Number(total || 0).toFixed(2)),
       unitPrice: Number(Number(total / qty || 0).toFixed(2)),
     };
+    syncAllCartFormsVariationPriceProperties();
 
     document
       .querySelectorAll(
@@ -1429,6 +1430,7 @@
 
         if (overlay) {
           event.preventDefault();
+          event.stopImmediatePropagation();
 
           saveOverlayPositionToCart(overlay);
 
@@ -1440,7 +1442,7 @@
 
           form.submit();
         }
-      });
+      }, true);
     });
   }
 
@@ -1493,6 +1495,12 @@
     setCartProperty(form, "_pom_final_price", currentPricing.finalPrice);
     setCartProperty(form, "_pom_unit_price", currentPricing.unitPrice);
     setCartProperty(form, "_pom_selected_quantity", selectedQuantity);
+  }
+
+  function syncAllCartFormsVariationPriceProperties() {
+    document.querySelectorAll("form[action*='/cart/add']").forEach((form) => {
+      syncVariationPriceProperties(form);
+    });
   }
 
   async function init() {

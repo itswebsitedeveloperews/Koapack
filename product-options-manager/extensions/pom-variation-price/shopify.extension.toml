@@ -10,7 +10,8 @@ description = "Applies Product Options Manager exact variation prices to cart an
   [[extensions.targeting]]
   target = "cart.transform.run"
   input_query = "src/run.graphql"
-  export = "cartTransformRun"
+  export = "cart-transform-run"
 
   [extensions.build]
   path = "dist/function.wasm"
+  typegen_command = "node src/typegen.js"
