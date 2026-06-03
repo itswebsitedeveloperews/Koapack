@@ -1,0 +1,13 @@
+query Input {
+  cart {
+    lines {
+      id
+      priceSource: attribute(key: "_pom_price_source") {
+        value
+      }
+      unitPrice: attribute(key: "_pom_unit_price") {
+        value
+      }
+    }
+  }
+}

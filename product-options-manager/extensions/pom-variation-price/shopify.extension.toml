@@ -1,0 +1,16 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "POM Variation Price"
+handle = "pom-variation-price"
+type = "function"
+uid = "pom-variation-price-530bf6d4"
+description = "Applies Product Options Manager exact variation prices to cart and checkout lines."
+
+  [[extensions.targeting]]
+  target = "cart.transform.run"
+  input_query = "src/run.graphql"
+  export = "cartTransformRun"
+
+  [extensions.build]
+  path = "dist/function.wasm"

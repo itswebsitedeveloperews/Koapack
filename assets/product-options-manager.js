@@ -18,6 +18,11 @@
 
   let selectedQuantity = 1;
   let selectedQuantityDiscount = 0;
+  let currentPricing = {
+    hasExactVariationPrice: false,
+    finalPrice: null,
+    unitPrice: null,
+  };
 
   function money(amount) {
     return (
@@ -222,6 +227,12 @@
         subtotal * (Number(selectedQuantityDiscount || 0) / 100);
       total = subtotal - discountAmount;
     }
+
+    currentPricing = {
+      hasExactVariationPrice,
+      finalPrice: Number(Number(total || 0).toFixed(2)),
+      unitPrice: Number(Number(total / qty || 0).toFixed(2)),
+    };
 
     document
       .querySelectorAll(
@@ -1414,6 +1425,8 @@
           input.value = value;
         });
 
+        syncVariationPriceProperties(form);
+
         if (overlay) {
           event.preventDefault();
 
@@ -1429,6 +1442,57 @@
         }
       });
     });
+  }
+
+  function getCartPropertyInput(form, key) {
+    const escapedKey =
+      window.CSS && typeof window.CSS.escape === "function"
+        ? window.CSS.escape(key)
+        : key.replace(/"/g, '\\"');
+
+    return form.querySelector(`[name="properties[${escapedKey}]"]`);
+  }
+
+  function setCartProperty(form, key, value) {
+    let input = getCartPropertyInput(form, key);
+
+    if (!input) {
+      input = document.createElement("input");
+      input.type = "hidden";
+      input.name = `properties[${key}]`;
+      form.appendChild(input);
+    }
+
+    input.value = String(value);
+  }
+
+  function removeCartProperty(form, key) {
+    const input = getCartPropertyInput(form, key);
+
+    if (input) input.remove();
+  }
+
+  function syncVariationPriceProperties(form) {
+    const propertyKeys = [
+      "_pom_price_source",
+      "_pom_final_price",
+      "_pom_unit_price",
+      "_pom_selected_quantity",
+    ];
+
+    if (
+      !currentPricing.hasExactVariationPrice ||
+      !Number.isFinite(currentPricing.unitPrice) ||
+      currentPricing.unitPrice <= 0
+    ) {
+      propertyKeys.forEach((key) => removeCartProperty(form, key));
+      return;
+    }
+
+    setCartProperty(form, "_pom_price_source", "exact_variation");
+    setCartProperty(form, "_pom_final_price", currentPricing.finalPrice);
+    setCartProperty(form, "_pom_unit_price", currentPricing.unitPrice);
+    setCartProperty(form, "_pom_selected_quantity", selectedQuantity);
   }
 
   async function init() {
