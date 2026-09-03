@@ -20,7 +20,6 @@ redirect_urls = [
 api_version = "2026-10"
 
 [build]
-include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 
 [app_proxy]
