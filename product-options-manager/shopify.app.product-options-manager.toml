@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "6e785ee29f4caece99aaa8d733b50f46"
-application_url = "https://example.com"
+application_url = "https://koapack-product-options-manager.onrender.com"
 embedded = true
 name = "product-options-manager"
 
@@ -11,9 +11,9 @@ scopes = "read_files,write_cart_transforms,write_files,write_metaobject_definiti
 
 [auth]
 redirect_urls = [
-  "https://example.com/auth/callback",
-  "https://example.com/auth/shopify/callback",
-  "https://example.com/api/auth/callback"
+  "https://koapack-product-options-manager.onrender.com/auth/callback",
+  "https://koapack-product-options-manager.onrender.com/auth/shopify/callback",
+  "https://koapack-product-options-manager.onrender.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -24,6 +24,6 @@ include_config_on_deploy = true
 automatically_update_urls_on_dev = true
 
 [app_proxy]
-url = "https://example.com/apps/product-options"
+url = "https://koapack-product-options-manager.onrender.com/apps/product-options"
 subpath = "product-options"
 prefix = "apps"
