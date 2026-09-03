@@ -1,5 +1,11 @@
 import { useMemo, useState, useEffect } from "react";
-import { Form, redirect, useLoaderData, useNavigation } from "react-router";
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+} from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
@@ -79,7 +85,7 @@ export const action = async ({ request, params }) => {
     });
   }
 
-  return redirect("/app/options");
+  return { saved: true };
 };
 
 async function loadShopifyMediaImages(admin) {
@@ -122,6 +128,8 @@ async function loadShopifyMediaImages(admin) {
 
 export default function EditOptionGroupPage() {
   const { group, isNew, shopifyMediaImages = [] } = useLoaderData();
+  const actionData = useActionData();
+  const navigate = useNavigate();
   const shopify = useAppBridge();
   const navigation = useNavigation();
 
@@ -151,6 +159,13 @@ export default function EditOptionGroupPage() {
   const [variationPrices, setVariationPrices] = useState(() =>
     isNew ? [] : getSavedVariationPriceRows(group.fields),
   );
+
+  useEffect(() => {
+    if (!actionData?.saved) return;
+
+    shopify.toast.show(isNew ? "Option group saved" : "Changes saved");
+    navigate("/app/options", { replace: true });
+  }, [actionData, isNew, navigate, shopify]);
 
   return (
     <ProductOptionGroupForm
