@@ -9,6 +9,7 @@ import {
 import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { syncApprovedProductNativeVariants } from "../native-variant-pricing.server";
 
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
@@ -19,7 +20,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  await authenticate.admin(request);
+  const { admin } = await authenticate.admin(request);
 
   const formData = await request.formData();
   const name = String(formData.get("name") || "").trim();
@@ -47,7 +48,13 @@ export const action = async ({ request }) => {
     },
   });
 
-  return { saved: true };
+  const nativePricing = await syncApprovedProductNativeVariants(
+    admin,
+    fields,
+    targets,
+  );
+
+  return { saved: true, nativePricing };
 };
 
 async function loadShopifyMediaImages(admin) {
@@ -105,7 +112,11 @@ export default function NewOptionGroupPage() {
   useEffect(() => {
     if (!actionData?.saved) return;
 
-    shopify.toast.show("Option group saved");
+    shopify.toast.show(
+      actionData.nativePricing?.synced
+        ? `${actionData.nativePricing.variantCount} Shopify price variants synced`
+        : "Option group saved",
+    );
     navigate("/app/options", { replace: true });
   }, [actionData, navigate, shopify]);
 

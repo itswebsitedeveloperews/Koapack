@@ -10,4 +10,19 @@
   <div class="pom-loading">Loading options...</div>
 </div>
 
+<script type="application/json" data-pom-native-variants>
+  {
+    "optionNames": {{ product.options | json }},
+    "variants": [
+      {%- for variant in product.variants -%}
+        {
+          "id": {{ variant.id | json }},
+          "available": {{ variant.available | json }},
+          "options": {{ variant.options | json }}
+        }{%- unless forloop.last -%},{%- endunless -%}
+      {%- endfor -%}
+    ]
+  }
+</script>
+
 <script src="{{ 'product-options-manager.js' | asset_url }}" defer></script>

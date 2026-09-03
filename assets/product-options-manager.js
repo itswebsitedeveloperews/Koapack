@@ -13,6 +13,7 @@
   const selectedOptions = {};
   const selectedPrices = {};
   const variationPriceRows = [];
+  const nativeVariantData = readNativeVariantData();
   const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
   const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
 
@@ -22,6 +23,24 @@
     finalPrice: null,
     unitPrice: null,
   };
+
+  function readNativeVariantData() {
+    const dataElement = document.querySelector(
+      "script[data-pom-native-variants]",
+    );
+
+    if (!dataElement) return null;
+
+    try {
+      const data = JSON.parse(dataElement.textContent || "{}");
+      return Array.isArray(data.optionNames) && Array.isArray(data.variants)
+        ? data
+        : null;
+    } catch (error) {
+      console.error("Product options variant data is invalid:", error);
+      return null;
+    }
+  }
 
   function money(amount) {
     return (
@@ -229,6 +248,7 @@
       finalPrice: Number(Number(total || 0).toFixed(2)),
       unitPrice: Number(Number(total / qty || 0).toFixed(2)),
     };
+    syncAllCartFormsNativeVariant();
     syncAllCartFormsQuantity();
     syncAllCartFormsVariationPriceProperties();
 
@@ -268,6 +288,50 @@
       <span class="bulk-text">Buy in bulk and save</span>
     </div>
   `;
+  }
+
+  function findSelectedNativeVariant() {
+    if (!nativeVariantData || nativeVariantData.optionNames.length === 0) {
+      return null;
+    }
+
+    const selectedValues = nativeVariantData.optionNames.map(
+      (optionName) => selectedOptions[optionName],
+    );
+
+    if (selectedValues.some((value) => !String(value || "").trim())) {
+      return null;
+    }
+
+    return (
+      nativeVariantData.variants.find(
+        (variant) =>
+          variant.available !== false &&
+          variant.options.length === selectedValues.length &&
+          variant.options.every(
+            (value, index) =>
+              normalizeVariationValue(value) ===
+              normalizeVariationValue(selectedValues[index]),
+          ),
+      ) || null
+    );
+  }
+
+  function syncCartFormNativeVariant(form) {
+    const variant = findSelectedNativeVariant();
+    if (!variant) return;
+
+    const input = form.querySelector("[name='id']");
+    if (!input || String(input.value) === String(variant.id)) return;
+
+    input.value = String(variant.id);
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function syncAllCartFormsNativeVariant() {
+    document.querySelectorAll("form[action*='/cart/add']").forEach((form) => {
+      syncCartFormNativeVariant(form);
+    });
   }
   function getFieldKey(field) {
     return field.label || field.name || "Option";
@@ -1532,6 +1596,9 @@
   }
 
   async function init() {
+    if (nativeVariantData?.variants?.length > 1) {
+      document.body.classList.add("pom-native-pricing-active");
+    }
     root.innerHTML = `<div class="pom-loading">Loading options...</div>`;
 
     const response = await fetch(

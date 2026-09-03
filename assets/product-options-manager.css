@@ -2,6 +2,11 @@
   margin: 24px 0;
 }
 
+body.pom-native-pricing-active variant-selects,
+body.pom-native-pricing-active variant-radios {
+  display: none !important;
+}
+
 .pom-group {
   display: flex;
   flex-wrap: wrap;
