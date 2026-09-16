@@ -11,7 +11,7 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
   const plan = buildNativeVariantPlan(fields);
 
   if (!plan) {
-    throw new Error("Native pricing requires variation prices and at least one non-quantity option.");
+    throw new Error("Native pricing requires variation prices with one to three selected options.");
   }
 
   const currentProduct = await loadProduct(admin, APPROVED_PRODUCT_ID);
@@ -124,7 +124,7 @@ export function buildNativeVariantPlan(fields) {
   for (const row of rows) {
     for (const selection of row.selections || []) {
       const name = String(selection.field || selection.label || "").trim();
-      if (name && !quantityLabels.has(name) && !optionNames.includes(name)) {
+      if (name && !optionNames.includes(name)) {
         optionNames.push(name);
       }
     }
