@@ -1,23 +1,37 @@
-const APPROVED_PRODUCT_ID = "gid://shopify/Product/8974959476907";
 const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
 
 export async function syncApprovedProductNativeVariants(admin, fields, targets) {
-  const isApprovedTarget = targets.some(
-    (target) => normalizeProductId(target.id || target.productId) === APPROVED_PRODUCT_ID,
-  );
-
-  if (!isApprovedTarget) return { synced: false };
-
   const plan = buildNativeVariantPlan(fields);
 
   if (!plan) {
     throw new Error("Native pricing requires variation prices with one to three selected options.");
   }
 
-  const currentProduct = await loadProduct(admin, APPROVED_PRODUCT_ID);
+  const productIds = await resolveTargetProductIds(admin, targets);
+
+  if (!productIds.length) {
+    return { synced: false };
+  }
+
+  let variantCount = 0;
+
+  for (const productId of productIds) {
+    const result = await syncProductNativeVariants(admin, productId, plan);
+    variantCount += result.variantCount;
+  }
+
+  return {
+    synced: true,
+    productIds,
+    variantCount,
+  };
+}
+
+async function syncProductNativeVariants(admin, productId, plan) {
+  const currentProduct = await loadProduct(admin, productId);
 
   if (!currentProduct) {
-    throw new Error("The approved Shopify product could not be found.");
+    throw new Error(`The Shopify product ${productId} could not be found.`);
   }
 
   const currentVariants = currentProduct.variants?.nodes || [];
@@ -76,7 +90,7 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
     `,
     {
       variables: {
-        identifier: { id: APPROVED_PRODUCT_ID },
+        identifier: { id: productId },
         input: {
           productOptions: plan.productOptions,
           variants,
@@ -96,8 +110,6 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
   }
 
   return {
-    synced: true,
-    productId: APPROVED_PRODUCT_ID,
     variantCount: payload.data?.productSet?.product?.variants?.nodes?.length || 0,
   };
 }
@@ -182,6 +194,52 @@ export function buildNativeVariantPlan(fields) {
   };
 }
 
+async function resolveTargetProductIds(admin, targets) {
+  const productIds = [];
+
+  for (const target of targets) {
+    const rawId = target.id || target.productId || "";
+    const productId = normalizeProductId(rawId);
+
+    if (productId) {
+      productIds.push(productId);
+      continue;
+    }
+
+    const handle = String(target.handle || target.productId || target.id || "")
+      .trim()
+      .toLowerCase();
+
+    if (!handle || /\s/.test(handle)) continue;
+
+    const resolvedProductId = await loadProductIdByHandle(admin, handle);
+
+    if (resolvedProductId) productIds.push(resolvedProductId);
+  }
+
+  return [...new Set(productIds)];
+}
+
+async function loadProductIdByHandle(admin, handle) {
+  const response = await admin.graphql(
+    `#graphql
+      query PomNativeVariantProductByHandle($handle: String!) {
+        productByHandle(handle: $handle) {
+          id
+        }
+      }
+    `,
+    { variables: { handle } },
+  );
+  const payload = await response.json();
+
+  if (payload.errors?.length) {
+    throw new Error(payload.errors.map((error) => error.message).join("; "));
+  }
+
+  return payload.data?.productByHandle?.id || "";
+}
+
 async function loadProduct(admin, id) {
   const response = await admin.graphql(
     `#graphql
@@ -220,9 +278,11 @@ async function loadProduct(admin, id) {
 function normalizeProductId(value) {
   const text = String(value || "").trim();
   if (!text) return "";
-  return text.startsWith("gid://shopify/Product/")
-    ? text
-    : `gid://shopify/Product/${text.replace(/\D/g, "")}`;
+  if (text.startsWith("gid://shopify/Product/")) return text;
+
+  const numericId = text.replace(/\D/g, "");
+
+  return numericId ? `gid://shopify/Product/${numericId}` : "";
 }
 
 function parsePositiveNumber(value) {
