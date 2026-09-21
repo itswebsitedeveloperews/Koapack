@@ -36,6 +36,9 @@ export default function App() {
         <Link style={navLinkStyle} to="/app/options/assets">
           Assets
         </Link>
+        <Link style={navLinkStyle} to="/app/pricing-sync">
+          Pricing Sync
+        </Link>
         <Link style={navLinkStyle} to="/app/additional">
           Additional page
         </Link>
