@@ -1,12 +1,19 @@
-const APPROVED_PRODUCT_ID = "gid://shopify/Product/8974959476907";
+const APPROVED_PRODUCT_IDS = new Set([
+  "gid://shopify/Product/8974959476907",
+  "gid://shopify/Product/8519458029739",
+]);
 const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
 
 export async function syncApprovedProductNativeVariants(admin, fields, targets) {
-  const isApprovedTarget = targets.some(
-    (target) => normalizeProductId(target.id || target.productId) === APPROVED_PRODUCT_ID,
-  );
+  const approvedTargetIds = [
+    ...new Set(
+      targets
+        .map((target) => normalizeProductId(target.id || target.productId))
+        .filter((productId) => APPROVED_PRODUCT_IDS.has(productId)),
+    ),
+  ];
 
-  if (!isApprovedTarget) return { synced: false };
+  if (!approvedTargetIds.length) return { synced: false };
 
   const plan = buildNativeVariantPlan(fields);
 
@@ -14,10 +21,28 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
     throw new Error("Native pricing requires variation prices with one to three selected options.");
   }
 
-  const currentProduct = await loadProduct(admin, APPROVED_PRODUCT_ID);
+  const results = [];
+
+  for (const productId of approvedTargetIds) {
+    results.push(await syncProduct(admin, productId, plan));
+  }
+
+  return {
+    synced: true,
+    productIds: approvedTargetIds,
+    productCount: results.length,
+    variantCount: results.reduce(
+      (total, result) => total + result.variantCount,
+      0,
+    ),
+  };
+}
+
+async function syncProduct(admin, productId, plan) {
+  const currentProduct = await loadProduct(admin, productId);
 
   if (!currentProduct) {
-    throw new Error("The approved Shopify product could not be found.");
+    throw new Error(`The approved Shopify product ${productId} could not be found.`);
   }
 
   const currentVariants = currentProduct.variants?.nodes || [];
@@ -76,7 +101,7 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
     `,
     {
       variables: {
-        identifier: { id: APPROVED_PRODUCT_ID },
+        identifier: { id: productId },
         input: {
           productOptions: plan.productOptions,
           variants,
@@ -96,8 +121,7 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
   }
 
   return {
-    synced: true,
-    productId: APPROVED_PRODUCT_ID,
+    productId,
     variantCount: payload.data?.productSet?.product?.variants?.nodes?.length || 0,
   };
 }
