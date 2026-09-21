@@ -8,7 +8,7 @@ export async function syncApprovedProductNativeVariants(admin, fields, targets) 
   const approvedTargetIds = [
     ...new Set(
       targets
-        .map((target) => normalizeProductId(target.id || target.productId))
+        .map((target) => normalizeProductId(target.productId || target.id))
         .filter((productId) => APPROVED_PRODUCT_IDS.has(productId)),
     ),
   ];
