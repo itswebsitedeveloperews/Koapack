@@ -9,7 +9,7 @@ import {
 import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
-import { syncApprovedProductNativeVariants } from "../native-variant-pricing.server";
+import { syncProductNativeVariants } from "../native-variant-pricing.server";
 
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
@@ -20,7 +20,7 @@ export const loader = async ({ request }) => {
 };
 
 export const action = async ({ request }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
   const formData = await request.formData();
   const name = String(formData.get("name") || "").trim();
@@ -48,10 +48,11 @@ export const action = async ({ request }) => {
     },
   });
 
-  const nativePricing = await syncApprovedProductNativeVariants(
+  const nativePricing = await syncProductNativeVariants(
     admin,
     fields,
     targets,
+    { shop: session.shop },
   );
 
   return { saved: true, nativePricing };

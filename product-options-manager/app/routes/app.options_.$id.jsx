@@ -9,7 +9,10 @@ import {
 import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
-import { syncApprovedProductNativeVariants } from "../native-variant-pricing.server";
+import {
+  restoreOrphanedProductNativeVariants,
+  syncProductNativeVariants,
+} from "../native-variant-pricing.server";
 
 export const loader = async ({ request, params }) => {
   const { admin } = await authenticate.admin(request);
@@ -43,7 +46,7 @@ export const loader = async ({ request, params }) => {
 };
 
 export const action = async ({ request, params }) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
   const isNew = params.id === "new";
   const groupId = Number(params.id);
@@ -56,6 +59,12 @@ export const action = async ({ request, params }) => {
 
   const fields = parseJsonArray(formData.get("fields"));
   const targets = parseJsonArray(formData.get("targets"));
+  const previousGroup = isNew || !groupId
+    ? null
+    : await db.optionGroup.findUnique({
+        where: { id: groupId },
+        include: { targets: true },
+      });
 
   const data = {
     name,
@@ -86,13 +95,24 @@ export const action = async ({ request, params }) => {
     });
   }
 
-  const nativePricing = await syncApprovedProductNativeVariants(
+  const currentTargetIds = new Set(
+    targets.map((target) => String(target.id || target.handle || "").trim()),
+  );
+  const removedTargets = (previousGroup?.targets || []).filter(
+    (target) => !currentTargetIds.has(String(target.productId).trim()),
+  );
+  const nativePricingRestore = await restoreOrphanedProductNativeVariants(
+    admin,
+    { shop: session.shop, targets: removedTargets },
+  );
+  const nativePricing = await syncProductNativeVariants(
     admin,
     fields,
     targets,
+    { shop: session.shop },
   );
 
-  return { saved: true, nativePricing };
+  return { saved: true, nativePricing, nativePricingRestore };
 };
 
 async function loadShopifyMediaImages(admin) {

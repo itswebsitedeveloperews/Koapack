@@ -2,6 +2,7 @@
 import { Form, redirect, useLoaderData } from "react-router";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
+import { restoreOrphanedProductNativeVariants } from "../native-variant-pricing.server";
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -78,7 +79,7 @@ function isHiddenVariationField(field) {
 }
 
 export const action = async ({ request }) => {
-  await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
   const formData = await request.formData();
 
   const intent = String(formData.get("intent") || "");
@@ -89,8 +90,22 @@ export const action = async ({ request }) => {
   }
 
   if (intent === "delete") {
+    const source = await db.optionGroup.findUnique({
+      where: { id },
+      include: { targets: true },
+    });
+
+    if (!source) {
+      throw new Response("Option group not found", { status: 404 });
+    }
+
     await db.optionGroup.delete({
       where: { id },
+    });
+
+    await restoreOrphanedProductNativeVariants(admin, {
+      shop: session.shop,
+      targets: source.targets,
     });
 
     return redirect("/app/options");

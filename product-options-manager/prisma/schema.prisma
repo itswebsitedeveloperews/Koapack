@@ -32,6 +32,7 @@ model Session {
   refreshToken        String?
   refreshTokenExpires DateTime?
 }
+
 model OptionGroup {
   id        Int      @id @default(autoincrement())
   name      String
@@ -39,20 +40,20 @@ model OptionGroup {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  fields    OptionField[]
-  targets   ProductTarget[]
+  fields  OptionField[]
+  targets ProductTarget[]
 }
 
 model OptionField {
-  id            Int      @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   optionGroupId Int
   label         String
   type          String
-  required      Boolean  @default(false)
-  sortOrder     Int      @default(0)
+  required      Boolean @default(false)
+  sortOrder     Int     @default(0)
   valuesJson    String?
 
-  optionGroup   OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+  optionGroup OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
 }
 
 model ProductTarget {
@@ -61,5 +62,16 @@ model ProductTarget {
   productId     String
   productTitle  String
 
-  optionGroup   OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+  optionGroup OptionGroup @relation(fields: [optionGroupId], references: [id], onDelete: Cascade)
+}
+
+model NativePricingBackup {
+  id           Int      @id @default(autoincrement())
+  shop         String
+  productId    String
+  snapshotJson String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([shop, productId])
 }
