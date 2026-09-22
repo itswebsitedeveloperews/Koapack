@@ -127,7 +127,7 @@ export const action = async ({ request }) => {
     throw new Response("Option group not found", { status: 404 });
   }
 
-  await db.optionGroup.create({
+  const duplicate = await db.optionGroup.create({
     data: {
       name: `${source.name} copy`,
       status: "draft",
@@ -149,7 +149,7 @@ export const action = async ({ request }) => {
     },
   });
 
-  return redirect("/app/options");
+  return redirect(`/app/options/${duplicate.id}`);
 };
 
 export default function ProductOptionsPage() {
@@ -220,7 +220,9 @@ export default function ProductOptionsPage() {
                             value="duplicate"
                           />
                           <input type="hidden" name="id" value={group.id} />
-                          <s-button submit>Duplicate</s-button>
+                          <button type="submit" style={duplicateButtonStyle}>
+                            Duplicate
+                          </button>
                         </Form>
 
                         <Form method="post">
@@ -319,6 +321,18 @@ const deleteButtonStyle = {
   padding: "7px 12px",
   background: "#ffffff",
   color: "#d72c0d",
+  cursor: "pointer",
+  font: "inherit",
+  lineHeight: "1",
+};
+
+const duplicateButtonStyle = {
+  border: "1px solid #c9cccf",
+  borderRadius: "6px",
+  minHeight: "36px",
+  padding: "7px 12px",
+  background: "#ffffff",
+  color: "#202223",
   cursor: "pointer",
   font: "inherit",
   lineHeight: "1",
