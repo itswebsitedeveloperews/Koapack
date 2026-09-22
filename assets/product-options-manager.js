@@ -295,8 +295,8 @@
       return null;
     }
 
-    const selectedValues = nativeVariantData.optionNames.map(
-      (optionName) => selectedOptions[optionName],
+    const selectedValues = nativeVariantData.optionNames.map((optionName) =>
+      getSelectedOptionValue(optionName),
     );
 
     if (selectedValues.some((value) => !String(value || "").trim())) {
@@ -317,6 +317,22 @@
     );
   }
 
+  function normalizeOptionName(value) {
+    return String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function getSelectedOptionValue(optionName) {
+    const normalizedName = normalizeOptionName(optionName);
+    const matchedEntry = Object.entries(selectedOptions).find(
+      ([name]) => normalizeOptionName(name) === normalizedName,
+    );
+
+    return matchedEntry?.[1];
+  }
+
   function syncCartFormNativeVariant(form) {
     const variant = findSelectedNativeVariant();
     if (!variant) return;
@@ -334,7 +350,7 @@
     });
   }
   function getFieldKey(field) {
-    return field.label || field.name || "Option";
+    return String(field.label || field.name || "Option").trim();
   }
 
   function isVariationPriceStorageField(field) {
@@ -399,7 +415,7 @@
       row.selections.length > 0 &&
       row.selections.every(
         (selection) =>
-          normalizeVariationValue(selectedOptions[selection.field]) ===
+          normalizeVariationValue(getSelectedOptionValue(selection.field)) ===
           normalizeVariationValue(selection.value),
       )
     );
@@ -1201,7 +1217,7 @@
           qtyInput.dispatchEvent(new Event("input", { bubbles: true }));
         }
 
-        selectedOptions[field.label || field.name || "Quantity"] = `${qty}+`;
+        selectedOptions[getFieldKey(field)] = `${qty}+`;
         selectedInput.value = `${qty}+`;
 
         updatePrice();
