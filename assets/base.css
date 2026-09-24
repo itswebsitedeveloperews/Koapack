@@ -2099,8 +2099,11 @@ input[type='checkbox'] {
   background-color: rgb(var(--color-button));
   color: rgb(var(--color-button-text));
   height: 1.7rem;
-  width: 1.7rem;
-  border-radius: 100%;
+  min-width: 1.7rem;
+  width: max-content;
+  padding: 0 0.35rem;
+  box-sizing: border-box;
+  border-radius: 999px;
   display: flex;
   justify-content: center;
   align-items: center;
