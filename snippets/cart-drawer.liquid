@@ -121,8 +121,13 @@
                       {%- liquid
                         assign pom_final_line_price = blank
                         assign pom_unit_price = blank
+                        assign is_pom_priced = false
 
                         for property in item.properties
+                          if property.first == '_pom_price_source' and property.last == 'exact_variation'
+                            assign is_pom_priced = true
+                          endif
+
                           if property.first == '_pom_final_price' and property.last != blank
                             assign pom_final_line_price = property.last | times: 100 | round
                           endif
@@ -303,8 +308,13 @@
                           <quantity-popover>
                             <div class="cart-item__quantity-wrapper quantity-popover-wrapper">
                               <div class="quantity-popover-container{% if has_qty_rules or has_vol_pricing %} quantity-popover-container--hover{% endif %}">
-                                <quantity-input class="quantity cart-quantity">
-                                  <button class="quantity__button" name="minus" type="button">
+                                <quantity-input class="quantity cart-quantity{% if is_pom_priced %} pom-cart-quantity--locked{% endif %}">
+                                  <button
+                                    class="quantity__button"
+                                    name="minus"
+                                    type="button"
+                                    {% if is_pom_priced %}disabled aria-disabled="true" tabindex="-1"{% endif %}
+                                  >
                                     <span class="visually-hidden">
                                       {{-
                                         'products.product.quantity.decrease'
@@ -334,8 +344,18 @@
                                     aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
                                     id="Drawer-quantity-{{ item.index | plus: 1 }}"
                                     data-index="{{ item.index | plus: 1 }}"
+                                    {% if is_pom_priced %}
+                                      readonly
+                                      aria-readonly="true"
+                                      title="Quantity is fixed by the selected product options"
+                                    {% endif %}
                                   >
-                                  <button class="quantity__button" name="plus" type="button">
+                                  <button
+                                    class="quantity__button"
+                                    name="plus"
+                                    type="button"
+                                    {% if is_pom_priced %}disabled aria-disabled="true" tabindex="-1"{% endif %}
+                                  >
                                     <span class="visually-hidden">
                                       {{-
                                         'products.product.quantity.increase'
@@ -348,6 +368,9 @@
                                     </span>
                                   </button>
                                 </quantity-input>
+                                {%- if is_pom_priced -%}
+                                  <span class="visually-hidden">Quantity is fixed by the selected product options.</span>
+                                {%- endif -%}
                               </div>
                               <cart-remove-button
                                 id="CartDrawer-Remove-{{ item.index | plus: 1 }}"
