@@ -10,6 +10,7 @@ body.pom-native-pricing-active variant-radios {
 .pom-group {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .pom-field.pincode-pom-field {
