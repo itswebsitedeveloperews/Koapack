@@ -57,6 +57,14 @@ export function parseRateSheet(sheetName, rows) {
   }
 
   const axisColumns = header.axisColumns;
+  const extraFields = parseExtraFields(normalizedRows, errors);
+  const reservedNames = new Set(["quantity", "order_quantity", "variation_prices", ...axisColumns.map((axis) => fieldName(axis.label))]);
+  for (const field of extraFields) {
+    if (reservedNames.has(fieldName(field.label))) {
+      errors.push(`Extra field “${field.label}” repeats another field or a reserved name. Use a unique label.`);
+    }
+    reservedNames.add(fieldName(field.label));
+  }
   if (axisColumns.length + 1 > MAX_OPTIONS) {
     errors.push(
       `The table has ${axisColumns.length} option columns plus Quantity. Shopify supports at most ${MAX_OPTIONS} product options.`,
@@ -69,6 +77,7 @@ export function parseRateSheet(sheetName, rows) {
 
   for (let rowIndex = header.rowIndex + 1; rowIndex < normalizedRows.length; rowIndex += 1) {
     const row = normalizedRows[rowIndex] || [];
+    if (isExtraFieldsMarker(row)) break;
     const axisValues = axisColumns.map((axis) => cellText(row[axis.columnIndex]));
     const hasAxisValues = axisValues.some(Boolean);
     const hasRates = header.quantityColumns.some(
@@ -141,6 +150,7 @@ export function parseRateSheet(sheetName, rows) {
     : buildImportedFields({
         axisColumns,
         records,
+        extraFields,
       });
 
   return {
@@ -208,7 +218,7 @@ export function serializeImportedField(field, index) {
   };
 }
 
-function buildImportedFields({ axisColumns, records }) {
+function buildImportedFields({ axisColumns, records, extraFields = [] }) {
   const quantities = uniqueSorted(records.map((record) => record.quantity));
   const quantityField = {
     type: "quantity_discount",
@@ -271,6 +281,7 @@ function buildImportedFields({ axisColumns, records }) {
   return [
     quantityField,
     ...axisFields,
+    ...extraFields,
     {
       type: "__variation_prices",
       name: "__variation_prices",
@@ -282,6 +293,64 @@ function buildImportedFields({ axisColumns, records }) {
       },
     },
   ];
+}
+
+function isExtraFieldsMarker(row) {
+  return cellText(row[0]).toLowerCase() === "extra fields";
+}
+
+function parseExtraFields(rows, errors) {
+  const markerIndex = rows.findIndex(isExtraFieldsMarker);
+  if (markerIndex < 0) return [];
+  const header = (rows[markerIndex + 1] || []).map((value) => cellText(value).toLowerCase());
+  const labels = ["label", "type", "enabled", "required", "values"];
+  if (labels.some((label, index) => header[index] !== label)) {
+    errors.push("The Extra Fields header must be: Label, Type, Enabled, Required, Values.");
+    return [];
+  }
+  const fields = [];
+  const supportedTypes = new Set(["text", "number", "date", "upload", "radio", "dropdown"]);
+  for (let index = markerIndex + 2; index < rows.length; index += 1) {
+    const row = rows[index] || [];
+    if (!row.some((value) => cellText(value))) break;
+    const label = cellText(row[0]);
+    const enabled = cellText(row[2]).toLowerCase();
+    const required = cellText(row[3]).toLowerCase();
+    if (!["yes", "no", ""].includes(enabled)) {
+      errors.push(`Extra Fields row ${index + 1}: Enabled must be Yes or No.`);
+      continue;
+    }
+    if (enabled !== "yes") continue;
+    if (!label || !/[a-z0-9]/i.test(label)) {
+      errors.push(`Extra Fields row ${index + 1}: add a valid field label.`);
+      continue;
+    }
+    const type = cellText(row[1]).toLowerCase();
+    if (!supportedTypes.has(type)) {
+      errors.push(`Extra field “${label}”: use text, number, date, upload, radio, or dropdown.`);
+      continue;
+    }
+    if (!["yes", "no", ""].includes(required)) {
+      errors.push(`Extra field “${label}”: Required must be Yes or No.`);
+      continue;
+    }
+    const config = { value: "", advanced: {} };
+    if (type === "radio" || type === "dropdown") {
+      const values = uniqueStrings(cellText(row[4]).split("|"));
+      if (!values.length) {
+        errors.push(`Extra field “${label}”: enter choices separated by | in Values.`);
+        continue;
+      }
+      config.values = values.map((value) => ({ value, text: "" }));
+    }
+    if (type === "upload") {
+      Object.assign(config, { buttonText: "Upload Your File", maxFileSize: 10, allowedFileTypes: "" });
+    }
+    if (type === "number") config.stepButtons = false;
+    if (type === "date") Object.assign(config, { dateFormat: "yyyy-mm-dd", minDate: "", maxDate: "" });
+    fields.push({ type, name: fieldName(label), label, required: required === "yes", config });
+  }
+  return fields;
 }
 
 function findProductReferences(rows) {

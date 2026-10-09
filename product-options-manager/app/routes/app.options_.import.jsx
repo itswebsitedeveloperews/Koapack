@@ -193,9 +193,11 @@ export default function SpreadsheetImportPage() {
           </a>
         </div>
         <p style={{ ...helpStyle, margin: "12px 0 0" }}>
-          Excel includes Size + Quantity, Size + Color + Quantity, and shared-product
+          Excel includes Size + Quantity, Size + Color + Quantity, Size + GSM + Quantity, and shared-product
           examples. Keep the tabs you need and remove the others. CSV contains one
           shared-product example. Replace every sample product URL before importing.
+          Both formats include an Extra Fields table: set Enabled and Required to Yes or No
+          for GSM, Logo Upload, Enter Pincode, and other fields.
         </p>
       </s-section>
 
@@ -241,6 +243,7 @@ export default function SpreadsheetImportPage() {
               <li>A header row with Size, Color, or another option name</li>
               <li>Numeric quantity headers such as 1, 10, 50, 100</li>
               <li>Per-piece rates in the matrix</li>
+              <li>Optional Extra Fields table: Label, Type, Enabled, Required, Values</li>
             </ul>
           </div>
           <div>
@@ -250,9 +253,15 @@ export default function SpreadsheetImportPage() {
               <li>Required Quantity and option fields</li>
               <li>Exact variation totals and native Shopify price variants</li>
               <li>All product assignments from the URLs above the table</li>
+              <li>Enabled extra fields (these do not change prices)</li>
             </ul>
           </div>
         </div>
+        <p style={helpStyle}>
+          Extra field types: text, number, date, upload, radio, dropdown. Separate dropdown
+          or radio choices with |. For price-changing GSM choices, put GSM in the main
+          rate table instead of enabling it as an extra field.
+        </p>
       </s-section>
 
       {Array.isArray(actionData?.preview) ? (
@@ -318,6 +327,11 @@ function PreviewSection({ data, creating, previewing }) {
                           .map((option) => `${option.label}: ${option.count}`)
                           .join(", ")
                       : "—"}
+                    {sheet.extraFields.map((field) => (
+                      <div key={field.label} style={mutedStyle}>
+                        {field.label} ({field.type}) · {field.required ? "required" : "optional"}
+                      </div>
+                    ))}
                   </td>
                   <td style={bodyCellStyle}>
                     {sheet.quantities.length ? sheet.quantities.join(", ") : "—"}
@@ -532,6 +546,9 @@ function publicSheetPreview(sheet) {
     })),
     quantities: sheet.quantities,
     optionValueCounts: sheet.optionValueCounts,
+    extraFields: sheet.fields
+      .filter((field) => field.type !== "__variation_prices" && field.type !== "quantity_discount" && !sheet.optionLabels.includes(field.label))
+      .map(({ label, type, required }) => ({ label, type, required })),
     variationCount: sheet.variationCount,
     minTotal: sheet.minTotal,
     maxTotal: sheet.maxTotal,

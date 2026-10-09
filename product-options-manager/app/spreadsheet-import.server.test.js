@@ -150,7 +150,7 @@ test("downloadable examples import cleanly and share identical pouch prices", as
     "product-options-example.csv",
   );
 
-  assert.equal(workbook.length, 3);
+  assert.equal(workbook.length, 4);
   for (const sheet of [...workbook, csv]) {
     assert.deepEqual(sheet.errors, []);
     assert.deepEqual(sheet.warnings, []);
@@ -160,4 +160,48 @@ test("downloadable examples import cleanly and share identical pouch prices", as
   assert.equal(workbook[2].products.length, 3);
   assert.deepEqual(csv.products, workbook[2].products);
   assert.deepEqual(csv.fields, workbook[2].fields);
+  assert.deepEqual(workbook[3].optionLabels, ["Size", "Gsm"]);
+  const gsm = csv.fields.find((field) => field.label === "GSM");
+  assert.equal(gsm.type, "dropdown");
+  assert.equal(gsm.required, true);
+  assert.deepEqual(gsm.config.values.map(({ value }) => value), ["220 gsm", "300 gsm", "400 gsm"]);
+  assert.equal(csv.fields.find((field) => field.label === "Logo Upload").type, "upload");
+  assert.equal(csv.fields.find((field) => field.label === "Logo Upload").required, false);
+  assert.equal(csv.fields.find((field) => field.label === "Enter Pincode").required, true);
+  assert.equal(csv.fields.some((field) => field.label === "Printing"), false);
+  const prices = csv.fields.find((field) => field.type === "__variation_prices").config.prices;
+  assert.equal(prices.length, 7);
+  assert.deepEqual(prices[0].selections.map(({ field }) => field), ["Order Quantity", "Size"]);
+  const gsmPrices = workbook[3].fields.find((field) => field.type === "__variation_prices").config.prices;
+  assert.equal(gsmPrices.length, 14);
+  assert.deepEqual(gsmPrices[0].selections.map(({ field }) => field), ["Order Quantity", "Size", "Gsm"]);
+});
+
+test("extra field settings validate types, choices, Yes/No, and duplicate labels", () => {
+  const base = [["https://koapack.in/products/pouch"], ["Size", 10], ["Small", 18],
+    ["EXTRA FIELDS"], ["Label", "Type", "Enabled", "Required", "Values"]];
+  for (const row of [
+    ["Logo", "upload", "maybe", "No"],
+    ["Logo", "upload", "Yes", "maybe"],
+    ["GSM", "dropdown", "Yes", "Yes", ""],
+    ["Other", "unknown", "Yes", "No"],
+    ["Size", "text", "Yes", "No"],
+    ["__variation_prices", "text", "Yes", "No"],
+  ]) {
+    const sheet = parseRateSheet("Invalid extra", [...base, row]);
+    assert.ok(sheet.errors.length, JSON.stringify(row));
+    assert.deepEqual(sheet.fields, []);
+  }
+  const sheet = parseRateSheet("Extras", [...base,
+    ["Notes", "text", "Yes", "No"],
+    ["Date", "date", "YES", "NO"],
+    ["Printing", "radio", "Yes", "Yes", "None|Front|Front"],
+    ["Disabled", "unknown", "No", "No"],
+  ]);
+  assert.deepEqual(sheet.errors, []);
+  assert.equal(sheet.variationCount, 1);
+  assert.equal(sheet.fields.find((field) => field.label === "Printing").config.values.length, 2);
+  const price = sheet.fields.find((field) => field.type === "__variation_prices").config.prices[0];
+  assert.equal(price.price, "180");
+  assert.equal(price.selections.length, 2);
 });
