@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Buffer } from "node:buffer";
 import {
   createImportToken,
+  parseCsv,
   parseRateSheet,
+  parseRateUpload,
   readImportToken,
 } from "./spreadsheet-import.server.js";
 
@@ -18,7 +21,10 @@ test("parses a quantity-by-size rate matrix and multiplies rate by quantity", ()
 
   assert.deepEqual(sheet.errors, []);
   assert.equal(sheet.groupName, "COTTON DRAWSTRING POUCH");
-  assert.equal(sheet.productHandle, "cotton-drawstring-potli-pouch");
+  assert.deepEqual(sheet.products, [{
+    url: "https://koapack.in/products/cotton-drawstring-potli-pouch",
+    handle: "cotton-drawstring-potli-pouch",
+  }]);
   assert.deepEqual(sheet.quantities, [1, 10, 50, 100]);
   assert.equal(sheet.variationCount, 8);
 
@@ -69,7 +75,10 @@ test("signs and verifies import previews", () => {
     items: [
       {
         groupName: "Pouch",
-        target: { id: "gid://shopify/Product/1", title: "Pouch" },
+        targets: [
+          { id: "gid://shopify/Product/1", title: "Blue pouch" },
+          { id: "gid://shopify/Product/2", title: "Red pouch" },
+        ],
         fields: [{ type: "quantity_discount", label: "Order Quantity" }],
       },
     ],
@@ -78,4 +87,54 @@ test("signs and verifies import previews", () => {
 
   assert.deepEqual(readImportToken(token, "test-secret"), plan);
   assert.throws(() => readImportToken(`${token}x`, "test-secret"));
+});
+
+test("imports the shared zipper pouch table from CSV with three products", async () => {
+  const csv = [
+    "https://koapack.in/products/blue-canvas-zipper-box-kit",
+    "https://koapack.in/products/red-canvas-box-kit",
+    "https://koapack.in/products/black-cotton-canvas-zipper-box-kit",
+    "",
+    "Sl No,SIZE,1,10,50,100,300,500,1000",
+    '1,"7.5"" x 3.5"" by 3.5""",300,180,130,110,105,100,90',
+  ].join("\r\n");
+  const [sheet] = await parseRateUpload(Buffer.from(`\uFEFF${csv}`), "Zipper-Pouches.csv");
+
+  assert.deepEqual(sheet.errors, []);
+  assert.equal(sheet.groupName, "Zipper-Pouches");
+  assert.deepEqual(sheet.products.map((product) => product.handle), [
+    "blue-canvas-zipper-box-kit",
+    "red-canvas-box-kit",
+    "black-cotton-canvas-zipper-box-kit",
+  ]);
+  assert.deepEqual(sheet.quantities, [1, 10, 50, 100, 300, 500, 1000]);
+  const prices = sheet.fields.find((field) => field.type === "__variation_prices").config.prices;
+  assert.deepEqual(prices.map((row) => Number(row.price)), [
+    300, 1800, 6500, 11000, 31500, 50000, 90000,
+  ]);
+  assert.equal(prices[0].selections[1].value, '7.5" x 3.5" by 3.5"');
+});
+
+test("deduplicates product URLs above the matrix and ignores URLs below it", () => {
+  const sheet = parseRateSheet("Shared pouch rates", [
+    ["https://koapack.in/products/blue https://koapack.in/products/red"],
+    ["https://koapack.in/products/blue?variant=1"],
+    ["Sl No", "SIZE", 1, 10],
+    [1, "Small", 300, 180],
+    [], [], [], [],
+    ["https://koapack.in/products/unrelated"],
+  ]);
+
+  assert.deepEqual(sheet.errors, []);
+  assert.deepEqual(sheet.products.map((product) => product.handle), ["blue", "red"]);
+  assert.equal(sheet.groupName, "Shared pouch rates");
+});
+
+test("CSV preserves quoted commas, quotes, and embedded newlines", () => {
+  assert.deepEqual(parseCsv('Size,Description\n"Large, wide","First line\nSecond ""quoted"" line"'), [
+    ["Size", "Description"],
+    ["Large, wide", 'First line\nSecond "quoted" line'],
+  ]);
+  assert.deepEqual(parseCsv('Size,Rate\rSmall,180\r'), [["Size", "Rate"], ["Small", "180"]]);
+  assert.throws(() => parseCsv('Size,"unclosed'), /unclosed quoted value/);
 });

@@ -1,14 +1,25 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { Buffer } from "node:buffer";
 import { gunzipSync, gzipSync } from "node:zlib";
 import readXlsxFile from "read-excel-file/node";
 
-const PRODUCT_URL_PATTERN = /https?:\/\/[^\s/]+\/products\/([^\s/?#]+)/i;
+const PRODUCT_URL_PATTERN = /https?:\/\/[^\s/]+\/products\/([^\s/?#]+)/gi;
+const PRODUCT_URL_TEST_PATTERN = /https?:\/\/[^\s/]+\/products\/[^\s/?#]+/i;
 const SYSTEM_COLUMN_PATTERN = /^(?:sl\.?\s*no\.?|s\.?\s*no\.?|serial(?:\s+no)?|#)$/i;
 const MAX_SHEETS = 100;
 const MAX_OPTIONS = 3;
 const MAX_VARIANTS = 250;
 
 export const MAX_SPREADSHEET_BYTES = 10 * 1024 * 1024;
+
+export async function parseRateUpload(input, filename) {
+  if (String(filename || "").toLowerCase().endsWith(".csv")) {
+    const data = parseCsv(Buffer.from(input).toString("utf8"));
+    return [parseRateSheet(cleanTitle(filename), data)];
+  }
+
+  return parseRateWorkbook(input);
+}
 
 export async function parseRateWorkbook(input) {
   const sheets = await readXlsxFile(input);
@@ -26,12 +37,14 @@ export async function parseRateWorkbook(input) {
 
 export function parseRateSheet(sheetName, rows) {
   const normalizedRows = Array.isArray(rows) ? rows : [];
-  const productReference = findProductReference(normalizedRows);
   const header = findMatrixHeader(normalizedRows);
+  const productReferences = findProductReferences(
+    normalizedRows.slice(0, header ? header.rowIndex : 100),
+  );
   const errors = [];
   const warnings = [];
 
-  if (!productReference.handle) {
+  if (!productReferences.length) {
     errors.push("Add a Shopify product URL containing /products/<handle> near the top of the sheet.");
   }
 
@@ -40,7 +53,7 @@ export function parseRateSheet(sheetName, rows) {
   }
 
   if (errors.length) {
-    return invalidSheet(sheetName, productReference, errors);
+    return invalidSheet(sheetName, productReferences, errors);
   }
 
   const axisColumns = header.axisColumns;
@@ -120,7 +133,9 @@ export function parseRateSheet(sheetName, rows) {
     }
   }
 
-  const groupName = findSheetTitle(normalizedRows, productReference.rowIndex) || cleanTitle(sheetName);
+  const groupName =
+    findSheetTitle(normalizedRows, productReferences[0]?.rowIndex ?? -1) ||
+    cleanTitle(sheetName);
   const fields = errors.length
     ? []
     : buildImportedFields({
@@ -131,8 +146,7 @@ export function parseRateSheet(sheetName, rows) {
   return {
     sheetName: String(sheetName || "Sheet"),
     groupName,
-    productUrl: productReference.url,
-    productHandle: productReference.handle,
+    products: productReferences.map(({ url, handle }) => ({ url, handle })),
     quantities: uniqueSorted(records.map((record) => record.quantity)),
     optionLabels: axisColumns.map((axis) => axis.label),
     optionValueCounts: axisColumns.map((axis) => ({
@@ -270,23 +284,25 @@ function buildImportedFields({ axisColumns, records }) {
   ];
 }
 
-function findProductReference(rows) {
-  for (let rowIndex = 0; rowIndex < Math.min(rows.length, 40); rowIndex += 1) {
+function findProductReferences(rows) {
+  const products = [];
+  const seenHandles = new Set();
+
+  for (let rowIndex = 0; rowIndex < Math.min(rows.length, 100); rowIndex += 1) {
     const row = rows[rowIndex] || [];
     for (const value of row) {
       const text = cellText(value);
-      const match = text.match(PRODUCT_URL_PATTERN);
-      if (!match) continue;
-
-      return {
-        url: match[0],
-        handle: decodeURIComponent(match[1]).trim(),
-        rowIndex,
-      };
+      for (const match of text.matchAll(PRODUCT_URL_PATTERN)) {
+        const handle = decodeURIComponent(match[1]).trim();
+        const key = handle.toLowerCase();
+        if (!handle || seenHandles.has(key)) continue;
+        seenHandles.add(key);
+        products.push({ url: match[0], handle, rowIndex });
+      }
     }
   }
 
-  return { url: "", handle: "", rowIndex: -1 };
+  return products;
 }
 
 function findMatrixHeader(rows) {
@@ -346,21 +362,21 @@ function findSheetTitle(rows, productUrlRowIndex) {
   for (let rowIndex = Math.max(0, end - 6); rowIndex < end; rowIndex += 1) {
     for (const value of rows[rowIndex] || []) {
       const text = cellText(value);
-      if (!text || PRODUCT_URL_PATTERN.test(text) || /^\d+(?:\.\d+)?$/.test(text)) continue;
+      if (!text || PRODUCT_URL_TEST_PATTERN.test(text) || /^\d+(?:\.\d+)?$/.test(text)) continue;
       if (/^(?:qty|quantity|size|color|sl\.?\s*no\.?)$/i.test(text)) continue;
       candidates.push(text);
     }
   }
 
-  return cleanTitle(candidates.sort((a, b) => b.length - a.length)[0] || "");
+  const title = candidates.sort((a, b) => b.length - a.length)[0];
+  return title ? cleanTitle(title) : "";
 }
 
-function invalidSheet(sheetName, productReference, errors) {
+function invalidSheet(sheetName, productReferences, errors) {
   return {
     sheetName: String(sheetName || "Sheet"),
     groupName: cleanTitle(sheetName),
-    productUrl: productReference.url,
-    productHandle: productReference.handle,
+    products: productReferences.map(({ url, handle }) => ({ url, handle })),
     quantities: [],
     optionLabels: [],
     optionValueCounts: [],
@@ -382,8 +398,13 @@ function validateImportPlan(plan) {
     if (
       !item ||
       !String(item.groupName || "").trim() ||
-      !String(item.target?.id || "").startsWith("gid://shopify/Product/") ||
-      !String(item.target?.title || "").trim() ||
+      !Array.isArray(item.targets) ||
+      !item.targets.length ||
+      item.targets.some(
+        (target) =>
+          !String(target?.id || "").startsWith("gid://shopify/Product/") ||
+          !String(target?.title || "").trim(),
+      ) ||
       !Array.isArray(item.fields) ||
       !item.fields.length
     ) {
@@ -406,6 +427,56 @@ function cellText(value) {
     if (Array.isArray(value.richText)) return value.richText.map((part) => part.text || "").join("").trim();
   }
   return String(value).replace(/\s+/g, " ").trim();
+}
+
+export function parseCsv(value) {
+  const text = String(value || "").replace(/^\uFEFF/, "");
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+
+    if (quoted) {
+      if (character === '"' && text[index + 1] === '"') {
+        cell += '"';
+        index += 1;
+      } else if (character === '"') {
+        quoted = false;
+      } else {
+        cell += character;
+      }
+      continue;
+    }
+
+    if (character === '"' && cell.length === 0) {
+      quoted = true;
+    } else if (character === ",") {
+      row.push(cell);
+      cell = "";
+    } else if (character === "\n" || character === "\r") {
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+      if (character === "\r" && text[index + 1] === "\n") index += 1;
+    } else {
+      cell += character;
+    }
+  }
+
+  if (quoted) {
+    throw new Error("The CSV contains an unclosed quoted value. Export the sheet as CSV again.");
+  }
+
+  if (cell || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+
+  return rows;
 }
 
 function parsePositiveInteger(value) {
@@ -443,7 +514,7 @@ function fieldName(label) {
 }
 
 function cleanTitle(value) {
-  return cellText(value).replace(/\.(?:xlsx?|xlsm)$/i, "").trim() || "Imported options";
+  return cellText(value).replace(/\.(?:xlsx?|xlsm|csv)$/i, "").trim() || "Imported options";
 }
 
 function normalizeKeyPart(value) {

@@ -8,7 +8,7 @@ import { syncProductNativeVariants } from "../native-variant-pricing.server";
 import {
   createImportToken,
   MAX_SPREADSHEET_BYTES,
-  parseRateWorkbook,
+  parseRateUpload,
   readImportToken,
   serializeImportedField,
 } from "../spreadsheet-import.server";
@@ -38,12 +38,12 @@ export const action = async ({ request }) => {
   const file = formData.get("spreadsheet");
 
   if (!file || typeof file.arrayBuffer !== "function") {
-    return { ok: false, error: "Choose an .xlsx spreadsheet to preview." };
+    return { ok: false, error: "Choose an .xlsx or .csv spreadsheet to preview." };
   }
 
   const filename = String(file.name || "");
-  if (!filename.toLowerCase().endsWith(".xlsx")) {
-    return { ok: false, error: "Upload an Excel .xlsx file. Legacy .xls files are not supported." };
+  if (!/\.(?:xlsx|csv)$/i.test(filename)) {
+    return { ok: false, error: "Upload an .xlsx or .csv file. Legacy .xls files are not supported." };
   }
 
   if (Number(file.size || 0) > MAX_SPREADSHEET_BYTES) {
@@ -51,7 +51,10 @@ export const action = async ({ request }) => {
   }
 
   try {
-    const parsedSheets = await parseRateWorkbook(Buffer.from(await file.arrayBuffer()));
+    const parsedSheets = await parseRateUpload(
+      Buffer.from(await file.arrayBuffer()),
+      filename,
+    );
     const preview = [];
     const validItems = [];
     const seenProductIds = new Set();
@@ -60,41 +63,61 @@ export const action = async ({ request }) => {
       const item = publicSheetPreview(sheet);
 
       if (!sheet.errors.length) {
-        try {
-          const target = await loadProductByHandle(admin, sheet.productHandle);
+        const resolvedTargets = [];
 
-          if (
-            !target ||
-            String(target.handle || "").toLowerCase() !==
-              String(sheet.productHandle || "").toLowerCase()
-          ) {
-            item.errors.push(`Shopify product “${sheet.productHandle}” was not found.`);
-          } else if (seenProductIds.has(target.id)) {
-            item.errors.push("Another worksheet in this file targets the same Shopify product.");
-          } else {
+        for (let index = 0; index < sheet.products.length; index += 1) {
+          const productReference = sheet.products[index];
+
+          try {
+            const target = await loadProductByHandle(admin, productReference.handle);
+
+            if (
+              !target ||
+              String(target.handle || "").toLowerCase() !==
+                String(productReference.handle || "").toLowerCase()
+            ) {
+              item.errors.push(`Shopify product “${productReference.handle}” was not found.`);
+              continue;
+            }
+
+            item.products[index].title = target.title;
+
+            if (seenProductIds.has(target.id)) {
+              item.errors.push(
+                `Product “${target.title}” is also targeted by another valid worksheet in this file.`,
+              );
+              continue;
+            }
+
             const existingTarget = await findExistingTarget(target);
 
             if (existingTarget) {
               item.errors.push(
-                `This product is already assigned to “${existingTarget.optionGroup.name}”. Remove it there before importing.`,
+                `Product “${target.title}” is already assigned to “${existingTarget.optionGroup.name}”. Remove it there before importing.`,
               );
-            } else {
-              seenProductIds.add(target.id);
-              item.productTitle = target.title;
-              validItems.push({
-                sheetName: sheet.sheetName,
-                groupName: sheet.groupName || target.title,
-                target: {
-                  id: target.id,
-                  title: target.title,
-                  handle: target.handle,
-                },
-                fields: sheet.fields,
-              });
+              continue;
             }
+
+            resolvedTargets.push({
+              id: target.id,
+              title: target.title,
+              handle: target.handle,
+            });
+          } catch (error) {
+            item.errors.push(
+              `${productReference.handle}: ${errorMessage(error, "Shopify could not verify this product.")}`,
+            );
           }
-        } catch (error) {
-          item.errors.push(errorMessage(error, "Shopify could not verify this product."));
+        }
+
+        if (!item.errors.length && resolvedTargets.length === sheet.products.length) {
+          resolvedTargets.forEach((target) => seenProductIds.add(target.id));
+          validItems.push({
+            sheetName: sheet.sheetName,
+            groupName: sheet.groupName || resolvedTargets[0].title,
+            targets: resolvedTargets,
+            fields: sheet.fields,
+          });
         }
       }
 
@@ -119,6 +142,10 @@ export const action = async ({ request }) => {
       preview,
       importToken,
       validCount: validItems.length,
+      validProductCount: validItems.reduce(
+        (total, item) => total + item.targets.length,
+        0,
+      ),
       invalidCount: preview.length - validItems.length,
     };
   } catch (error) {
@@ -145,21 +172,21 @@ export default function SpreadsheetImportPage() {
 
       <s-section heading="Upload rate spreadsheet">
         <p style={introStyle}>
-          Create one option group per worksheet. The importer reads the product URL,
-          option columns such as Size or Color, quantity headers, and per-piece rates.
-          Each saved variation price is calculated as quantity × rate.
+          Create one option group per worksheet or CSV file. Add one or more product
+          URLs above the table to assign the same options and prices to every listed
+          product. Each saved variation price is calculated as quantity × rate.
         </p>
 
         <Form method="post" encType="multipart/form-data" style={uploadFormStyle}>
           <input type="hidden" name="intent" value="preview" />
           <label htmlFor="option-spreadsheet" style={labelStyle}>
-            Excel workbook (.xlsx)
+            Rate spreadsheet (.xlsx or .csv)
           </label>
           <input
             id="option-spreadsheet"
             name="spreadsheet"
             type="file"
-            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
             required
             style={fileInputStyle}
           />
@@ -176,12 +203,12 @@ export default function SpreadsheetImportPage() {
         ) : null}
       </s-section>
 
-      <s-section heading="Expected worksheet layout">
+      <s-section heading="Expected spreadsheet layout">
         <div style={formatGridStyle}>
           <div>
             <strong>Required</strong>
             <ul style={listStyle}>
-              <li>A product URL containing /products/product-handle</li>
+              <li>One or more product URLs containing /products/product-handle</li>
               <li>A header row with Size, Color, or another option name</li>
               <li>Numeric quantity headers such as 1, 10, 50, 100</li>
               <li>Per-piece rates in the matrix</li>
@@ -190,10 +217,10 @@ export default function SpreadsheetImportPage() {
           <div>
             <strong>Created in Shopify</strong>
             <ul style={listStyle}>
-              <li>One active Product Options group per valid worksheet</li>
+              <li>One active Product Options group per valid worksheet or CSV file</li>
               <li>Required Quantity and option fields</li>
               <li>Exact variation totals and native Shopify price variants</li>
-              <li>The product assignment from the worksheet URL</li>
+              <li>All product assignments from the URLs above the table</li>
             </ul>
           </div>
         </div>
@@ -218,7 +245,7 @@ function PreviewSection({ data, creating, previewing }) {
       <div style={summaryStyle}>
         <strong>{data.filename}</strong>
         <span>
-          {data.validCount} ready · {data.invalidCount} need attention
+          {data.validCount} groups ready for {data.validProductCount} products · {data.invalidCount} need attention
         </span>
       </div>
 
@@ -227,7 +254,7 @@ function PreviewSection({ data, creating, previewing }) {
           <thead>
             <tr>
               <th style={headerCellStyle}>Worksheet</th>
-              <th style={headerCellStyle}>Product</th>
+              <th style={headerCellStyle}>Products</th>
               <th style={headerCellStyle}>Options</th>
               <th style={headerCellStyle}>Quantities</th>
               <th style={headerCellStyle}>Prices</th>
@@ -244,7 +271,17 @@ function PreviewSection({ data, creating, previewing }) {
                     <div style={mutedStyle}>{sheet.groupName}</div>
                   </td>
                   <td style={bodyCellStyle}>
-                    {sheet.productTitle || sheet.productHandle || "Missing product URL"}
+                    {sheet.products.length ? (
+                      <ul style={productListStyle}>
+                        {sheet.products.map((product) => (
+                          <li key={product.handle}>
+                            {product.title || product.handle}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "Missing product URL"
+                    )}
                   </td>
                   <td style={bodyCellStyle}>
                     {sheet.optionValueCounts.length
@@ -292,7 +329,7 @@ function PreviewSection({ data, creating, previewing }) {
           <button type="submit" disabled={creating || previewing} style={primaryButtonStyle}>
             {creating
               ? "Creating and syncing…"
-              : `Import and sync ${data.validCount} product${data.validCount === 1 ? "" : "s"}`}
+              : `Import ${data.validCount} group${data.validCount === 1 ? "" : "s"} for ${data.validProductCount} product${data.validProductCount === 1 ? "" : "s"}`}
           </button>
         </Form>
       ) : null}
@@ -312,7 +349,7 @@ function ResultsSection({ results }) {
         {results.map((result) => (
           <div key={`${result.sheetName}-${result.groupName}`} style={resultCardStyle}>
             <strong>{result.groupName}</strong>
-            <div style={mutedStyle}>{result.productTitle}</div>
+            <div style={mutedStyle}>{result.productTitles.join(", ")}</div>
             <div style={messageStyle(result.ok)}>
               {result.ok
                 ? `${result.variantCount} Shopify price variants synced.`
@@ -343,15 +380,20 @@ async function createGroupsFromPreview({ admin, session, token }) {
     const results = [];
 
     for (const item of plan.items) {
-      const existingTarget = await findExistingTarget(item.target);
+      let existingTarget = null;
+
+      for (const target of item.targets) {
+        existingTarget = await findExistingTarget(target);
+        if (existingTarget) break;
+      }
 
       if (existingTarget) {
         results.push({
           ok: false,
           sheetName: item.sheetName,
           groupName: item.groupName,
-          productTitle: item.target.title,
-          error: `Skipped because this product is already assigned to “${existingTarget.optionGroup.name}”.`,
+          productTitles: item.targets.map((target) => target.title),
+          error: `Skipped because one of these products is already assigned to “${existingTarget.optionGroup.name}”.`,
         });
         continue;
       }
@@ -364,10 +406,10 @@ async function createGroupsFromPreview({ admin, session, token }) {
             create: item.fields.map(serializeImportedField),
           },
           targets: {
-            create: {
-              productId: item.target.id,
-              productTitle: item.target.title,
-            },
+            create: item.targets.map((target) => ({
+              productId: target.id,
+              productTitle: target.title,
+            })),
           },
         },
       });
@@ -376,7 +418,7 @@ async function createGroupsFromPreview({ admin, session, token }) {
         const sync = await syncProductNativeVariants(
           admin,
           item.fields,
-          [item.target],
+          item.targets,
           { shop: session.shop },
         );
 
@@ -386,7 +428,7 @@ async function createGroupsFromPreview({ admin, session, token }) {
           ok: true,
           sheetName: item.sheetName,
           groupName: item.groupName,
-          productTitle: item.target.title,
+          productTitles: item.targets.map((target) => target.title),
           groupId: group.id,
           variantCount: sync.variantCount || 0,
         });
@@ -400,7 +442,7 @@ async function createGroupsFromPreview({ admin, session, token }) {
           ok: false,
           sheetName: item.sheetName,
           groupName: item.groupName,
-          productTitle: item.target.title,
+          productTitles: item.targets.map((target) => target.title),
           groupId: group.id,
           error: `${errorMessage(error, "Shopify price sync failed.")} The group was saved as draft.`,
         });
@@ -455,8 +497,10 @@ function publicSheetPreview(sheet) {
   return {
     sheetName: sheet.sheetName,
     groupName: sheet.groupName,
-    productHandle: sheet.productHandle,
-    productTitle: "",
+    products: sheet.products.map((product) => ({
+      handle: product.handle,
+      title: "",
+    })),
     quantities: sheet.quantities,
     optionValueCounts: sheet.optionValueCounts,
     variationCount: sheet.variationCount,
@@ -498,6 +542,7 @@ const errorBannerStyle = { marginTop: 16, padding: "12px 14px", border: "1px sol
 const successBannerStyle = { marginTop: 12, padding: "12px 14px", border: "1px solid #8fc89e", borderRadius: 8, background: "#edf9f0", color: "#174d27" };
 const formatGridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 24 };
 const listStyle = { margin: "10px 0 0", paddingLeft: 20, lineHeight: 1.7 };
+const productListStyle = { margin: 0, paddingLeft: 18, lineHeight: 1.5 };
 const summaryStyle = { display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, marginBottom: 14 };
 const tableWrapStyle = { overflowX: "auto", border: "1px solid #dfe3e8", borderRadius: 10 };
 const tableStyle = { width: "100%", minWidth: 980, borderCollapse: "collapse" };
