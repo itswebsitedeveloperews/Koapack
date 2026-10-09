@@ -160,8 +160,8 @@ export default function ProductOptionsPage() {
       <s-button slot="primary-action" href="/app/options/new" variant="primary">
         Add group
       </s-button>
-      <s-button slot="secondary-actions" href="/app/options/assets">
-        Assets
+      <s-button slot="secondary-actions" href="/app/options/import">
+        Import spreadsheet
       </s-button>
 
       {groups.length === 0 ? (
@@ -173,6 +173,7 @@ export default function ProductOptionsPage() {
           <s-button href="/app/options/new" variant="primary">
             Add option group
           </s-button>
+          <s-button href="/app/options/import">Import spreadsheet</s-button>
         </s-section>
       ) : (
         <s-section>

@@ -130,7 +130,7 @@ async function setProductOptionsAndVariants(admin, productId, input) {
               name
               values
             }
-            variants(first: 100) {
+            variants(first: 250) {
               nodes {
                 id
                 price
@@ -354,7 +354,7 @@ async function loadProduct(admin, id) {
             position
             values
           }
-          variants(first: 100) {
+          variants(first: 250) {
             nodes {
               id
               price
@@ -398,7 +398,7 @@ async function loadProductByHandle(admin, handle) {
               position
               values
             }
-            variants(first: 100) {
+            variants(first: 250) {
               nodes {
                 id
                 price
