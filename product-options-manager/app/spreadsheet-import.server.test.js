@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Buffer } from "node:buffer";
+import { readFile } from "node:fs/promises";
 import {
   createImportToken,
   parseCsv,
@@ -137,4 +138,26 @@ test("CSV preserves quoted commas, quotes, and embedded newlines", () => {
   ]);
   assert.deepEqual(parseCsv('Size,Rate\rSmall,180\r'), [["Size", "Rate"], ["Small", "180"]]);
   assert.throws(() => parseCsv('Size,"unclosed'), /unclosed quoted value/);
+});
+
+test("downloadable examples import cleanly and share identical pouch prices", async () => {
+  const workbook = await parseRateUpload(
+    await readFile(new URL("../public/examples/product-options-example.xlsx", import.meta.url)),
+    "product-options-example.xlsx",
+  );
+  const [csv] = await parseRateUpload(
+    await readFile(new URL("../public/examples/product-options-example.csv", import.meta.url)),
+    "product-options-example.csv",
+  );
+
+  assert.equal(workbook.length, 3);
+  for (const sheet of [...workbook, csv]) {
+    assert.deepEqual(sheet.errors, []);
+    assert.deepEqual(sheet.warnings, []);
+    assert.ok(sheet.fields.length > 0);
+  }
+  assert.deepEqual(workbook[1].optionLabels, ["Size", "Color"]);
+  assert.equal(workbook[2].products.length, 3);
+  assert.deepEqual(csv.products, workbook[2].products);
+  assert.deepEqual(csv.fields, workbook[2].fields);
 });

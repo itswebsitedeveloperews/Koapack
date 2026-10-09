@@ -170,6 +170,35 @@ export default function SpreadsheetImportPage() {
         Product Options
       </s-link>
 
+      <s-section heading="Download an example">
+        <p style={introStyle}>
+          Download a sample, replace the product URLs and rates with your data,
+          then upload it below. Rate cells contain the price per piece. The importer
+          multiplies each rate by its quantity.
+        </p>
+        <div style={downloadActionsStyle}>
+          <a
+            href="/examples/product-options-example.xlsx"
+            download="product-options-example.xlsx"
+            style={downloadLinkStyle}
+          >
+            Download Excel example (.xlsx)
+          </a>
+          <a
+            href="/examples/product-options-example.csv"
+            download="product-options-example.csv"
+            style={downloadLinkStyle}
+          >
+            Download CSV example (.csv)
+          </a>
+        </div>
+        <p style={{ ...helpStyle, margin: "12px 0 0" }}>
+          Excel includes Size + Quantity, Size + Color + Quantity, and shared-product
+          examples. Keep the tabs you need and remove the others. CSV contains one
+          shared-product example. Replace every sample product URL before importing.
+        </p>
+      </s-section>
+
       <s-section heading="Upload rate spreadsheet">
         <p style={introStyle}>
           Create one option group per worksheet or CSV file. Add one or more product
@@ -524,6 +553,19 @@ function money(value) {
 }
 
 const introStyle = { maxWidth: 780, margin: "0 0 18px", lineHeight: 1.55, color: "#4a4f55" };
+const downloadActionsStyle = { display: "flex", flexWrap: "wrap", gap: 12 };
+const downloadLinkStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  minHeight: 40,
+  padding: "0 14px",
+  border: "1px solid #8c9196",
+  borderRadius: 8,
+  color: "#202223",
+  background: "#fff",
+  textDecoration: "none",
+  fontWeight: 650,
+};
 const uploadFormStyle = { display: "grid", gap: 10, maxWidth: 620 };
 const labelStyle = { fontWeight: 650, color: "#202223" };
 const fileInputStyle = { padding: 12, border: "1px solid #8c9196", borderRadius: 8, background: "#fff" };
