@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { Buffer } from "node:buffer";
 import { gunzipSync, gzipSync } from "node:zlib";
 import readXlsxFile from "read-excel-file/node";
+import { DEFAULT_UPLOAD_HELP } from "./upload-help.js";
 
 const PRODUCT_URL_PATTERN = /https?:\/\/[^\s/]+\/products\/([^\s/?#]+)/gi;
 const PRODUCT_URL_TEST_PATTERN = /https?:\/\/[^\s/]+\/products\/[^\s/?#]+/i;
@@ -345,6 +346,7 @@ function parseExtraFields(rows, errors) {
     }
     if (type === "upload") {
       Object.assign(config, { buttonText: "Upload Your File", maxFileSize: 10, allowedFileTypes: "" });
+      config.advanced.help = DEFAULT_UPLOAD_HELP;
     }
     if (type === "number") config.stepButtons = false;
     if (type === "date") Object.assign(config, { dateFormat: "yyyy-mm-dd", minDate: "", maxDate: "" });

@@ -10,6 +10,7 @@ import { useAppBridge } from "@shopify/app-bridge-react"; // no ResourcePicker
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { syncProductNativeVariants } from "../native-variant-pricing.server";
+import { DEFAULT_UPLOAD_HELP } from "../upload-help.js";
 
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
@@ -368,7 +369,7 @@ const FIELD_TEMPLATES = {
       buttonText: "Upload Your File",
       maxFileSize: 10,
       allowedFileTypes: "",
-      advanced: {},
+      advanced: { help: DEFAULT_UPLOAD_HELP },
     },
   },
   upload_lift: {

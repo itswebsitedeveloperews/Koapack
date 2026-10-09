@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
+import { DEFAULT_UPLOAD_HELP } from "./upload-help.js";
 import {
   createImportToken,
   parseCsv,
@@ -167,6 +168,9 @@ test("downloadable examples import cleanly and share identical pouch prices", as
   assert.deepEqual(gsm.config.values.map(({ value }) => value), ["220 gsm", "300 gsm", "400 gsm"]);
   assert.equal(csv.fields.find((field) => field.label === "Logo Upload").type, "upload");
   assert.equal(csv.fields.find((field) => field.label === "Logo Upload").required, false);
+  assert.equal(csv.fields.find((field) => field.label === "Logo Upload").config.advanced.help, DEFAULT_UPLOAD_HELP);
+  assert.ok(DEFAULT_UPLOAD_HELP.startsWith("Contact us on <strong>WhatsApp"));
+  assert.ok(DEFAULT_UPLOAD_HELP.endsWith("<span>For customizations and design query. </span>"));
   assert.equal(csv.fields.find((field) => field.label === "Enter Pincode").required, true);
   assert.equal(csv.fields.some((field) => field.label === "Printing"), false);
   const prices = csv.fields.find((field) => field.type === "__variation_prices").config.prices;
