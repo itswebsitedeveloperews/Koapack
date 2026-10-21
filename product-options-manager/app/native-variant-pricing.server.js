@@ -1,6 +1,7 @@
 import db from "./db.server";
+import { buildNativeVariantPlan } from "./native-variant-plan.js";
+export { buildNativeVariantPlan } from "./native-variant-plan.js";
 
-const VARIATION_PRICE_FIELD_TYPE = "__variation_prices";
 const LEGACY_BASE_PRICES = new Map([
   ["gid://shopify/Product/8974959476907", "0.00"],
   ["gid://shopify/Product/8519458029739", "350.00"],
@@ -263,85 +264,6 @@ function defaultVariantSnapshot(product, price) {
   };
 }
 
-export function buildNativeVariantPlan(fields) {
-  const quantityLabels = new Set(
-    fields
-      .filter((field) => ["quantity", "quantity_discount"].includes(normalizeType(field.type)))
-      .map((field) => String(field.label || field.name || "").trim())
-      .filter(Boolean),
-  );
-  const priceField = fields.find((field) => {
-    return (
-      normalizeType(field.type) === VARIATION_PRICE_FIELD_TYPE ||
-      normalizeType(field.name) === VARIATION_PRICE_FIELD_TYPE ||
-      normalizeType(field.config?.storageType) === VARIATION_PRICE_FIELD_TYPE
-    );
-  });
-  const rows = Array.isArray(priceField?.config?.prices)
-    ? priceField.config.prices
-    : [];
-  const optionNames = [];
-
-  for (const row of rows) {
-    for (const selection of row.selections || []) {
-      const name = String(selection.field || selection.label || "").trim();
-      if (name && !optionNames.includes(name)) {
-        optionNames.push(name);
-      }
-    }
-  }
-
-  if (!rows.length || !optionNames.length || optionNames.length > 3) return null;
-
-  const optionValuesByName = new Map(optionNames.map((name) => [name, []]));
-  const variantsByKey = new Map();
-
-  for (const row of rows) {
-    const selections = Array.isArray(row.selections) ? row.selections : [];
-    const selectionMap = new Map(
-      selections.map((selection) => [
-        String(selection.field || selection.label || "").trim(),
-        String(selection.value ?? "").trim(),
-      ]),
-    );
-    const optionValues = optionNames.map((optionName) => ({
-      optionName,
-      name: selectionMap.get(optionName) || "",
-    }));
-
-    if (optionValues.some((option) => !option.name)) continue;
-
-    const quantitySelection = selections.find((selection) =>
-      quantityLabels.has(String(selection.field || selection.label || "").trim()),
-    );
-    const quantity = parsePositiveNumber(quantitySelection?.value) || 1;
-    const totalPrice = Number(row.price);
-
-    if (!Number.isFinite(totalPrice) || totalPrice <= 0) continue;
-
-    for (const option of optionValues) {
-      const values = optionValuesByName.get(option.optionName);
-      if (!values.includes(option.name)) values.push(option.name);
-    }
-
-    variantsByKey.set(selectionKey(optionValues), {
-      optionValues,
-      price: (totalPrice / quantity).toFixed(2),
-    });
-  }
-
-  const variants = [...variantsByKey.values()];
-  if (!variants.length) return null;
-
-  return {
-    productOptions: optionNames.map((name, index) => ({
-      name,
-      position: index + 1,
-      values: optionValuesByName.get(name).map((value) => ({ name: value })),
-    })),
-    variants,
-  };
-}
 
 async function loadProduct(admin, id) {
   const response = await admin.graphql(
@@ -461,19 +383,6 @@ function normalizeProductId(value) {
   if (!text) return "";
   if (text.startsWith("gid://shopify/Product/")) return text;
   return /^\d+$/.test(text) ? `gid://shopify/Product/${text}` : "";
-}
-
-function parsePositiveNumber(value) {
-  const number = Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
-  return Number.isFinite(number) && number > 0 ? number : null;
-}
-
-function normalizeType(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/-/g, "_");
 }
 
 function selectionKey(selections) {

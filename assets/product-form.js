@@ -23,6 +23,12 @@ if (!customElements.get('product-form')) {
 
         this.handleErrorMessage();
 
+        if (typeof window.ProductOptionsManagerSyncCartForm === 'function' &&
+            window.ProductOptionsManagerSyncCartForm(this.form) === false) {
+          this.handleErrorMessage('Please select available product options with a synced price before adding to cart.');
+          return;
+        }
+
         this.submitButton.setAttribute('aria-disabled', true);
         this.submitButton.classList.add('loading');
         this.querySelector('.loading__spinner').classList.remove('hidden');
@@ -30,10 +36,6 @@ if (!customElements.get('product-form')) {
         const config = fetchConfig('javascript');
         config.headers['X-Requested-With'] = 'XMLHttpRequest';
         delete config.headers['Content-Type'];
-
-        if (typeof window.ProductOptionsManagerSyncCartForm === 'function') {
-          window.ProductOptionsManagerSyncCartForm(this.form);
-        }
 
         const formData = new FormData(this.form);
         if (this.cart) {

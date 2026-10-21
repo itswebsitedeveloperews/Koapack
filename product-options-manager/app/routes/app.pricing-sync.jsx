@@ -75,7 +75,13 @@ export default function PricingSyncPage() {
         <s-paragraph>
           Convert each option group&apos;s variation prices into native Shopify
           variants so the same totals appear on the product page, cart, and
-          checkout.
+          checkout. This works without Shopify Plus: Shopify charges the synced
+          variant price, not a cart transform or a hidden option property.
+        </s-paragraph>
+        <s-paragraph>
+          Sync after changing prices, then refresh the product page. Remove old
+          cart items and add them again with the correct options. Pricing supports
+          up to three price-changing options, including quantity.
         </s-paragraph>
 
         {groups.length ? (
@@ -138,10 +144,13 @@ async function loadPricingGroups() {
   });
 
   return groups.filter((group) => {
-    return (
-      group.targets.length > 0 &&
-      Boolean(buildNativeVariantPlan(group.fields.map(parseSavedField)))
-    );
+    if (!group.targets.length) return false;
+    try {
+      return Boolean(buildNativeVariantPlan(group.fields.map(parseSavedField)));
+    } catch {
+      // Sync shows the actionable validation error instead of crashing the page.
+      return true;
+    }
   });
 }
 

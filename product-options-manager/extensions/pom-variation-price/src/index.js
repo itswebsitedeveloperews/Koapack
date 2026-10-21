@@ -1,28 +1,5 @@
-const EMPTY_RESULT = { operations: [] };
-
-export function cartTransformRun(input) {
-  const operations = input.cart.lines.flatMap((line) => {
-    if (line.priceSource?.value !== "exact_variation") return [];
-
-    const amount = Number(line.unitPrice?.value);
-
-    if (!Number.isFinite(amount) || amount <= 0) return [];
-
-    return [
-      {
-        lineUpdate: {
-          cartLineId: line.id,
-          price: {
-            adjustment: {
-              fixedPricePerUnit: {
-                amount: amount.toFixed(2),
-              },
-            },
-          },
-        },
-      },
-    ];
-  });
-
-  return operations.length ? { operations } : EMPTY_RESULT;
+// Retained as a no-op for existing installations during migration. Pricing Sync
+// stores prices on Shopify variants; client-supplied properties never set prices.
+export function cartTransformRun() {
+  return { operations: [] };
 }

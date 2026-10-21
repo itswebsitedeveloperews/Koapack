@@ -18,6 +18,8 @@
   const LEGACY_VARIATION_PRICE_TYPE = "variation_price";
 
   let selectedQuantity = 1;
+  let optionsLoaded = false;
+  let hasOptionGroups = false;
   let currentPricing = {
     hasExactVariationPrice: false,
     finalPrice: null,
@@ -251,6 +253,7 @@
     syncAllCartFormsNativeVariant();
     syncAllCartFormsQuantity();
     syncAllCartFormsVariationPriceProperties();
+    showPricingError();
 
     document
       .querySelectorAll(
@@ -335,13 +338,52 @@
 
   function syncCartFormNativeVariant(form) {
     const variant = findSelectedNativeVariant();
-    if (!variant) return;
+    if (!variant) return false;
 
-    const input = form.querySelector("[name='id']");
-    if (!input || String(input.value) === String(variant.id)) return;
+    let inputs = form.querySelectorAll("[name='id']");
+    if (!inputs.length) {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "id";
+      form.appendChild(input);
+      inputs = [input];
+    }
+    // Write immediately before FormData is built. Theme change listeners can
+    // otherwise replace our ID with the product's default variant.
+    inputs.forEach((input) => {
+      input.disabled = false;
+      input.value = String(variant.id);
+    });
+    return true;
+  }
 
-    input.value = String(variant.id);
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+  function getPricingError() {
+    if (!optionsLoaded) return "Product options are still loading. Please wait.";
+    if (!variationPriceRows.length) return "";
+    if (!currentPricing.hasExactVariationPrice) return "Please choose all pricing options.";
+    const variant = findSelectedNativeVariant();
+    if (!variant) return "This combination is unavailable or has not been synced. Please contact us.";
+    const lineCents = Number(variant.price) * Math.max(1, Number(selectedQuantity || 1));
+    if (!Number.isFinite(lineCents) || Math.round(lineCents) !== Math.round(currentPricing.finalPrice * 100)) {
+      return "This option price needs updating. Please refresh the page or contact us before ordering.";
+    }
+    return "";
+  }
+
+  function showPricingError() {
+    let message = root.querySelector(".pom-pricing-error");
+    const error = optionsLoaded ? getPricingError() : "";
+    if (!error) {
+      message?.remove();
+      return;
+    }
+    if (!message) {
+      message = document.createElement("p");
+      message.className = "pom-pricing-error pom-error";
+      message.setAttribute("role", "alert");
+      root.appendChild(message);
+    }
+    message.textContent = error;
   }
 
   function syncAllCartFormsNativeVariant() {
@@ -493,9 +535,10 @@
       setFieldInvalid(fieldEl, showErrors && isInvalid);
     });
 
+    const ready = allFilled && !getPricingError();
     findAddToCartButtons().forEach((button) => {
-      button.disabled = !allFilled;
-      button.setAttribute("aria-disabled", String(!allFilled));
+      button.disabled = !ready;
+      button.setAttribute("aria-disabled", String(!ready));
     });
 
     if (showErrors && firstInvalid) {
@@ -503,7 +546,7 @@
       firstInvalid.querySelector("input, select, textarea, button")?.focus();
     }
 
-    return allFilled;
+    return ready;
   }
 
   function saveSelection(field, value) {
@@ -1472,7 +1515,9 @@
       form.dataset.pomSubmitAttached = "true";
 
       form.addEventListener("submit", async (event) => {
+        if (optionsLoaded && !hasOptionGroups) return;
         if (!validateRequiredFields({ showErrors: true })) {
+          showPricingError();
           event.preventDefault();
           event.stopImmediatePropagation();
           return;
@@ -1495,6 +1540,7 @@
           input.value = value;
         });
 
+        syncCartFormNativeVariant(form);
         syncVariationPriceProperties(form);
         syncCartFormQuantity(form);
         setCartProperty(form, "_pom_line_key", createPomLineKey());
@@ -1511,6 +1557,8 @@
             console.error("Preview image merge failed:", error);
           }
 
+          // Selections may have changed while the preview image was generated.
+          if (!window.ProductOptionsManagerSyncCartForm(form)) return;
           form.submit();
         }
       }, true);
@@ -1563,7 +1611,9 @@
       return;
     }
 
-    setCartProperty(form, "_pom_price_source", "exact_variation");
+    // Informational metadata and quantity locking only. Shopify's variant price
+    // is the source of truth; no property activates a cart price override.
+    setCartProperty(form, "_pom_price_source", "native_variant");
     setCartProperty(form, "_pom_final_price", currentPricing.finalPrice);
     setCartProperty(form, "_pom_unit_price", currentPricing.unitPrice);
     setCartProperty(form, "_pom_selected_quantity", selectedQuantity);
@@ -1589,11 +1639,18 @@
   }
 
   window.ProductOptionsManagerSyncCartForm = function (form) {
-    if (!form) return;
+    if (!form) return false;
+    if (optionsLoaded && !hasOptionGroups) return true;
+    if (!validateRequiredFields({ showErrors: true })) {
+      showPricingError();
+      return false;
+    }
 
+    syncCartFormNativeVariant(form);
     syncVariationPriceProperties(form);
     syncCartFormQuantity(form);
     setCartProperty(form, "_pom_line_key", createPomLineKey());
+    return true;
   };
 
   function createPomLineKey() {
@@ -1616,6 +1673,8 @@
       document.body.classList.add("pom-native-pricing-active");
     }
     root.innerHTML = `<div class="pom-loading">Loading options...</div>`;
+    attachToCartForm();
+    validateRequiredFields();
 
     const response = await fetch(
       `/apps/product-options?productId=${encodeURIComponent(
@@ -1624,15 +1683,19 @@
     );
 
     const data = await response.json();
+    if (!response.ok || !Array.isArray(data.groups)) throw new Error("Invalid product options response.");
 
     root.innerHTML = "";
     variationPriceRows.length = 0;
 
     if (!data.groups || data.groups.length === 0) {
+      optionsLoaded = true;
+      validateRequiredFields();
       root.style.display = "none";
       return;
     }
 
+    hasOptionGroups = true;
     data.groups.forEach((group) => {
       const groupEl = document.createElement("div");
 
@@ -1660,6 +1723,7 @@
       root.appendChild(groupEl);
     });
 
+    optionsLoaded = true;
     attachToCartForm();
     updatePrice();
     validateRequiredFields();

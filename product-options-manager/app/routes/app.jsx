@@ -9,19 +9,19 @@ import {
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import { authenticate } from "../shopify.server";
-import { ensurePomCartTransform } from "../cart-transform.server";
+import { disablePomCartTransform } from "../cart-transform.server";
 
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
-  await ensurePomCartTransform(admin);
+  const transformCleanup = await disablePomCartTransform(admin);
 
   // eslint-disable-next-line no-undef
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+  return { apiKey: process.env.SHOPIFY_API_KEY || "", transformCleanup };
 };
 
 export default function App() {
-  const { apiKey } = useLoaderData();
+  const { apiKey, transformCleanup } = useLoaderData();
 
   return (
     <AppProvider embedded apiKey={apiKey}>
@@ -46,6 +46,9 @@ export default function App() {
           Additional page
         </Link>
       </nav>
+      {transformCleanup?.ok === false ? (
+        <p role="alert">{transformCleanup.error}</p>
+      ) : null}
       <Outlet />
     </AppProvider>
   );
