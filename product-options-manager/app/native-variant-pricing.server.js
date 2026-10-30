@@ -1,5 +1,6 @@
 import db from "./db.server";
 import { buildNativeVariantPlan } from "./native-variant-plan.js";
+import { loadStorefrontOptions, publishStorefrontOptions } from "./storefront-options.server.js";
 export { buildNativeVariantPlan } from "./native-variant-plan.js";
 
 const LEGACY_BASE_PRICES = new Map([
@@ -10,20 +11,21 @@ const LEGACY_BASE_PRICES = new Map([
 export async function syncProductNativeVariants(admin, fields, targets, { shop }) {
   const plan = buildNativeVariantPlan(fields);
 
-  if (!plan) return { synced: false };
-
   const products = await resolveTargetProducts(admin, targets);
   if (!products.length) return { synced: false };
 
   const results = [];
 
   for (const product of products) {
-    await saveOriginalProduct(admin, shop, product);
-    results.push(await syncProduct(admin, product, plan));
+    if (plan) {
+      await saveOriginalProduct(admin, shop, product);
+      results.push(await syncProduct(admin, product, plan));
+    }
+    await publishStorefrontOptions(admin, product.id, await loadStorefrontOptions(db, product));
   }
 
   return {
-    synced: true,
+    synced: Boolean(plan),
     productIds: products.map((product) => product.id),
     productCount: results.length,
     variantCount: results.reduce(
@@ -38,6 +40,9 @@ export async function restoreOrphanedProductNativeVariants(
   { shop, targets },
 ) {
   const orphanedTargets = [];
+  for (const product of await resolveTargetProducts(admin, targets)) {
+    await publishStorefrontOptions(admin, product.id, await loadStorefrontOptions(db, product));
+  }
 
   for (const target of targets || []) {
     const productId = String(
@@ -63,6 +68,7 @@ export async function restoreProductNativeVariants(admin, { shop, targets }) {
   const results = [];
 
   for (const product of products) {
+    await publishStorefrontOptions(admin, product.id, await loadStorefrontOptions(db, product));
     const backup = await db.nativePricingBackup.findUnique({
       where: { shop_productId: { shop, productId: product.id } },
     });
@@ -271,6 +277,8 @@ async function loadProduct(admin, id) {
       query PomNativeVariantProduct($id: ID!) {
         product(id: $id) {
           id
+          handle
+          title
           options {
             name
             position
@@ -315,6 +323,8 @@ async function loadProductByHandle(admin, handle) {
         products(first: 1, query: $query) {
           nodes {
             id
+            handle
+            title
             options {
               name
               position

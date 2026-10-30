@@ -10,6 +10,12 @@
   <div class="pom-loading">Loading options...</div>
 </div>
 
+{% if product.metafields.product_options_manager.storefront != blank %}
+  <script type="application/json" data-pom-options>
+    {{ product.metafields.product_options_manager.storefront.value | json | replace: '<', '\u003c' }}
+  </script>
+{% endif %}
+
 <script type="application/json" data-pom-native-variants>
   {
     "optionNames": {{ product.options | json }},

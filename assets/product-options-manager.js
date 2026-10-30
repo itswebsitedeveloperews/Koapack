@@ -1676,14 +1676,7 @@
     attachToCartForm();
     validateRequiredFields();
 
-    const response = await fetch(
-      `/apps/product-options?productId=${encodeURIComponent(
-        productGid,
-      )}&handle=${encodeURIComponent(productHandle)}`,
-    );
-
-    const data = await response.json();
-    if (!response.ok || !Array.isArray(data.groups)) throw new Error("Invalid product options response.");
+    const data = await loadOptions();
 
     root.innerHTML = "";
     variationPriceRows.length = 0;
@@ -1729,13 +1722,59 @@
     validateRequiredFields();
   }
 
-  init().catch((error) => {
-    console.error("Product options error:", error);
+  async function loadOptions() {
+    const embedded = document.querySelector("script[data-pom-options]");
+    if (embedded) {
+      try {
+        const data = JSON.parse(embedded.textContent || "null");
+        if (data?.schemaVersion === 1 && data.productId === productGid && Array.isArray(data.groups)) return data;
+      } catch (error) {
+        console.warn("Embedded product options are invalid", error);
+      }
+    }
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const controller = new AbortController();
+      let timer;
+      try {
+        return await Promise.race([
+          (async () => {
+            const response = await fetch(`/apps/product-options?productId=${encodeURIComponent(productGid)}&handle=${encodeURIComponent(productHandle)}`, { signal: controller.signal });
+            if (!response.ok) throw new Error(`Options request failed (${response.status})`);
+            const data = await response.json();
+            if (!Array.isArray(data?.groups)) throw new Error("Invalid product options response.");
+            return data;
+          })(),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => {
+              reject(new Error("Product options request timed out."));
+              controller.abort();
+            }, 12000);
+          }),
+        ]);
+      } catch (error) { lastError = error; }
+      finally { clearTimeout(timer); }
+    }
+    throw lastError;
+  }
 
-    root.innerHTML = `
-      <div class="pom-error">
-        Product options could not be loaded.
-      </div>
-    `;
-  });
+  function showLoadError(error) {
+    console.error("Product options error:", error);
+    optionsLoaded = false;
+    validateRequiredFields();
+    root.innerHTML = "";
+    const message = document.createElement("p");
+    message.className = "pom-error";
+    message.setAttribute("role", "alert");
+    message.textContent = "Product options could not be loaded. Please try again.";
+    root.appendChild(message);
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.className = "pom-option-button";
+    retry.textContent = "Retry loading options";
+    retry.addEventListener("click", () => init().catch(showLoadError));
+    root.appendChild(retry);
+  }
+
+  init().catch(showLoadError);
 })();

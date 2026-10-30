@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
 import { setImmediate } from "node:timers";
+import { setTimeout, clearTimeout } from "node:timers";
 import { readFile } from "node:fs/promises";
 
 // Minimal DOM for executing the real storefront script and its event handlers.
@@ -41,7 +42,8 @@ class Element {
   }
 }
 
-async function storefront({ variantPrice = 2800, available = true, groups = true } = {}) {
+async function storefront({ variantPrice = 2800, available = true, groups = true, embedded = false, failures = 0, hung = false } = {}) {
+  let requests = 0;
   const root = new Element();
   Object.assign(root.dataset, { productGid: "gid://shopify/Product/1", productHandle: "pouch", basePrice: "35000" });
   const form = new Element("form");
@@ -56,6 +58,7 @@ async function storefront({ variantPrice = 2800, available = true, groups = true
     createElement: (tag) => new Element(tag),
     querySelector(selector) {
       if (selector.includes("data-pom-native-variants")) return native;
+      if (selector.includes("data-pom-options") && embedded) return { textContent: JSON.stringify({ schemaVersion: 1, productId: root.dataset.productGid, groups: [{ fields }] }) };
       return null;
     },
     querySelectorAll(selector) {
@@ -75,10 +78,12 @@ async function storefront({ variantPrice = 2800, available = true, groups = true
   const source = await readFile(new URL("../../assets/product-options-manager.js", import.meta.url), "utf8");
   vm.runInNewContext(source, {
     document, window, console, Event: class { constructor(type) { this.type = type; } },
-    fetch: async () => ({ ok: true, json: async () => ({ groups: groups ? [{ fields }] : [] }) }),
+    AbortController, setTimeout: hung ? (fn) => setImmediate(fn) : setTimeout, clearTimeout,
+    fetch: async () => { requests += 1; if (hung) return new Promise(() => {}); if (requests <= failures) throw new Error("Temporary network failure"); return { ok: true, json: async () => ({ groups: groups ? [{ fields }] : [] }) }; },
   });
   await new Promise((resolve) => setImmediate(resolve));
-  return { root, form, id, submit, window,
+  if (hung) for (let i = 0; i < 4; i += 1) await new Promise((resolve) => setImmediate(resolve));
+  return { root, form, id, submit, window, requests,
     select() {
       root.querySelector(".pom-option-button").dispatchEvent({ type: "click" });
       const select = root.querySelector("select"); select.value = "14X16"; select.dispatchEvent({ type: "change" });
@@ -97,6 +102,34 @@ test("storefront submits synced ID and quantity, not a client price override", a
   assert.equal(page.form.querySelector("[name='quantity']").value, "1000");
   assert.equal(page.form.querySelector('[name="properties[_pom_price_source]"]').value, "native_variant");
   assert.equal(page.root.querySelector(".pom-pricing-error"), null);
+});
+
+test("embedded Shopify options load without any backend request", async () => {
+  const page = await storefront({ embedded: true, failures: 10 });
+  page.select();
+  assert.equal(page.requests, 0);
+  assert.equal(page.submit.disabled, false);
+});
+
+test("loading recovers automatically from two temporary failures", async () => {
+  const page = await storefront({ failures: 2 });
+  assert.equal(page.requests, 3);
+  page.select();
+  assert.equal(page.submit.disabled, false);
+});
+
+test("persistent failure offers a retry and keeps checkout disabled", async () => {
+  const page = await storefront({ failures: 10 });
+  assert.equal(page.requests, 3);
+  assert.equal(page.submit.disabled, true);
+  assert.equal(page.root.querySelector("button").textContent, "Retry loading options");
+});
+
+test("hung requests time out after bounded retries rather than loading forever", async () => {
+  const page = await storefront({ hung: true });
+  assert.equal(page.requests, 3);
+  assert.equal(page.submit.disabled, true);
+  assert.equal(page.root.querySelector("button").textContent, "Retry loading options");
 });
 
 test("stale or unavailable variants cannot be submitted at the wrong price", async () => {
